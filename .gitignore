@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/scripts/node_modules
 /.pnp
 .pnp.*
 .yarn/*
@@ -39,3 +40,41 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# MongoDB backups
+/backups/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Large media files (consider using Git LFS if needed)
+*.mp4
+*.mov
+*.wmv
+*.avi
+
+# Card images (stored in Cloudinary)
+/public/images/cards/
+
+*.md

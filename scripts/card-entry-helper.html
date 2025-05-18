@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algomancy Card Entry Helper</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #1a1a2e;
+      color: #e6e6e6;
+    }
+
+    .card-container {
+      height: 500px;
+      background-color: #16213e;
+    }
+
+    .form-container {
+      background-color: #0f3460;
+    }
+
+    .btn-primary {
+      background-color: #e94560;
+    }
+
+    .btn-secondary {
+      background-color: #533483;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background-color: #533483;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: #e94560;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-4 text-center">Algomancy Card Entry Helper</h1>
+
+    <!-- Progress Bar -->
+    <div class="mb-8">
+      <div class="flex justify-between mb-2">
+        <div>
+          <span id="progress-text">Card 0 of 0</span>
+          <span id="completion-text">0% Complete</span>
+        </div>
+        <div class="flex items-center">
+          <label class="mr-2">Jump to Card:</label>
+          <input type="number" id="jump-to-card" class="w-16 px-2 py-1 rounded-md bg-gray-800 text-white" min="1">
+          <button id="jump-button" class="ml-2 bg-purple-600 px-3 py-1 rounded-md">Go</button>
+        </div>
+      </div>
+      <div class="progress-bar rounded-full">
+        <div id="progress-fill" class="progress-fill rounded-full" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Card Image -->
+      <div class="card-container rounded-lg p-4 flex flex-col">
+        <h2 class="text-xl font-semibold mb-4">Card Image</h2>
+        <div class="flex-grow flex items-center justify-center">
+          <img id="card-image" src="" alt="Card" class="max-h-full max-w-full object-contain">
+        </div>
+        <div class="mt-4 flex justify-between">
+          <button id="prev-card" class="btn-secondary px-4 py-2 rounded-md">Previous</button>
+          <button id="next-card" class="btn-secondary px-4 py-2 rounded-md">Next</button>
+        </div>
+      </div>
+
+      <!-- Card Form -->
+      <div class="form-container rounded-lg p-4">
+        <h2 class="text-xl font-semibold mb-4">Card Details</h2>
+        <form id="card-form" class="space-y-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block mb-1">ID (auto-generated)</label>
+              <input type="text" id="card-id" class="w-full px-3 py-2 rounded-md bg-gray-700 text-gray-300" readonly
+                placeholder="Auto-generated from name">
+            </div>
+            <div>
+              <label class="block mb-1">Name</label>
+              <input type="text" id="card-name" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                placeholder="Card Name">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block mb-1">Mana Cost</label>
+              <input type="number" id="card-mana-cost" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                min="0" max="10">
+            </div>
+            <div>
+              <label class="block mb-1">Element</label>
+              <select id="card-element" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white">
+                <!-- Options will be populated by JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block mb-1">Power</label>
+              <input type="number" id="card-power" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white" min="0"
+                max="10">
+            </div>
+            <div>
+              <label class="block mb-1">Defense</label>
+              <input type="number" id="card-defense" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white" min="0"
+                max="10">
+            </div>
+          </div>
+
+          <div>
+            <label class="block mb-1">Affinity</label>
+            <div class="grid grid-cols-5 gap-2">
+              <div>
+                <label class="block text-xs mb-1">Fire</label>
+                <input type="number" id="affinity-fire" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                  min="0" max="5" value="0">
+              </div>
+              <div>
+                <label class="block text-xs mb-1">Water</label>
+                <input type="number" id="affinity-water" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                  min="0" max="5" value="0">
+              </div>
+              <div>
+                <label class="block text-xs mb-1">Earth</label>
+                <input type="number" id="affinity-earth" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                  min="0" max="5" value="0">
+              </div>
+              <div>
+                <label class="block text-xs mb-1">Wood</label>
+                <input type="number" id="affinity-wood" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                  min="0" max="5" value="0">
+              </div>
+              <div>
+                <label class="block text-xs mb-1">Metal</label>
+                <input type="number" id="affinity-metal" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+                  min="0" max="5" value="0">
+              </div>
+              <!-- Colorless removed as it doesn't have affinity -->
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Set the affinity cost for each element (0 means no affinity)</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block mb-1">Timing</label>
+              <select id="card-timing" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white">
+                <!-- Options will be populated by JavaScript -->
+              </select>
+            </div>
+            <div>
+              <label class="block mb-1">Card Type</label>
+              <select id="card-type" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white">
+                <!-- Options will be populated by JavaScript -->
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block mb-1">Subtype</label>
+            <input type="text" id="card-subtype" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white"
+              placeholder="e.g., Elemental, Horror, etc.">
+          </div>
+
+          <div>
+            <label class="block mb-1">Attributes</label>
+            <div class="mb-2">
+              <h3 class="text-sm font-semibold mb-1">Pink Attributes</h3>
+              <div class="grid grid-cols-4 gap-2 mb-3">
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-burst" class="mr-2">
+                  <label for="attr-burst" class="text-pink-400">Burst</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-unstable" class="mr-2">
+                  <label for="attr-unstable" class="text-pink-400">Unstable</label>
+                </div>
+              </div>
+
+              <h3 class="text-sm font-semibold mb-1">Yellow Attributes</h3>
+              <div class="grid grid-cols-4 gap-2">
+                <!-- Yellow attributes in alphabetical order -->
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-alluring" class="mr-2">
+                  <label for="attr-alluring" class="text-yellow-400">Alluring</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-balanced" class="mr-2">
+                  <label for="attr-balanced" class="text-yellow-400">Balanced</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-deadly" class="mr-2">
+                  <label for="attr-deadly" class="text-yellow-400">Deadly</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-electric" class="mr-2">
+                  <label for="attr-electric" class="text-yellow-400">Electric</label>
+                </div>
+
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-evasive" class="mr-2">
+                  <label for="attr-evasive" class="text-yellow-400">Evasive</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-feeble" class="mr-2">
+                  <label for="attr-feeble" class="text-yellow-400">Feeble</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-flying" class="mr-2">
+                  <label for="attr-flying" class="text-yellow-400">Flying</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-inverted" class="mr-2">
+                  <label for="attr-inverted" class="text-yellow-400">Inverted</label>
+                </div>
+
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-piercing" class="mr-2">
+                  <label for="attr-piercing" class="text-yellow-400">Piercing</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-poisonous" class="mr-2">
+                  <label for="attr-poisonous" class="text-yellow-400">Poisonous</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-poisonous-swift" class="mr-2">
+                  <label for="attr-poisonous-swift" class="text-yellow-400">Poisonous Swift</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-powerful" class="mr-2">
+                  <label for="attr-powerful" class="text-yellow-400">Powerful</label>
+                </div>
+
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-reaping" class="mr-2">
+                  <label for="attr-reaping" class="text-yellow-400">Reaping</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-resonant" class="mr-2">
+                  <label for="attr-resonant" class="text-yellow-400">Resonant</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-sluggish" class="mr-2">
+                  <label for="attr-sluggish" class="text-yellow-400">Sluggish</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-sneaky" class="mr-2">
+                  <label for="attr-sneaky" class="text-yellow-400">Sneaky</label>
+                </div>
+
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-swift" class="mr-2">
+                  <label for="attr-swift" class="text-yellow-400">Swift</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-thieving" class="mr-2">
+                  <label for="attr-thieving" class="text-yellow-400">Thieving</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-tough" class="mr-2">
+                  <label for="attr-tough" class="text-yellow-400">Tough</label>
+                </div>
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-unaware" class="mr-2">
+                  <label for="attr-unaware" class="text-yellow-400">Unaware</label>
+                </div>
+
+                <div class="flex items-center">
+                  <input type="checkbox" id="attr-vulnerable" class="mr-2">
+                  <label for="attr-vulnerable" class="text-yellow-400">Vulnerable</label>
+                </div>
+              </div>
+            </div>
+            <div class="mt-2 text-xs">
+              <span class="text-yellow-400 mr-2">Yellow</span> and <span class="text-pink-400">Pink</span> indicate
+              different attribute types
+            </div>
+          </div>
+
+          <div>
+            <label class="block mb-1">Abilities (one per line)</label>
+            <textarea id="card-abilities" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white h-24"
+              placeholder="Enter each ability on a new line"></textarea>
+          </div>
+
+          <div>
+            <label class="block mb-1">Flavor Text</label>
+            <textarea id="card-flavor-text" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white h-16"
+              placeholder="Optional flavor text"></textarea>
+          </div>
+
+          <div>
+            <label class="block mb-1">Rarity</label>
+            <select id="card-rarity" class="w-full px-3 py-2 rounded-md bg-gray-800 text-white">
+              <!-- Options will be populated by JavaScript -->
+            </select>
+          </div>
+
+          <div class="flex justify-between">
+            <button type="button" id="save-card" class="btn-primary px-6 py-2 rounded-md">Save Card</button>
+            <button type="button" id="skip-card" class="bg-gray-600 px-6 py-2 rounded-md">Skip</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Global variables
+    let cardImages = [];
+    let existingCards = [];
+    let currentCardIndex = 0;
+    let lastSavedIndex = 0;
+    let constants = {};
+
+    // Fetch data on page load
+    async function initialize() {
+      try {
+        // Fetch card images
+        const imagesResponse = await fetch('/api/card-images');
+        cardImages = await imagesResponse.json();
+
+        // Fetch existing cards
+        const cardsResponse = await fetch('/api/existing-cards');
+        existingCards = await cardsResponse.json();
+
+        // Fetch constants
+        const constantsResponse = await fetch('/api/constants');
+        constants = await constantsResponse.json();
+
+        // Fetch last saved card index
+        const lastIndexResponse = await fetch('/api/last-card-index');
+        const lastIndexData = await lastIndexResponse.json();
+        lastSavedIndex = lastIndexData.index || 0;
+
+        // Populate dropdowns
+        populateDropdowns();
+
+        // Update progress
+        updateProgress();
+
+        // Show last saved card or first card
+        if (cardImages.length > 0) {
+          // Add buttons to jump to the start or last saved position
+          if (lastSavedIndex > 0) {
+            const jumpButtons = document.createElement('div');
+            jumpButtons.className = 'flex justify-center space-x-4 mb-4';
+            jumpButtons.innerHTML = `
+              <button id="start-from-beginning" class="bg-blue-600 px-4 py-2 rounded-md">Start from Beginning</button>
+              <button id="continue-from-last" class="bg-green-600 px-4 py-2 rounded-md">Continue from Last (Card ${lastSavedIndex + 1})</button>
+            `;
+
+            const container = document.querySelector('.container');
+            container.insertBefore(jumpButtons, container.firstChild);
+
+            document.getElementById('start-from-beginning').addEventListener('click', () => {
+              showCard(0);
+              jumpButtons.remove();
+            });
+
+            document.getElementById('continue-from-last').addEventListener('click', () => {
+              showCard(lastSavedIndex);
+              jumpButtons.remove();
+            });
+          } else {
+            showCard(0);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing:', error);
+      }
+    }
+
+    // Populate dropdown options
+    function populateDropdowns() {
+      // Element dropdown
+      const elementSelect = document.getElementById('card-element');
+
+      // Add basic elements group
+      const basicGroup = document.createElement('optgroup');
+      basicGroup.label = 'Basic Elements';
+      Object.entries(constants.ELEMENTS || {})
+        .filter(([key]) => ['FIRE', 'WATER', 'EARTH', 'WOOD', 'METAL', 'COLORLESS'].includes(key))
+        .forEach(([key, value]) => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = value;
+          basicGroup.appendChild(option);
+        });
+      elementSelect.appendChild(basicGroup);
+
+      // Add hybrid elements group
+      const hybridGroup = document.createElement('optgroup');
+      hybridGroup.label = 'Hybrid Elements';
+      Object.entries(constants.ELEMENTS || {})
+        .filter(([key]) => key.includes('_'))
+        .forEach(([key, value]) => {
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = value;
+          hybridGroup.appendChild(option);
+        });
+      elementSelect.appendChild(hybridGroup);
+
+      // Timing dropdown
+      const timingSelect = document.getElementById('card-timing');
+      Object.entries(constants.TIMING || {}).forEach(([key, value]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = value;
+        timingSelect.appendChild(option);
+      });
+
+      // Card type dropdown
+      const typeSelect = document.getElementById('card-type');
+      Object.entries(constants.CARD_TYPES || {}).forEach(([key, value]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = value;
+        typeSelect.appendChild(option);
+      });
+
+      // Rarity dropdown
+      const raritySelect = document.getElementById('card-rarity');
+      Object.entries(constants.COMPLEXITY || {}).forEach(([key, value]) => {
+        const option = document.createElement('option');
+        option.value = key;
+        option.textContent = value;
+        raritySelect.appendChild(option);
+      });
+    }
+
+    // Show card at specified index
+    function showCard(index) {
+      if (index < 0 || index >= cardImages.length) return;
+
+      currentCardIndex = index;
+      const card = cardImages[index];
+
+      // Set image
+      const imageElement = document.getElementById('card-image');
+      imageElement.src = card.localImagePath;
+      imageElement.alt = card.name;
+
+      // Check if this card already has details
+      const existingCard = existingCards.find(c => c.imageUrl === card.localImagePath);
+
+      // Populate form
+      if (existingCard) {
+        document.getElementById('card-id').value = existingCard.id || '';
+        document.getElementById('card-name').value = existingCard.name || '';
+        document.getElementById('card-mana-cost').value = existingCard.manaCost || 0;
+
+        // Set element
+        const elementKey = Object.keys(constants.ELEMENTS).find(
+          key => constants.ELEMENTS[key] === existingCard.element?.type
+        );
+        document.getElementById('card-element').value = elementKey || 'FIRE';
+
+        // Set stats
+        document.getElementById('card-power').value = existingCard.stats?.power || 0;
+        document.getElementById('card-defense').value = existingCard.stats?.defense || 0;
+
+        // Set affinity
+        const affinity = existingCard.stats?.affinity || {};
+        document.getElementById('affinity-fire').value = affinity.fire || 0;
+        document.getElementById('affinity-water').value = affinity.water || 0;
+        document.getElementById('affinity-earth').value = affinity.earth || 0;
+        document.getElementById('affinity-wood').value = affinity.wood || 0;
+        document.getElementById('affinity-metal').value = affinity.metal || 0;
+
+        // Set timing
+        const timingKey = Object.keys(constants.TIMING).find(
+          key => constants.TIMING[key] === existingCard.timing?.type
+        );
+        document.getElementById('card-timing').value = timingKey || 'STANDARD';
+
+        // Set card type
+        const typeKey = Object.keys(constants.CARD_TYPES).find(
+          key => constants.CARD_TYPES[key] === existingCard.typeAndAttributes?.mainType
+        );
+        document.getElementById('card-type').value = typeKey || 'UNIT';
+
+        document.getElementById('card-subtype').value = existingCard.typeAndAttributes?.subType || '';
+
+        // Set attributes
+        const attributes = existingCard.typeAndAttributes?.attributes || [];
+        document.getElementById('attr-flying').checked = attributes.includes('Flying');
+        document.getElementById('attr-deadly').checked = attributes.includes('Deadly');
+        document.getElementById('attr-swift').checked = attributes.includes('Swift');
+        document.getElementById('attr-inverted').checked = attributes.includes('Inverted');
+        document.getElementById('attr-unstable').checked = attributes.includes('Unstable');
+        document.getElementById('attr-piercing').checked = attributes.includes('Piercing');
+        document.getElementById('attr-evasive').checked = attributes.includes('Evasive');
+        document.getElementById('attr-sluggish').checked = attributes.includes('Sluggish');
+        document.getElementById('attr-burst').checked = attributes.includes('Burst');
+        document.getElementById('attr-reaping').checked = attributes.includes('Reaping');
+        document.getElementById('attr-feeble').checked = attributes.includes('Feeble');
+        document.getElementById('attr-electric').checked = attributes.includes('Electric');
+        document.getElementById('attr-unaware').checked = attributes.includes('Unaware');
+        document.getElementById('attr-balanced').checked = attributes.includes('Balanced');
+        document.getElementById('attr-powerful').checked = attributes.includes('Powerful');
+        document.getElementById('attr-vulnerable').checked = attributes.includes('Vulnerable');
+        document.getElementById('attr-poisonous-swift').checked = attributes.includes('Poisonous Swift');
+        document.getElementById('attr-poisonous').checked = attributes.includes('Poisonous');
+        document.getElementById('attr-tough').checked = attributes.includes('Tough');
+        document.getElementById('attr-resonant').checked = attributes.includes('Resonant');
+        document.getElementById('attr-thieving').checked = attributes.includes('Thieving');
+        document.getElementById('attr-alluring').checked = attributes.includes('Alluring');
+        document.getElementById('attr-sneaky').checked = attributes.includes('Sneaky');
+
+        document.getElementById('card-abilities').value = (existingCard.abilities || []).join('\n');
+        document.getElementById('card-flavor-text').value = existingCard.flavorText || '';
+
+        // Set rarity
+        const rarityKey = Object.keys(constants.COMPLEXITY).find(
+          key => constants.COMPLEXITY[key] === existingCard.set?.complexity
+        );
+        document.getElementById('card-rarity').value = rarityKey || 'COMMON';
+      } else {
+        // Default values for new card
+        const elementPrefix = guessElementFromName(card.name);
+        const paddedIndex = String(index + 1).padStart(3, '0');
+
+        document.getElementById('card-id').value = generateIdFromName(card.name);
+        document.getElementById('card-name').value = card.name;
+        document.getElementById('card-mana-cost').value = 1;
+        document.getElementById('card-element').value = elementPrefix.toUpperCase();
+        document.getElementById('card-power').value = 0;
+        document.getElementById('card-defense').value = 0;
+
+        // Set default affinity based on element (colorless has no affinity)
+        document.getElementById('affinity-fire').value = elementPrefix === 'fire' ? 1 : 0;
+        document.getElementById('affinity-water').value = elementPrefix === 'water' ? 1 : 0;
+        document.getElementById('affinity-earth').value = elementPrefix === 'earth' ? 1 : 0;
+        document.getElementById('affinity-wood').value = elementPrefix === 'wood' ? 1 : 0;
+        document.getElementById('affinity-metal').value = elementPrefix === 'metal' ? 1 : 0;
+
+        // For hybrid elements, set both affinities
+        if (elementPrefix.includes('_')) {
+          const elements = elementPrefix.split('_');
+          if (elements[0] === 'fire') document.getElementById('affinity-fire').value = 1;
+          if (elements[0] === 'water') document.getElementById('affinity-water').value = 1;
+          if (elements[0] === 'earth') document.getElementById('affinity-earth').value = 1;
+          if (elements[0] === 'wood') document.getElementById('affinity-wood').value = 1;
+          if (elements[0] === 'metal') document.getElementById('affinity-metal').value = 1;
+
+          if (elements[1] === 'fire') document.getElementById('affinity-fire').value = 1;
+          if (elements[1] === 'water') document.getElementById('affinity-water').value = 1;
+          if (elements[1] === 'earth') document.getElementById('affinity-earth').value = 1;
+          if (elements[1] === 'wood') document.getElementById('affinity-wood').value = 1;
+          if (elements[1] === 'metal') document.getElementById('affinity-metal').value = 1;
+        }
+        document.getElementById('card-timing').value = 'STANDARD';
+        document.getElementById('card-type').value = 'UNIT';
+        document.getElementById('card-subtype').value = '';
+
+        // Clear attributes
+        document.getElementById('attr-flying').checked = false;
+        document.getElementById('attr-deadly').checked = false;
+        document.getElementById('attr-swift').checked = false;
+        document.getElementById('attr-inverted').checked = false;
+        document.getElementById('attr-unstable').checked = false;
+        document.getElementById('attr-piercing').checked = false;
+        document.getElementById('attr-evasive').checked = false;
+        document.getElementById('attr-sluggish').checked = false;
+        document.getElementById('attr-burst').checked = false;
+        document.getElementById('attr-reaping').checked = false;
+        document.getElementById('attr-feeble').checked = false;
+        document.getElementById('attr-electric').checked = false;
+        document.getElementById('attr-unaware').checked = false;
+        document.getElementById('attr-balanced').checked = false;
+        document.getElementById('attr-powerful').checked = false;
+        document.getElementById('attr-vulnerable').checked = false;
+        document.getElementById('attr-poisonous-swift').checked = false;
+        document.getElementById('attr-poisonous').checked = false;
+        document.getElementById('attr-tough').checked = false;
+        document.getElementById('attr-resonant').checked = false;
+        document.getElementById('attr-thieving').checked = false;
+        document.getElementById('attr-alluring').checked = false;
+        document.getElementById('attr-sneaky').checked = false;
+
+        document.getElementById('card-abilities').value = '';
+        document.getElementById('card-flavor-text').value = '';
+
+        // Set default rarity
+        document.getElementById('card-rarity').value = 'COMMON';
+      }
+
+      // Update progress
+      updateProgress();
+    }
+
+    // Generate ID from card name (lowercase with hyphens instead of spaces)
+    function generateIdFromName(name) {
+      return name
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-'); // Replace spaces with hyphens
+    }
+
+    // Guess element from card name
+    function guessElementFromName(name) {
+      name = name.toLowerCase();
+
+      // Check for hybrid elements first (looking for patterns like "fire and water" or "fire/water")
+      const elements = [];
+
+      if (name.includes('fire') || name.includes('flame') || name.includes('burn'))
+        elements.push('fire');
+      if (name.includes('water') || name.includes('ocean') || name.includes('sea'))
+        elements.push('water');
+      if (name.includes('earth') || name.includes('stone') || name.includes('rock'))
+        elements.push('earth');
+      if (name.includes('wood') || name.includes('tree') || name.includes('forest'))
+        elements.push('wood');
+      if (name.includes('metal') || name.includes('steel') || name.includes('iron'))
+        elements.push('metal');
+      if (name.includes('colorless') || name.includes('void') || name.includes('neutral'))
+        elements.push('colorless');
+
+      // If we found exactly two elements, it's likely a hybrid
+      if (elements.length === 2) {
+        return `${elements[0]}_${elements[1]}`;
+      }
+
+      // Otherwise, return the first element found or default to fire
+      return elements[0] || 'fire';
+    }
+
+    // Update progress indicators
+    function updateProgress() {
+      const completedCount = existingCards.length;
+      const totalCount = cardImages.length;
+      const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      document.getElementById('progress-text').textContent = `Card ${currentCardIndex + 1} of ${totalCount}`;
+      document.getElementById('completion-text').textContent = `${percentage}% Complete (${completedCount}/${totalCount})`;
+      document.getElementById('progress-fill').style.width = `${percentage}%`;
+    }
+
+    // Save current card
+    async function saveCard() {
+      const id = document.getElementById('card-id').value;
+      const name = document.getElementById('card-name').value;
+      const manaCost = parseInt(document.getElementById('card-mana-cost').value);
+      const elementKey = document.getElementById('card-element').value;
+      const power = parseInt(document.getElementById('card-power').value);
+      const defense = parseInt(document.getElementById('card-defense').value);
+
+      // Get affinity values
+      const affinityFire = parseInt(document.getElementById('affinity-fire').value) || 0;
+      const affinityWater = parseInt(document.getElementById('affinity-water').value) || 0;
+      const affinityEarth = parseInt(document.getElementById('affinity-earth').value) || 0;
+      const affinityWood = parseInt(document.getElementById('affinity-wood').value) || 0;
+      const affinityMetal = parseInt(document.getElementById('affinity-metal').value) || 0;
+
+      const timingKey = document.getElementById('card-timing').value;
+      const typeKey = document.getElementById('card-type').value;
+      const subType = document.getElementById('card-subtype').value;
+      const abilitiesText = document.getElementById('card-abilities').value;
+      const flavorText = document.getElementById('card-flavor-text').value;
+      const rarityKey = document.getElementById('card-rarity').value;
+
+      // Validate required fields
+      if (!id || !name) {
+        alert('ID and Name are required');
+        return;
+      }
+
+      // Create card object
+      const card = {
+        id,
+        name,
+        manaCost: isNaN(manaCost) ? 0 : manaCost,
+        element: {
+          type: constants.ELEMENTS[elementKey],
+          symbol: `/images/elements/${elementKey.split('_')[0].toLowerCase()}.png`,
+          ...(elementKey.includes('_') && {
+            secondarySymbol: `/images/elements/${elementKey.split('_')[1].toLowerCase()}.png`
+          }),
+        },
+        stats: {
+          power: isNaN(power) ? 0 : power,
+          defense: isNaN(defense) ? 0 : defense,
+          affinity: {
+            ...(affinityFire > 0 && { fire: affinityFire }),
+            ...(affinityWater > 0 && { water: affinityWater }),
+            ...(affinityEarth > 0 && { earth: affinityEarth }),
+            ...(affinityWood > 0 && { wood: affinityWood }),
+            ...(affinityMetal > 0 && { metal: affinityMetal })
+          }
+        },
+        timing: {
+          type: constants.TIMING[timingKey],
+          description: timingKey === 'STANDARD' ? 'Can be played during deployment' : 'Special timing rules apply',
+        },
+        typeAndAttributes: {
+          mainType: constants.CARD_TYPES[typeKey],
+          subType: subType || 'Unknown',
+          attributes: [
+            ...(document.getElementById('attr-flying').checked ? [constants.CARD_ATTRIBUTES.FLYING.name] : []),
+            ...(document.getElementById('attr-deadly').checked ? [constants.CARD_ATTRIBUTES.DEADLY.name] : []),
+            ...(document.getElementById('attr-swift').checked ? [constants.CARD_ATTRIBUTES.SWIFT.name] : []),
+            ...(document.getElementById('attr-inverted').checked ? [constants.CARD_ATTRIBUTES.INVERTED.name] : []),
+            ...(document.getElementById('attr-unstable').checked ? [constants.CARD_ATTRIBUTES.UNSTABLE.name] : []),
+            ...(document.getElementById('attr-piercing').checked ? [constants.CARD_ATTRIBUTES.PIERCING.name] : []),
+            ...(document.getElementById('attr-evasive').checked ? [constants.CARD_ATTRIBUTES.EVASIVE.name] : []),
+            ...(document.getElementById('attr-sluggish').checked ? [constants.CARD_ATTRIBUTES.SLUGGISH.name] : []),
+            ...(document.getElementById('attr-burst').checked ? [constants.CARD_ATTRIBUTES.BURST.name] : []),
+            ...(document.getElementById('attr-reaping').checked ? [constants.CARD_ATTRIBUTES.REAPING.name] : []),
+            ...(document.getElementById('attr-feeble').checked ? [constants.CARD_ATTRIBUTES.FEEBLE.name] : []),
+            ...(document.getElementById('attr-electric').checked ? [constants.CARD_ATTRIBUTES.ELECTRIC.name] : []),
+            ...(document.getElementById('attr-unaware').checked ? [constants.CARD_ATTRIBUTES.UNAWARE.name] : []),
+            ...(document.getElementById('attr-balanced').checked ? [constants.CARD_ATTRIBUTES.BALANCED.name] : []),
+            ...(document.getElementById('attr-powerful').checked ? [constants.CARD_ATTRIBUTES.POWERFUL.name] : []),
+            ...(document.getElementById('attr-vulnerable').checked ? [constants.CARD_ATTRIBUTES.VULNERABLE.name] : []),
+            ...(document.getElementById('attr-poisonous-swift').checked ? [constants.CARD_ATTRIBUTES.POISONOUS_SWIFT.name] : []),
+            ...(document.getElementById('attr-poisonous').checked ? [constants.CARD_ATTRIBUTES.POISONOUS.name] : []),
+            ...(document.getElementById('attr-tough').checked ? [constants.CARD_ATTRIBUTES.TOUGH.name] : []),
+            ...(document.getElementById('attr-resonant').checked ? [constants.CARD_ATTRIBUTES.RESONANT.name] : []),
+            ...(document.getElementById('attr-thieving').checked ? [constants.CARD_ATTRIBUTES.THIEVING.name] : []),
+            ...(document.getElementById('attr-alluring').checked ? [constants.CARD_ATTRIBUTES.ALLURING.name] : []),
+            ...(document.getElementById('attr-sneaky').checked ? [constants.CARD_ATTRIBUTES.SNEAKY.name] : [])
+          ],
+        },
+        abilities: abilitiesText.split('\n').filter(line => line.trim() !== ''),
+        set: {
+          symbol: 'core',
+          name: 'Core Set',
+          complexity: constants.COMPLEXITY[rarityKey] || 'Common',
+        },
+        imageUrl: cardImages[currentCardIndex].localImagePath,
+        flavorText: flavorText || undefined,
+      };
+
+      try {
+        const response = await fetch('/api/save-card', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...card,
+            currentIndex: currentCardIndex
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Update existing cards
+          const existingIndex = existingCards.findIndex(c => c.id === card.id);
+          if (existingIndex !== -1) {
+            existingCards[existingIndex] = card;
+          } else {
+            existingCards.push(card);
+          }
+
+          // Move to next card
+          showCard(currentCardIndex + 1);
+        } else {
+          alert('Error saving card: ' + (result.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error saving card:', error);
+        alert('Error saving card');
+      }
+    }
+
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      initialize();
+
+      document.getElementById('prev-card').addEventListener('click', () => {
+        showCard(currentCardIndex - 1);
+      });
+
+      document.getElementById('next-card').addEventListener('click', () => {
+        showCard(currentCardIndex + 1);
+      });
+
+      document.getElementById('save-card').addEventListener('click', saveCard);
+
+      document.getElementById('skip-card').addEventListener('click', () => {
+        showCard(currentCardIndex + 1);
+      });
+
+      // Auto-generate ID when name changes
+      document.getElementById('card-name').addEventListener('input', (e) => {
+        const name = e.target.value;
+        if (name) {
+          document.getElementById('card-id').value = generateIdFromName(name);
+        }
+      });
+
+      // Jump to card button
+      document.getElementById('jump-button').addEventListener('click', () => {
+        const jumpInput = document.getElementById('jump-to-card');
+        const cardNumber = parseInt(jumpInput.value);
+        if (!isNaN(cardNumber) && cardNumber >= 1 && cardNumber <= cardImages.length) {
+          showCard(cardNumber - 1); // Convert from 1-based to 0-based index
+        } else {
+          alert(`Please enter a valid card number between 1 and ${cardImages.length}`);
+        }
+      });
+
+      // Also allow pressing Enter in the jump input
+      document.getElementById('jump-to-card').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          document.getElementById('jump-button').click();
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

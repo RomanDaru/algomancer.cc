@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
+@theme {
+  /* Algomancy color palette */
+  --color-algomancy-dark: #0a0a0a;
+  --color-algomancy-darker: #050505;
+
+  /* Purple variants */
+  --color-algomancy-purple-light: #9d4edd;
+  --color-algomancy-purple: #7b2cbf;
+  --color-algomancy-purple-dark: #5a189a;
+
+  /* Blue variants */
+  --color-algomancy-blue-light: #48bfe3;
+  --color-algomancy-blue: #5390d9;
+  --color-algomancy-blue-dark: #3a0ca3;
+
+  /* Gold variants */
+  --color-algomancy-gold-light: #ffda6b;
+  --color-algomancy-gold: #f9c74f;
+  --color-algomancy-gold-dark: #f3a712;
+
+  /* Teal variants */
+  --color-algomancy-teal-light: #80ffdb;
+  --color-algomancy-teal: #56cfe1;
+  --color-algomancy-teal-dark: #2ec4b6;
+
+  /* Cosmic variants */
+  --color-algomancy-cosmic-light: #c77dff;
+  --color-algomancy-cosmic: #9d4edd;
+  --color-algomancy-cosmic-dark: #7b2cbf;
+
+  /* Direct color mappings */
+  --color-primary: #7b2cbf;
+  --color-secondary: #5390d9;
+  --color-accent: #f9c74f;
+  --color-highlight: #56cfe1;
+  --color-background: #0a0a0a;
+  --color-foreground: #ededed;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: var(--color-background);
+  --foreground: var(--color-foreground);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans);
 }

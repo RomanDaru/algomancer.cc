@@ -1,11 +1,12 @@
-import mongoose from 'mongoose';
-import { config } from 'dotenv';
+import mongoose from "mongoose";
+import { config } from "dotenv";
 
 // Load environment variables
 config();
 
 // MongoDB connection string
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/algomancy';
+const MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/algomancy";
 
 // Global variable to track connection status
 let isConnected = false;
@@ -15,16 +16,14 @@ let isConnected = false;
  */
 export async function connectToDatabase() {
   if (isConnected) {
-    console.log('=> Using existing database connection');
     return;
   }
 
   try {
     const db = await mongoose.connect(MONGODB_URI);
     isConnected = !!db.connections[0].readyState;
-    console.log('=> Connected to MongoDB');
   } catch (error) {
-    console.error('=> Error connecting to MongoDB:', error);
+    console.error("Error connecting to MongoDB:", error);
     throw error;
   }
 }
@@ -40,9 +39,8 @@ export async function disconnectFromDatabase() {
   try {
     await mongoose.disconnect();
     isConnected = false;
-    console.log('=> Disconnected from MongoDB');
   } catch (error) {
-    console.error('=> Error disconnecting from MongoDB:', error);
+    console.error("Error disconnecting from MongoDB:", error);
     throw error;
   }
 }

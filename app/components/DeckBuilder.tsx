@@ -5,8 +5,9 @@ import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import CardSearch from "./CardSearch";
 import CardGrid from "./CardGrid";
-import DeckCardList from "./DeckCardList";
+import DeckViewer from "./DeckViewer";
 import DeckStats from "./DeckStats";
+import CardHoverPreview from "./CardHoverPreview";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 
@@ -169,7 +170,7 @@ export default function DeckBuilder({
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-      {/* Left Column - Deck Info and Cards */}
+      {/* Left Column - Deck Info and Stats */}
       <div className='lg:col-span-1 space-y-4'>
         <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
           <h3 className='text-lg font-semibold text-white mb-4'>
@@ -230,19 +231,12 @@ export default function DeckBuilder({
           </div>
         </div>
 
-        <DeckCardList
-          cards={cards}
-          deckCards={deckCards}
-          onAddCard={handleAddCard}
-          onRemoveCard={handleRemoveCard}
-          onRemoveAllCopies={handleRemoveAllCopies}
-        />
-
         <DeckStats cards={cards} deckCards={deckCards} />
       </div>
 
-      {/* Right Column - Card Browser */}
+      {/* Right Column - Card Browser and Deck Viewer */}
       <div className='lg:col-span-2'>
+        {/* Card Browser - Limited to 2 rows */}
         <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
           <h3 className='text-lg font-semibold text-white mb-4'>
             Card Browser
@@ -252,7 +246,7 @@ export default function DeckBuilder({
 
           <div className='mt-4'>
             {filteredCards.length > 0 ? (
-              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3'>
+              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-[320px] overflow-y-auto'>
                 {filteredCards.map((card) => {
                   const deckCard = deckCards.find(
                     (dc) => dc.cardId === card.id
@@ -260,25 +254,22 @@ export default function DeckBuilder({
                   const quantity = deckCard?.quantity || 0;
 
                   return (
-                    <div key={card.id} className='relative'>
-                      <div
-                        className='cursor-pointer hover:opacity-80 transition-opacity'
-                        onClick={() => handleAddCard(card.id)}>
-                        <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                          <img
-                            src={card.imageUrl}
-                            alt={card.name}
-                            className='object-cover w-full h-full'
-                          />
+                    <CardHoverPreview
+                      key={card.id}
+                      card={card}
+                      onClick={() => handleAddCard(card.id)}>
+                      <div className='relative'>
+                        <div className='cursor-pointer hover:opacity-80 transition-opacity'>
+                          <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
+                            <img
+                              src={card.imageUrl}
+                              alt={card.name}
+                              className='object-cover w-full h-full'
+                            />
+                          </div>
                         </div>
                       </div>
-
-                      {quantity > 0 && (
-                        <div className='absolute top-1 right-1 bg-algomancy-purple text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center'>
-                          {quantity}
-                        </div>
-                      )}
-                    </div>
+                    </CardHoverPreview>
                   );
                 })}
               </div>
@@ -294,6 +285,15 @@ export default function DeckBuilder({
             )}
           </div>
         </div>
+
+        {/* Unified Deck Viewer with multiple view options */}
+        <DeckViewer
+          cards={cards}
+          deckCards={deckCards}
+          onAddCard={handleAddCard}
+          onRemoveCard={handleRemoveCard}
+          onRemoveAllCopies={handleRemoveAllCopies}
+        />
       </div>
     </div>
   );

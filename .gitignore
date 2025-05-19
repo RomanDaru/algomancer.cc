@@ -77,4 +77,17 @@ Thumbs.db
 # Card images (stored in Cloudinary)
 /public/images/cards/
 
+# Card entry helper and related scripts
+/scripts/card-entry-helper.js
+/scripts/card-entry-helper.html
+/scripts/backup-mongodb.js
+/scripts/cloudinary-upload.js
+/scripts/last-card-index.json
+/scripts/import-cards-to-mongodb.js
+/scripts/scrapeAlgomancyCards.js
+
+# Backup files
+/app/lib/data/backup_*.ts
+/app/lib/data/cardImages.json
+
 *.md

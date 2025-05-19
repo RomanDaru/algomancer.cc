@@ -333,9 +333,63 @@
         const imagesResponse = await fetch('/api/card-images');
         cardImages = await imagesResponse.json();
 
-        // Fetch existing cards
-        const cardsResponse = await fetch('/api/existing-cards');
-        existingCards = await cardsResponse.json();
+        // Fetch existing cards directly from MongoDB
+        try {
+          console.log('Attempting to fetch cards from MongoDB...');
+
+          // Add a timeout to the fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+          try {
+            const mongoCardsResponse = await fetch('http://localhost:3000/api/cards', {
+              signal: controller.signal,
+              mode: 'cors', // Explicitly set CORS mode
+              headers: {
+                'Accept': 'application/json'
+              }
+            });
+
+            clearTimeout(timeoutId); // Clear the timeout
+
+            if (mongoCardsResponse.ok) {
+              const data = await mongoCardsResponse.json();
+              existingCards = data;
+              console.log(`Successfully loaded ${existingCards.length} cards from MongoDB`);
+
+              // Display the first few cards for debugging
+              if (existingCards.length > 0) {
+                console.log('Sample card data:', existingCards[0]);
+              }
+            } else {
+              const errorText = await mongoCardsResponse.text();
+              console.error(`Failed to fetch cards from MongoDB: Status ${mongoCardsResponse.status}`, errorText);
+              throw new Error(`MongoDB API returned status ${mongoCardsResponse.status}: ${errorText}`);
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId); // Clear the timeout
+            console.error('Fetch error:', fetchError);
+            throw fetchError;
+          }
+        } catch (mongoError) {
+          console.error('Error fetching cards from MongoDB:', mongoError);
+          console.log('Falling back to local cache...');
+
+          // Fallback to local cache
+          try {
+            const cardsResponse = await fetch('/api/existing-cards');
+            if (cardsResponse.ok) {
+              existingCards = await cardsResponse.json();
+              console.log(`Loaded ${existingCards.length} cards from local cache`);
+            } else {
+              console.error('Failed to fetch cards from local cache:', await cardsResponse.text());
+              existingCards = []; // Initialize as empty array if both methods fail
+            }
+          } catch (localError) {
+            console.error('Error fetching from local cache:', localError);
+            existingCards = []; // Initialize as empty array if both methods fail
+          }
+        }
 
         // Fetch constants
         const constantsResponse = await fetch('/api/constants');
@@ -444,7 +498,7 @@
     }
 
     // Show card at specified index
-    function showCard(index) {
+    async function showCard(index) {
       if (index < 0 || index >= cardImages.length) return;
 
       currentCardIndex = index;
@@ -455,11 +509,32 @@
       imageElement.src = card.localImagePath;
       imageElement.alt = card.name;
 
-      // Check if this card already has details
-      const existingCard = existingCards.find(c => c.imageUrl === card.localImagePath);
+      // Generate a card ID based on the name
+      const cardId = generateIdFromName(card.name);
+
+      // First try to find the card by matching the card ID
+      let existingCard = existingCards.find(c => c.id === cardId);
+
+      // If not found by ID, try to find by image URL (both local and cloud URLs)
+      if (!existingCard) {
+        existingCard = existingCards.find(c => {
+          // Check if the imageUrl matches the local path
+          if (c.imageUrl === card.localImagePath) return true;
+
+          // Check if the card has a currentIndex that matches our current index
+          if (c.currentIndex === index) return true;
+
+          // Check if the card name matches (as a fallback)
+          if (c.name && card.name && c.name.toLowerCase() === card.name.toLowerCase()) return true;
+
+          return false;
+        });
+      }
 
       // Populate form
       if (existingCard) {
+        console.log(`Found existing card for ${card.name}: ${existingCard.id}`);
+
         document.getElementById('card-id').value = existingCard.id || '';
         document.getElementById('card-name').value = existingCard.name || '';
         document.getElementById('card-mana-cost').value = existingCard.manaCost || 0;
@@ -531,11 +606,13 @@
         );
         document.getElementById('card-rarity').value = rarityKey || 'COMMON';
       } else {
+        console.log(`No existing card found for ${card.name}, creating new entry`);
+
         // Default values for new card
         const elementPrefix = guessElementFromName(card.name);
         const paddedIndex = String(index + 1).padStart(3, '0');
 
-        document.getElementById('card-id').value = generateIdFromName(card.name);
+        document.getElementById('card-id').value = cardId;
         document.getElementById('card-name').value = card.name;
         document.getElementById('card-mana-cost').value = 1;
         document.getElementById('card-element').value = elementPrefix.toUpperCase();
@@ -745,39 +822,113 @@
         },
         imageUrl: cardImages[currentCardIndex].localImagePath,
         flavorText: flavorText || undefined,
+        currentIndex: currentCardIndex, // Always include the current index with the card data
       };
 
       try {
-        const response = await fetch('/api/save-card', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...card,
-            currentIndex: currentCardIndex
-          }),
-        });
+        console.log(`Saving card ${card.id} with currentIndex: ${currentCardIndex}`);
 
-        const result = await response.json();
+        // First try to save directly to MongoDB
+        try {
+          console.log(`Attempting to save card ${card.id} to MongoDB...`);
 
-        if (result.success) {
-          // Update existing cards
-          const existingIndex = existingCards.findIndex(c => c.id === card.id);
-          if (existingIndex !== -1) {
-            existingCards[existingIndex] = card;
-          } else {
-            existingCards.push(card);
+          // Add a timeout to the fetch request
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+          try {
+            const mongoResponse = await fetch('http://localhost:3000/api/cards', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify(card),
+              signal: controller.signal,
+              mode: 'cors' // Explicitly set CORS mode
+            });
+
+            clearTimeout(timeoutId); // Clear the timeout
+
+            if (mongoResponse.ok) {
+              const savedCard = await mongoResponse.json();
+              console.log(`Card saved directly to MongoDB: ${savedCard.id}`, savedCard);
+
+              // Update existing cards array
+              const existingIndex = existingCards.findIndex(c => c.id === card.id);
+              if (existingIndex !== -1) {
+                existingCards[existingIndex] = card;
+                console.log(`Updated existing card at index ${existingIndex}`);
+              } else {
+                existingCards.push(card);
+                console.log(`Added new card to existingCards array (now ${existingCards.length} cards)`);
+              }
+            } else {
+              const errorText = await mongoResponse.text();
+              console.error(`Failed to save to MongoDB: Status ${mongoResponse.status}`, errorText);
+              throw new Error(`MongoDB API returned status ${mongoResponse.status}: ${errorText}`);
+            }
+          } catch (fetchError) {
+            clearTimeout(timeoutId); // Clear the timeout
+            console.error('MongoDB fetch error:', fetchError);
+            throw fetchError;
           }
+        } catch (mongoError) {
+          console.error('Error saving directly to MongoDB:', mongoError);
+          console.log('Falling back to local API...');
 
-          // Move to next card
-          showCard(currentCardIndex + 1);
-        } else {
-          alert('Error saving card: ' + (result.error || 'Unknown error'));
+          // Fall back to the local API
+          try {
+            console.log('Sending card data to local API...');
+            const response = await fetch('/api/save-card', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                ...card,
+                currentIndex: currentCardIndex
+              }),
+            });
+
+            if (response.ok) {
+              const result = await response.json();
+
+              if (!result.success) {
+                console.error('Local API returned error:', result);
+                throw new Error(result.error || 'Unknown error from local API');
+              }
+
+              console.log('Card saved successfully via local API');
+
+              // Update existing cards
+              const existingIndex = existingCards.findIndex(c => c.id === card.id);
+              if (existingIndex !== -1) {
+                existingCards[existingIndex] = card;
+                console.log(`Updated existing card at index ${existingIndex} (local API)`);
+              } else {
+                existingCards.push(card);
+                console.log(`Added new card to existingCards array (now ${existingCards.length} cards) (local API)`);
+              }
+            } else {
+              const errorText = await response.text();
+              console.error(`Local API returned status ${response.status}:`, errorText);
+              throw new Error(`Local API returned status ${response.status}: ${errorText}`);
+            }
+          } catch (localError) {
+            console.error('Error saving via local API:', localError);
+            throw localError;
+          }
         }
+
+        // Save the current card index
+        lastSavedIndex = currentCardIndex;
+
+        // Move to next card
+        showCard(currentCardIndex + 1);
       } catch (error) {
         console.error('Error saving card:', error);
-        alert('Error saving card');
+        alert('Error saving card: ' + (error.message || 'Unknown error'));
       }
     }
 

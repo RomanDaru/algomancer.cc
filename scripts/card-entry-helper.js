@@ -99,7 +99,7 @@ const COMPLEXITY = {
 
 // Create Express app
 const app = express();
-const port = 3001;
+const port = 3002; // Changed port to avoid conflicts
 
 // Middleware
 app.use(bodyParser.json());
@@ -137,56 +137,14 @@ try {
   console.error("Error loading last card index:", error);
 }
 
-// Load existing card data if available
+// Load existing card data from MongoDB
 let existingCards = [];
 try {
-  const algomancyCardsPath = path.join(
-    __dirname,
-    "..",
-    "app",
-    "lib",
-    "data",
-    "algomancyCards.ts"
-  );
-  if (fs.existsSync(algomancyCardsPath)) {
-    const fileContent = fs.readFileSync(algomancyCardsPath, "utf8");
-    const match = fileContent.match(
-      /export const algomancyCards: Card\[\] = (\[[\s\S]*\]);/
-    );
-    if (match && match[1]) {
-      // Replace ELEMENTS.FIRE with 'Fire', etc.
-      let jsonContent = match[1]
-        .replace(
-          /BASIC_ELEMENTS\.(FIRE|WATER|EARTH|WOOD|METAL|COLORLESS)/g,
-          (_, element) => `"${BASIC_ELEMENTS[element]}"`
-        )
-        .replace(
-          /HYBRID_ELEMENTS\.(FIRE_WATER|WATER_FIRE|FIRE_EARTH|EARTH_FIRE|FIRE_WOOD|WOOD_FIRE|FIRE_METAL|METAL_FIRE|WATER_EARTH|EARTH_WATER|WATER_WOOD|WOOD_WATER|WATER_METAL|METAL_WATER|EARTH_WOOD|WOOD_EARTH|EARTH_METAL|METAL_EARTH|WOOD_METAL|METAL_WOOD)/g,
-          (_, element) => `"${HYBRID_ELEMENTS[element]}"`
-        )
-        .replace(
-          /ELEMENTS\.(FIRE|WATER|EARTH|WOOD|METAL|COLORLESS|FIRE_WATER|WATER_FIRE|FIRE_EARTH|EARTH_FIRE|FIRE_WOOD|WOOD_FIRE|FIRE_METAL|METAL_FIRE|WATER_EARTH|EARTH_WATER|WATER_WOOD|WOOD_WATER|WATER_METAL|METAL_WATER|EARTH_WOOD|WOOD_EARTH|EARTH_METAL|METAL_EARTH|WOOD_METAL|METAL_WOOD)/g,
-          (_, element) => `"${ELEMENTS[element]}"`
-        )
-        .replace(
-          /TIMING\.(STANDARD|HASTE|BATTLE|VIRUS)/g,
-          (_, timing) => `"${TIMING[timing]}"`
-        )
-        .replace(
-          /CARD_TYPES\.(UNIT|SPELL|RESOURCE|TOKEN|SPELL_TOKEN)/g,
-          (_, type) => `"${CARD_TYPES[type]}"`
-        );
-
-      try {
-        existingCards = JSON.parse(jsonContent);
-      } catch (e) {
-        console.error("Error parsing existing cards:", e);
-        existingCards = [];
-      }
-    }
-  }
+  // We'll fetch cards from MongoDB when the server starts
+  // This will be updated with the actual data in the initialize function
+  console.log("Will fetch cards from MongoDB when the server starts");
 } catch (error) {
-  console.error("Error loading existing card data:", error);
+  console.error("Error initializing existing card data:", error);
 }
 
 // Routes
@@ -257,6 +215,18 @@ app.post("/api/save-card", async (req, res) => {
       }
     }
 
+    // Make sure currentIndex is included in the card data
+    const currentIndex =
+      newCard.currentIndex !== undefined
+        ? newCard.currentIndex
+        : req.body.currentIndex;
+    if (currentIndex !== undefined) {
+      newCard.currentIndex = currentIndex;
+      console.log(
+        `Including currentIndex ${currentIndex} with card ${newCard.id}`
+      );
+    }
+
     // Save to MongoDB via the API
     const response = await fetch("http://localhost:3000/api/cards", {
       method: "POST",
@@ -272,6 +242,9 @@ app.post("/api/save-card", async (req, res) => {
     }
 
     const savedCard = await response.json();
+    console.log(
+      `Card ${newCard.id} saved to MongoDB with currentIndex: ${newCard.currentIndex}`
+    );
 
     // Update local cache
     const existingIndex = existingCards.findIndex(
@@ -370,7 +343,6 @@ export const algomancyCards: Card[] = ${tsContent};
     }
 
     // Save the current card index
-    const currentIndex = req.body.currentIndex;
     if (typeof currentIndex === "number") {
       lastSavedCardIndex = currentIndex;
       const lastCardPath = path.join(__dirname, "last-card-index.json");

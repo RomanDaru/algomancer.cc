@@ -13,15 +13,17 @@ let isConnected = false;
 
 /**
  * Connect to MongoDB
+ * @returns {Object} Object containing the MongoDB database instance
  */
 export async function connectToDatabase() {
   if (isConnected) {
-    return;
+    return { db: mongoose.connection.db };
   }
 
   try {
-    const db = await mongoose.connect(MONGODB_URI);
-    isConnected = !!db.connections[0].readyState;
+    const mongooseConnection = await mongoose.connect(MONGODB_URI);
+    isConnected = !!mongooseConnection.connections[0].readyState;
+    return { db: mongoose.connection.db };
   } catch (error) {
     console.error("Error connecting to MongoDB:", error);
     throw error;

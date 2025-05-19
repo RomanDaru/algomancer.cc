@@ -23,6 +23,7 @@ export const authOptions = {
           id: profile.sub,
           name: profile.name,
           email: profile.email,
+          username: null, // Google doesn't provide a username
           image: profile.picture,
         };
       },
@@ -68,6 +69,7 @@ export const authOptions = {
             id: user._id.toString(),
             email: user.email,
             name: user.name,
+            username: user.username || null,
             image: user.image,
           };
         } catch (error) {
@@ -89,15 +91,32 @@ export const authOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async session({ session, token }) {
-      if (token?.sub) {
-        session.user.id = token.sub;
+    async session({ session, token, user }) {
+      // When using JWT strategy
+      if (token) {
+        if (token?.sub) {
+          session.user.id = token.sub;
+        }
+
+        // Include username in session if available in token
+        if (token?.username !== undefined) {
+          session.user.username = token.username;
+        }
       }
+
+      // When using database strategy
+      if (user) {
+        session.user.id = user.id;
+        session.user.username = user.username || null;
+      }
+
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        // Include username in token
+        token.username = user.username;
       }
       return token;
     },

@@ -292,14 +292,6 @@ export default function DeckPage({ params }: DeckPageProps) {
                               <div className='absolute top-1 right-1 bg-algomancy-purple text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center'>
                                 {quantity}
                               </div>
-                              <div className='absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-2'>
-                                <p className='text-white text-sm font-medium truncate'>
-                                  {card.name}
-                                </p>
-                                <p className='text-gray-300 text-xs'>
-                                  {card.manaCost} Mana
-                                </p>
-                              </div>
                             </div>
                           ))}
                       </div>

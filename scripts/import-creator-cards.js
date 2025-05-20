@@ -36,20 +36,9 @@ if (!mongoUri) {
 const isDryRun = process.argv.includes("--dry-run");
 const replaceAll = process.argv.includes("--replace-all");
 
-if (replaceAll) {
-  console.log(
-    "WARNING: Replace All mode enabled. This will delete all existing cards and replace them with the new ones."
-  );
-  console.log("Press Ctrl+C within 5 seconds to cancel...");
-
-  if (!isDryRun) {
-    // Wait 5 seconds to give the user a chance to cancel
-    for (let i = 5; i > 0; i--) {
-      console.log(`Continuing in ${i} seconds...`);
-      // Use setTimeout with a promise for cross-platform compatibility
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  }
+// Function to wait for a specified number of seconds
+function sleep(seconds) {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 // Path to the converted cards file
@@ -90,10 +79,27 @@ async function importCards() {
     const collection = database.collection("cards");
 
     // Handle replace-all mode
-    if (replaceAll && !isDryRun) {
-      console.log("Replace All mode: Deleting all existing cards...");
-      await collection.deleteMany({});
-      console.log("All existing cards deleted");
+    if (replaceAll) {
+      console.log(
+        "WARNING: Replace All mode enabled. This will delete all existing cards and replace them with the new ones."
+      );
+
+      if (!isDryRun) {
+        console.log("Press Ctrl+C within 5 seconds to cancel...");
+        // Wait 5 seconds to give the user a chance to cancel
+        for (let i = 5; i > 0; i--) {
+          console.log(`Continuing in ${i} seconds...`);
+          await sleep(1);
+        }
+      }
+
+      if (isDryRun) {
+        console.log("DRY RUN: Would delete all existing cards");
+      } else {
+        console.log("Replace All mode: Deleting all existing cards...");
+        await collection.deleteMany({});
+        console.log("All existing cards deleted");
+      }
 
       // All cards are new in replace-all mode
       const newCards = cards;
@@ -116,9 +122,15 @@ async function importCards() {
       }));
 
       // Insert cards
-      console.log(`Importing ${cardsToInsert.length} cards...`);
-      const result = await collection.insertMany(cardsToInsert);
-      console.log(`Successfully imported ${result.insertedCount} cards`);
+      if (isDryRun) {
+        console.log(`DRY RUN: Would import ${cardsToInsert.length} cards`);
+        console.log(`First 3 cards that would be imported:`);
+        console.log(JSON.stringify(cardsToInsert.slice(0, 3), null, 2));
+      } else {
+        console.log(`Importing ${cardsToInsert.length} cards...`);
+        const result = await collection.insertMany(cardsToInsert);
+        console.log(`Successfully imported ${result.insertedCount} cards`);
+      }
 
       console.log("Import process completed successfully");
       return;
@@ -147,6 +159,39 @@ async function importCards() {
 
     console.log(`Found ${newCards.length} new cards to import`);
     console.log(`Found ${cardsToUpdate.length} existing cards to update`);
+
+    if (isDryRun) {
+      // Dry run mode - just show what would happen
+      console.log("DRY RUN: Would update the following cards:");
+      if (cardsToUpdate.length > 0) {
+        console.log(`Would update ${cardsToUpdate.length} existing cards`);
+        if (cardsToUpdate.length > 0) {
+          console.log("Example of first card that would be updated:");
+          const card = cardsToUpdate[0];
+          const existingCard = existingCardMap.get(card.id);
+          console.log(`Card ID: ${card.id}`);
+          console.log(`Name: ${existingCard.name} -> ${card.name}`);
+          console.log(
+            `Element: ${existingCard.element?.type} -> ${card.element.type}`
+          );
+        }
+      }
+
+      console.log("\nDRY RUN: Would add the following new cards:");
+      if (newCards.length > 0) {
+        console.log(`Would add ${newCards.length} new cards`);
+        if (newCards.length > 0) {
+          console.log("Example of first new card that would be added:");
+          const card = newCards[0];
+          console.log(`Card ID: ${card.id}`);
+          console.log(`Name: ${card.name}`);
+          console.log(`Element: ${card.element.type}`);
+        }
+      }
+
+      console.log("\nDRY RUN completed. No changes were made to the database.");
+      return;
+    }
 
     // Process updates first
     if (cardsToUpdate.length > 0) {

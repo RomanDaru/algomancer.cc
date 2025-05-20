@@ -84,7 +84,6 @@ Thumbs.db
 /scripts/cloudinary-upload.js
 /scripts/last-card-index.json
 /scripts/import-cards-to-mongodb.js
-/scripts/scrapeAlgomancyCards.js
 
 # Card import and conversion scripts
 /scripts/convert-creator-cards.js
@@ -97,6 +96,7 @@ Thumbs.db
 /scripts/rename-cloudinary-images.js
 /scripts/cloudinary-urls.txt
 /scripts/cloudinary-images.json
+/scripts/README_PRIVATE.md
 
 # Backup files
 /app/lib/data/backup_*.ts

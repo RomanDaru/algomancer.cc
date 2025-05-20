@@ -268,7 +268,7 @@ export default function DeckViewer({
                             <MinusIcon className='w-4 h-4' aria-hidden='true' />
                           </button>
                           <span
-                            className='text-sm text-white w-5 text-center'
+                            className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-1.5 py-0.5 min-w-5 text-center'
                             aria-label={`${quantity} copies`}>
                             {quantity}
                           </span>
@@ -319,6 +319,15 @@ export default function DeckViewer({
                               className='object-cover'
                               sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
                             />
+                            {deckCards.find((dc) => dc.cardId === card.id)
+                              ?.quantity > 0 && (
+                              <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
+                                {
+                                  deckCards.find((dc) => dc.cardId === card.id)
+                                    ?.quantity
+                                }
+                              </div>
+                            )}
                           </div>
 
                           <div className='absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1'>
@@ -393,6 +402,15 @@ export default function DeckViewer({
                             className='object-cover'
                             sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
                           />
+                          {deckCards.find((dc) => dc.cardId === card.id)
+                            ?.quantity > 0 && (
+                            <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
+                              {
+                                deckCards.find((dc) => dc.cardId === card.id)
+                                  ?.quantity
+                              }
+                            </div>
+                          )}
                         </div>
 
                         <div className='absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1'>

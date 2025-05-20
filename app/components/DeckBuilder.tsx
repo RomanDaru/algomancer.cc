@@ -266,6 +266,11 @@ export default function DeckBuilder({
                               alt={card.name}
                               className='object-cover w-full h-full'
                             />
+                            {quantity > 0 && (
+                              <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
+                                {quantity}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

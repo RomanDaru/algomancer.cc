@@ -6,6 +6,64 @@ import { useMemo } from "react";
 import { ElementType, ELEMENTS } from "@/app/lib/utils/elements";
 import ElementIcon from "./ElementIcon";
 
+interface ColorBarProps {
+  elementCounts: Record<string, number>;
+  maxValue: number;
+  totalCards: number;
+}
+
+function ColorBar({ elementCounts, maxValue, totalCards }: ColorBarProps) {
+  // Calculate the height percentage based on the max value
+  const heightPercent = Math.max((totalCards / maxValue) * 100, 5);
+
+  // Sort elements by count for consistent rendering
+  const sortedElements = Object.entries(elementCounts).sort(
+    ([, countA], [, countB]) => countB - countA
+  );
+
+  return (
+    <div
+      className='w-full flex flex-col-reverse rounded-t overflow-hidden'
+      style={{ height: `${heightPercent}%` }}>
+      {sortedElements.map(([element, count]) => {
+        // Calculate the height percentage for this element
+        const elementPercent = (count / totalCards) * 100;
+
+        // Get element color - handle hybrid elements
+        let elementColor;
+        if (element.includes("/")) {
+          // For hybrid elements, use a gradient
+          const [primary, secondary] = element.split("/") as [
+            ElementType,
+            ElementType
+          ];
+          elementColor = `linear-gradient(to right, ${ELEMENTS[primary].color}, ${ELEMENTS[secondary].color})`;
+        } else {
+          // For basic elements, use the solid color
+          elementColor =
+            ELEMENTS[element as ElementType]?.color ||
+            ELEMENTS["Colorless"].color;
+        }
+
+        return (
+          <div
+            key={element}
+            style={{
+              height: `${elementPercent}%`,
+              background: elementColor,
+              width: "100%",
+              minHeight: "4px", // Ensure even small segments are visible
+              transition: "all 0.2s ease",
+            }}
+            className='hover:brightness-125 hover:z-10'
+            title={`${element}: ${count} cards`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 interface DeckStatsProps {
   cards: Card[];
   deckCards: DeckCard[];
@@ -29,9 +87,24 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
 
     // Mana curve
     const manaCurve: Record<number, number> = {};
+    // Track element distribution per mana cost
+    const manaCurveByElement: Record<number, Record<string, number>> = {};
+
     deckCardsWithDetails.forEach(({ card, quantity }) => {
       const cost = card.manaCost;
+      const element = card.element.type;
+
+      // Update total count for this mana cost
       manaCurve[cost] = (manaCurve[cost] || 0) + quantity;
+
+      // Initialize mana cost entry if it doesn't exist
+      if (!manaCurveByElement[cost]) {
+        manaCurveByElement[cost] = {};
+      }
+
+      // Add card quantity to the element count for this mana cost
+      manaCurveByElement[cost][element] =
+        (manaCurveByElement[cost][element] || 0) + quantity;
     });
 
     // Element distribution
@@ -61,6 +134,7 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
     return {
       totalCards,
       manaCurve,
+      manaCurveByElement,
       elementDistribution,
       typeDistribution,
       attributeDistribution,
@@ -71,7 +145,7 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
   const maxManaCurveValue = Math.max(...Object.values(stats.manaCurve), 1);
 
   return (
-    <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
+    <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6'>
       <h3 className='text-lg font-semibold text-white mb-4'>Deck Statistics</h3>
 
       {stats.totalCards === 0 ? (
@@ -79,26 +153,22 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
           <p>Add cards to see deck statistics.</p>
         </div>
       ) : (
-        <div className='space-y-6'>
+        <div className='space-y-10'>
           {/* Mana Curve */}
           <div>
-            <h4 className='text-sm font-medium text-algomancy-gold mb-2'>
+            <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
               Mana Curve
             </h4>
-            <div className='flex items-end h-32 space-x-1'>
+            <div className='flex items-end h-32 space-x-2 mb-4'>
               {Array.from({ length: 10 }, (_, i) => i).map((cost) => (
                 <div key={cost} className='flex flex-col items-center flex-1'>
                   <div className='w-full flex flex-col justify-end h-24'>
                     {stats.manaCurve[cost] > 0 && (
-                      <div
-                        className='bg-algomancy-purple w-full rounded-t'
-                        style={{
-                          height: `${Math.max(
-                            ((stats.manaCurve[cost] || 0) / maxManaCurveValue) *
-                              100,
-                            5
-                          )}%`,
-                        }}></div>
+                      <ColorBar
+                        elementCounts={stats.manaCurveByElement[cost] || {}}
+                        maxValue={maxManaCurveValue}
+                        totalCards={stats.manaCurve[cost]}
+                      />
                     )}
                   </div>
                   <div className='text-xs text-gray-400 mt-1'>{cost}</div>
@@ -112,18 +182,23 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
                   {Object.entries(stats.manaCurve)
                     .filter(([cost]) => parseInt(cost) >= 10)
                     .reduce((sum, [_, count]) => sum + count, 0) > 0 && (
-                    <div
-                      className='bg-algomancy-purple w-full rounded-t'
-                      style={{
-                        height: `${Math.max(
-                          (Object.entries(stats.manaCurve)
-                            .filter(([cost]) => parseInt(cost) >= 10)
-                            .reduce((sum, [_, count]) => sum + count, 0) /
-                            maxManaCurveValue) *
-                            100,
-                          5
-                        )}%`,
-                      }}></div>
+                    <ColorBar
+                      elementCounts={Object.entries(stats.manaCurveByElement)
+                        .filter(([cost]) => parseInt(cost) >= 10)
+                        .reduce((acc, [cost, elements]) => {
+                          // Combine all elements for costs >= 10
+                          Object.entries(elements).forEach(
+                            ([element, count]) => {
+                              acc[element] = (acc[element] || 0) + count;
+                            }
+                          );
+                          return acc;
+                        }, {} as Record<string, number>)}
+                      maxValue={maxManaCurveValue}
+                      totalCards={Object.entries(stats.manaCurve)
+                        .filter(([cost]) => parseInt(cost) >= 10)
+                        .reduce((sum, [_, count]) => sum + count, 0)}
+                    />
                   )}
                 </div>
                 <div className='text-xs text-gray-400 mt-1'>10+</div>
@@ -134,14 +209,29 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
                 </div>
               </div>
             </div>
+
+            {/* Element Legend */}
+            <div className='flex flex-wrap gap-2 mt-3 justify-center'>
+              {Object.entries(BASIC_ELEMENTS).map(([key, element]) => (
+                <div key={key} className='flex items-center'>
+                  <div
+                    className='w-3 h-3 rounded-full mr-1'
+                    style={{
+                      backgroundColor: ELEMENTS[element as ElementType].color,
+                    }}
+                  />
+                  <span className='text-xs text-gray-400'>{element}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Element Distribution */}
           <div>
-            <h4 className='text-sm font-medium text-algomancy-gold mb-2'>
+            <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
               Element Distribution
             </h4>
-            <div className='grid grid-cols-2 gap-2'>
+            <div className='grid grid-cols-2 gap-3'>
               {Object.entries(stats.elementDistribution)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([element, count]) => {
@@ -189,14 +279,16 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
 
           {/* Card Type Distribution */}
           <div>
-            <h4 className='text-sm font-medium text-algomancy-gold mb-2'>
+            <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
               Card Type Distribution
             </h4>
-            <div className='grid grid-cols-2 gap-2'>
+            <div className='grid grid-cols-2 gap-3'>
               {Object.entries(stats.typeDistribution)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([type, count]) => (
-                  <div key={type} className='flex justify-between items-center'>
+                  <div
+                    key={type}
+                    className='flex justify-between items-center py-1'>
                     <span className='text-sm text-white'>{type}</span>
                     <span className='text-sm text-gray-400'>{count}</span>
                   </div>
@@ -207,17 +299,17 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
           {/* Top Attributes */}
           {Object.keys(stats.attributeDistribution).length > 0 && (
             <div>
-              <h4 className='text-sm font-medium text-algomancy-gold mb-2'>
+              <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
                 Top Attributes
               </h4>
-              <div className='grid grid-cols-2 gap-2'>
+              <div className='grid grid-cols-2 gap-3'>
                 {Object.entries(stats.attributeDistribution)
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 6)
                   .map(([attribute, count]) => (
                     <div
                       key={attribute}
-                      className='flex justify-between items-center'>
+                      className='flex justify-between items-center py-1'>
                       <span className='text-sm text-white'>{attribute}</span>
                       <span className='text-sm text-gray-400'>{count}</span>
                     </div>

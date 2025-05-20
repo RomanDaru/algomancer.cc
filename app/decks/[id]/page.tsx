@@ -13,6 +13,7 @@ import { toast, Toaster } from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
 import React from "react";
 import ElementIcons from "@/app/components/ElementIcons";
+import DeckDetailViewer from "@/app/components/DeckDetailViewer";
 import {
   ElementType,
   getDeckElements,
@@ -254,52 +255,11 @@ export default function DeckPage({ params }: DeckPageProps) {
 
           {/* Right Column - Card List */}
           <div className='lg:col-span-2'>
-            <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-              <h2 className='text-lg font-semibold text-white mb-4'>
-                Cards ({totalCards})
-              </h2>
-
-              {totalCards === 0 ? (
-                <div className='text-center py-8 text-gray-400'>
-                  <p>This deck is empty.</p>
-                </div>
-              ) : (
-                <div className='space-y-6'>
-                  {sortedTypes.map((type) => (
-                    <div key={type} className='space-y-2'>
-                      <h3 className='text-sm font-medium text-algomancy-gold border-b border-algomancy-gold/30 pb-1'>
-                        {type} (
-                        {groupedCards[type].reduce(
-                          (sum, item) => sum + item.quantity,
-                          0
-                        )}
-                        )
-                      </h3>
-                      <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
-                        {groupedCards[type]
-                          .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                          .map(({ card, quantity }) => (
-                            <div key={card.id} className='relative group'>
-                              <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                                <Image
-                                  src={card.imageUrl}
-                                  alt={card.name}
-                                  fill
-                                  className='object-cover'
-                                  sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
-                                />
-                              </div>
-                              <div className='absolute top-1 right-1 bg-algomancy-purple text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center'>
-                                {quantity}
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <DeckDetailViewer
+              cards={cards}
+              groupedCards={groupedCards}
+              totalCards={totalCards}
+            />
           </div>
         </div>
       </div>

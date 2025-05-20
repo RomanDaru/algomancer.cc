@@ -1,81 +1,117 @@
-import Image from "next/image";
 import Link from "next/link";
-import { cardService } from "@/app/lib/services/cardService";
-import Card from "@/app/components/Card";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
-// Mark the component as async
-export default async function Home() {
-  // Get a few featured cards to display
-  const allCards = await cardService.getAllCards();
-  const featuredCards = allCards.slice(0, 3);
-
+export default function Home() {
   return (
-    <div className='container mx-auto px-4 py-12'>
-      <div className='text-center mb-12'>
-        <h1 className='text-4xl font-bold mb-4 text-algomancy-gold'>
-          Welcome to Algomancer
+    <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-black'>
+      <div className='max-w-3xl w-full text-center mb-16'>
+        <h1 className='text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
+          Algomancer.gg
         </h1>
-        <p className='text-xl max-w-2xl mx-auto text-gray-300'>
-          Your ultimate resource for Algomancy card game - browse cards, build
-          decks, and join live drafts.
+
+        <p className='text-xl md:text-2xl mb-8 text-gray-300 leading-relaxed'>
+          Your ultimate companion for the Algomancy card game
         </p>
+
+        <div className='max-w-2xl mx-auto mb-12 text-gray-400 text-lg leading-relaxed'>
+          <p>
+            Build powerful decks, explore the complete card database, and share
+            your creations with the community. Analyze deck statistics, search
+            cards by multiple criteria, and elevate your Algomancy experience.
+          </p>
+        </div>
       </div>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-8 mb-12'>
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 p-6 rounded-lg'>
-          <h2 className='text-2xl font-bold mb-4 text-algomancy-blue-light'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-5xl'>
+        <Link
+          href='/decks/create'
+          className='group flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-purple/30 hover:border-algomancy-purple/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-purple/20'>
+          <div className='w-12 h-12 mb-4 rounded-full bg-algomancy-purple/20 flex items-center justify-center group-hover:bg-algomancy-purple/30 transition-all'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6 text-algomancy-purple'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={1.5}
+                d='M12 4v16m8-8H4'
+              />
+            </svg>
+          </div>
+          <h2 className='text-xl font-bold mb-2 text-white group-hover:text-algomancy-purple transition-colors'>
+            Create Deck
+          </h2>
+          <p className='text-gray-400 text-center text-sm mb-3'>
+            Build your own custom deck
+          </p>
+          <span className='flex items-center text-algomancy-purple text-sm'>
+            Get Started{" "}
+            <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
+          </span>
+        </Link>
+
+        <Link
+          href='/decks'
+          className='group flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-blue/30 hover:border-algomancy-blue/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-blue/20'>
+          <div className='w-12 h-12 mb-4 rounded-full bg-algomancy-blue/20 flex items-center justify-center group-hover:bg-algomancy-blue/30 transition-all'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6 text-algomancy-blue'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={1.5}
+                d='M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'
+              />
+            </svg>
+          </div>
+          <h2 className='text-xl font-bold mb-2 text-white group-hover:text-algomancy-blue transition-colors'>
+            Browse Decks
+          </h2>
+          <p className='text-gray-400 text-center text-sm mb-3'>
+            Explore community decks
+          </p>
+          <span className='flex items-center text-algomancy-blue text-sm'>
+            Explore{" "}
+            <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
+          </span>
+        </Link>
+
+        <Link
+          href='/cards'
+          className='group flex flex-col items-center p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-gold/30 hover:border-algomancy-gold/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-gold/20'>
+          <div className='w-12 h-12 mb-4 rounded-full bg-algomancy-gold/20 flex items-center justify-center group-hover:bg-algomancy-gold/30 transition-all'>
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              className='h-6 w-6 text-algomancy-gold'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'>
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={1.5}
+                d='M4 6h16M4 10h16M4 14h16M4 18h16'
+              />
+            </svg>
+          </div>
+          <h2 className='text-xl font-bold mb-2 text-white group-hover:text-algomancy-gold transition-colors'>
             Card Database
           </h2>
-          <p className='mb-4 text-gray-300'>
-            Browse and search the complete collection of Algomancy cards.
+          <p className='text-gray-400 text-center text-sm mb-3'>
+            Browse all available cards
           </p>
-          <Link
-            href='/cards'
-            className='inline-block bg-algomancy-purple text-white px-4 py-2 rounded-md hover:bg-algomancy-purple-dark transition-colors'>
-            Browse Cards
-          </Link>
-        </div>
-
-        <div className='bg-algomancy-darker border border-algomancy-blue/30 p-6 rounded-lg'>
-          <h2 className='text-2xl font-bold mb-4 text-algomancy-teal-light'>
-            Deck Builder
-          </h2>
-          <p className='mb-4 text-gray-300'>
-            Create and save your custom Algomancy decks.
-          </p>
-          <Link
-            href='/decks'
-            className='inline-block bg-algomancy-blue text-white px-4 py-2 rounded-md hover:bg-algomancy-blue-dark transition-colors'>
-            Build Decks
-          </Link>
-        </div>
-
-        <div className='bg-algomancy-darker border border-algomancy-gold/30 p-6 rounded-lg'>
-          <h2 className='text-2xl font-bold mb-4 text-algomancy-gold-light'>
-            Live Draft
-          </h2>
-          <p className='mb-4 text-gray-300'>
-            Join or create live draft sessions with other players.
-          </p>
-          <Link
-            href='/draft'
-            className='inline-block bg-algomancy-gold text-algomancy-darker px-4 py-2 rounded-md hover:bg-algomancy-gold-dark transition-colors'>
-            Start Drafting
-          </Link>
-        </div>
-      </div>
-
-      <div className='mb-12'>
-        <h2 className='text-2xl font-bold mb-6 text-center text-algomancy-teal'>
-          Featured Cards
-        </h2>
-        <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6'>
-          {featuredCards.map((card) => (
-            <Link key={card.id} href={`/cards/${card.id}`}>
-              <Card card={card} />
-            </Link>
-          ))}
-        </div>
+          <span className='flex items-center text-algomancy-gold text-sm'>
+            Browse{" "}
+            <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
+          </span>
+        </Link>
       </div>
     </div>
   );

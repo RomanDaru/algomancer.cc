@@ -103,3 +103,7 @@ Thumbs.db
 /app/lib/data/cardImages.json
 
 *.md
+app/cards/AlgomancyCards.json
+app/cards/ConvertedCards.json
+scripts/upload-new-card-images.js
+scripts/update-card-urls-bulk.js

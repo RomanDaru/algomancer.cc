@@ -61,13 +61,6 @@ async function importCards() {
 
     console.log(`Found ${cards.length} cards to import`);
 
-    if (isDryRun) {
-      console.log("Dry run mode - not actually importing cards");
-      console.log(`First 3 cards that would be imported:`);
-      console.log(JSON.stringify(cards.slice(0, 3), null, 2));
-      return;
-    }
-
     // Connect to MongoDB
     console.log("Connecting to MongoDB...");
     client = new MongoClient(mongoUri);

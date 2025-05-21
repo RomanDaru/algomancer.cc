@@ -267,28 +267,44 @@ export const deckService = {
   },
 
   /**
-   * Get decks containing a specific card with user information
+   * Get decks containing a specific card with user information and card data
    */
   async getDecksContainingCardWithUserInfo(
     cardId: string,
     limit?: number
   ): Promise<
-    { deck: Deck; user: { name: string; username: string | null } }[]
+    {
+      deck: Deck;
+      user: { name: string; username: string | null };
+      cards: Card[];
+    }[]
   > {
     try {
       const decks = await deckDbService.getDecksContainingCard(cardId, limit);
 
-      // Get user information for each deck
-      const decksWithUserInfo = await Promise.all(
+      // Get user information and card data for each deck
+      const decksWithUserInfoAndCards = await Promise.all(
         decks.map(async (deck) => {
+          // Get user information
           const user = await deckDbService.getDeckUserInfo(
             deck.userId.toString()
           );
-          return { deck, user };
+
+          // Get all cards in the deck
+          const cardPromises = deck.cards.map((deckCard) =>
+            cardService.getCardById(deckCard.cardId)
+          );
+
+          const cardResults = await Promise.all(cardPromises);
+          const cards = cardResults.filter(
+            (card) => card !== undefined
+          ) as Card[];
+
+          return { deck, user, cards };
         })
       );
 
-      return decksWithUserInfo;
+      return decksWithUserInfoAndCards;
     } catch (error) {
       console.error(`Error getting decks containing card ${cardId}:`, error);
       throw error;

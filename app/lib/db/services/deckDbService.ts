@@ -20,7 +20,7 @@ export const deckDbService = {
       await connectToDatabase();
       const deckDocs = await DeckModel.find({
         userId: new ObjectId(userId),
-      }).sort({ updatedAt: -1 });
+      }).sort({ createdAt: -1 });
       return deckDocs.map(convertDocumentToDeck);
     } catch (error) {
       console.error(`Error getting decks for user ${userId}:`, error);
@@ -42,7 +42,7 @@ export const deckDbService = {
       const sortOptions =
         sortBy === "popular"
           ? { views: -1 } // Sort by views (descending)
-          : { updatedAt: -1 }; // Sort by updatedAt (descending)
+          : { createdAt: -1 }; // Sort by createdAt (descending)
 
       const deckDocs = await DeckModel.find({ isPublic: true }).sort(
         sortOptions
@@ -269,7 +269,7 @@ export const deckDbService = {
       let query = DeckModel.find({
         "cards.cardId": cardId,
         isPublic: true,
-      }).sort({ updatedAt: -1 });
+      }).sort({ createdAt: -1 });
 
       // Apply limit if provided
       if (limit) {
@@ -345,7 +345,10 @@ export const deckDbService = {
             {
               $set: { views: 1 },
               $push: { viewedBy: viewerId },
-            }
+              // Preserve the original updatedAt timestamp
+              $setOnInsert: { updatedAt: currentDeck.updatedAt },
+            },
+            { timestamps: false } // Prevent automatic updatedAt update
           );
         } else {
           // If views exists, increment it
@@ -354,7 +357,10 @@ export const deckDbService = {
             {
               $inc: { views: 1 },
               $push: { viewedBy: viewerId },
-            }
+              // Preserve the original updatedAt timestamp
+              $setOnInsert: { updatedAt: currentDeck.updatedAt },
+            },
+            { timestamps: false } // Prevent automatic updatedAt update
           );
         }
       }

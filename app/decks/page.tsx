@@ -171,10 +171,10 @@ export default function PublicDecksPage() {
               // Sort by view count (most viewed first)
               return (b.deck.views || 0) - (a.deck.views || 0);
             } else {
-              // Sort by date (newest first)
+              // Sort by creation date (newest first)
               return (
-                new Date(b.deck.updatedAt).getTime() -
-                new Date(a.deck.updatedAt).getTime()
+                new Date(b.deck.createdAt).getTime() -
+                new Date(a.deck.createdAt).getTime()
               );
             }
           });

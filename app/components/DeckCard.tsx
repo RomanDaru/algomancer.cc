@@ -155,7 +155,7 @@ export default function DeckCard({
               </span>
             </div>
             <span className='text-white/80'>
-              {formatDistanceToNow(new Date(deck.updatedAt), {
+              {formatDistanceToNow(new Date(deck.createdAt), {
                 addSuffix: true,
               })}
             </span>

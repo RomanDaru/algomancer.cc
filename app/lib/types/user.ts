@@ -20,6 +20,8 @@ export interface Deck {
   createdAt: Date;
   updatedAt: Date;
   isPublic: boolean;
+  views: number;
+  viewedBy: string[];
 }
 
 export interface DeckCard {

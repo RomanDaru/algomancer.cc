@@ -7,6 +7,7 @@ import {
   CARD_TYPES,
   ELEMENTS,
   BASIC_ELEMENTS,
+  TIMING,
 } from "@/app/lib/types/card";
 import {
   MagnifyingGlassIcon,
@@ -31,8 +32,9 @@ export default function CardSearch({
   // Common filter categories
   const elementTypes = Object.values(BASIC_ELEMENTS);
   const cardTypes = Object.values(CARD_TYPES);
+  const timingTypes = Object.values(TIMING);
   const commonAttributes = ["Flying", "Swift", "Deadly", "Unstable", "Burst"];
-  const manaCosts = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const manaCosts = ["X", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   // Perform search whenever the search term changes
   useEffect(() => {
@@ -99,6 +101,15 @@ export default function CardSearch({
         // Search by element type (Fire, Water, etc.)
         if (card.element.type.toLowerCase().includes(term)) return true;
 
+        // Search by timing type (Standard, Haste, Battle, Virus)
+        if (term.startsWith("timing:")) {
+          const timingQuery = term.substring(7).toLowerCase(); // Remove "timing:" prefix
+          return card.timing.type.toLowerCase() === timingQuery;
+        }
+
+        // Also allow direct timing search without prefix
+        if (card.timing.type.toLowerCase().includes(term)) return true;
+
         // Search by attributes (Flying, Swift, etc.)
         if (
           card.typeAndAttributes.attributes.some((attr) =>
@@ -127,10 +138,27 @@ export default function CardSearch({
           if (costQuery === "10+") {
             // For 10+, check if mana cost is 10 or greater
             return card.manaCost >= 10;
+          } else if (costQuery.toLowerCase() === "x") {
+            // For X cost, check if it's a Spell with 0 mana cost (not a token)
+            return (
+              card.manaCost === 0 &&
+              card.typeAndAttributes.mainType === "Spell" &&
+              !card.typeAndAttributes.subType.toLowerCase().includes("token")
+            );
           } else {
             // For specific mana costs, check for exact match
             const cost = parseInt(costQuery, 10);
             if (!isNaN(cost)) {
+              // For 0 cost, exclude X-cost spells
+              if (cost === 0) {
+                return !(
+                  card.manaCost === 0 &&
+                  card.typeAndAttributes.mainType === "Spell" &&
+                  !card.typeAndAttributes.subType
+                    .toLowerCase()
+                    .includes("token")
+                );
+              }
               return card.manaCost === cost;
             }
           }
@@ -230,7 +258,7 @@ export default function CardSearch({
         <input
           type='text'
           className='block w-full p-4 pl-10 pr-20 text-sm text-white border border-algomancy-purple/30 rounded-lg bg-algomancy-darker focus:ring-algomancy-purple focus:border-algomancy-purple'
-          placeholder='Search with multiple keywords (e.g., "Fire Swift" or "mana:3" for 3-cost cards)'
+          placeholder='Search with multiple keywords (e.g., "Fire Swift", "Battle" timing, or "mana:3" for 3-cost cards)'
           value={searchTerm}
           onChange={handleSearchChange}
         />
@@ -316,6 +344,32 @@ export default function CardSearch({
 
           <div className='mb-4'>
             <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+              Timing
+            </h3>
+            <div className='flex flex-wrap gap-2'>
+              {timingTypes.map((timing) => {
+                const timingString = `timing:${timing}`;
+                const isActive = activeKeywords.some(
+                  (k) => k.toLowerCase() === timingString.toLowerCase()
+                );
+                return (
+                  <button
+                    key={timing}
+                    onClick={() => applyFilter(timingString)}
+                    className={`px-3 py-1 text-xs rounded-full border ${
+                      isActive
+                        ? "bg-algomancy-cosmic/40 border-algomancy-cosmic text-white"
+                        : "bg-algomancy-dark border-algomancy-cosmic/30 hover:bg-algomancy-cosmic/20"
+                    }`}>
+                    {timing}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className='mb-4'>
+            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
               Common Attributes
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -351,7 +405,7 @@ export default function CardSearch({
                 );
                 return (
                   <button
-                    key={cost}
+                    key={typeof cost === "number" ? cost : cost}
                     onClick={() => applyFilter(costString)}
                     className={`px-3 py-1 text-xs rounded-full border ${
                       isActive

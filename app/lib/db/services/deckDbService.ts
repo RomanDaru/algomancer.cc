@@ -30,13 +30,23 @@ export const deckDbService = {
 
   /**
    * Get public decks with user information
+   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
    */
-  async getPublicDecks(): Promise<Deck[]> {
+  async getPublicDecks(
+    sortBy: "popular" | "newest" = "newest"
+  ): Promise<Deck[]> {
     try {
       await connectToDatabase();
-      const deckDocs = await DeckModel.find({ isPublic: true }).sort({
-        updatedAt: -1,
-      });
+
+      // Sort by the specified field
+      const sortOptions =
+        sortBy === "popular"
+          ? { views: -1 } // Sort by views (descending)
+          : { updatedAt: -1 }; // Sort by updatedAt (descending)
+
+      const deckDocs = await DeckModel.find({ isPublic: true }).sort(
+        sortOptions
+      );
       return deckDocs.map(convertDocumentToDeck);
     } catch (error) {
       console.error("Error getting public decks:", error);
@@ -241,6 +251,138 @@ export const deckDbService = {
       return deckDoc ? convertDocumentToDeck(deckDoc) : null;
     } catch (error) {
       console.error(`Error updating cards in deck ${deckId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get decks containing a specific card
+   */
+  async getDecksContainingCard(
+    cardId: string,
+    limit?: number
+  ): Promise<Deck[]> {
+    try {
+      await connectToDatabase();
+
+      // Find decks that contain the card and are public
+      let query = DeckModel.find({
+        "cards.cardId": cardId,
+        isPublic: true,
+      }).sort({ updatedAt: -1 });
+
+      // Apply limit if provided
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      const deckDocs = await query;
+      return deckDocs.map(convertDocumentToDeck);
+    } catch (error) {
+      console.error(`Error getting decks containing card ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get user information for a deck
+   */
+  async getDeckUserInfo(
+    userId: string
+  ): Promise<{ name: string; username: string | null }> {
+    try {
+      await connectToDatabase();
+      const db = mongoose.connection.db;
+      const user = await db
+        .collection("users")
+        .findOne({ _id: new ObjectId(userId) });
+
+      if (!user) {
+        return { name: "Unknown User", username: null };
+      }
+
+      return {
+        name: user.name || "Unknown User",
+        username: user.username || null,
+      };
+    } catch (error) {
+      console.error(`Error getting user info for user ${userId}:`, error);
+      return { name: "Unknown User", username: null };
+    }
+  },
+
+  /**
+   * Increment the view count for a deck
+   * Uses the viewerId to prevent duplicate views from the same user/session
+   */
+  async incrementDeckViews(
+    deckId: string,
+    viewerId: string
+  ): Promise<Deck | null> {
+    try {
+      // Connect to the database and get the db instance
+      const { db } = await connectToDatabase();
+
+      // First, check if the deck exists and get its current state
+      const currentDeck = await db
+        .collection("decks")
+        .findOne({ _id: new ObjectId(deckId) });
+
+      if (!currentDeck) {
+        return null;
+      }
+
+      // Check if this viewer has already viewed the deck
+      const alreadyViewed =
+        currentDeck.viewedBy && currentDeck.viewedBy.includes(viewerId);
+
+      if (!alreadyViewed) {
+        // Check if the views field exists
+        if (currentDeck.views === undefined) {
+          // If views doesn't exist, set it to 1
+          await db.collection("decks").updateOne(
+            { _id: new ObjectId(deckId) },
+            {
+              $set: { views: 1 },
+              $push: { viewedBy: viewerId },
+            }
+          );
+        } else {
+          // If views exists, increment it
+          await db.collection("decks").updateOne(
+            { _id: new ObjectId(deckId) },
+            {
+              $inc: { views: 1 },
+              $push: { viewedBy: viewerId },
+            }
+          );
+        }
+      }
+
+      // Fetch the updated deck
+      const updatedDeck = await db
+        .collection("decks")
+        .findOne({ _id: new ObjectId(deckId) });
+
+      if (!updatedDeck) {
+        return null;
+      }
+
+      // Convert the MongoDB document to our Deck type
+      return {
+        _id: updatedDeck._id,
+        name: updatedDeck.name,
+        description: updatedDeck.description,
+        userId: updatedDeck.userId,
+        cards: updatedDeck.cards || [],
+        createdAt: updatedDeck.createdAt,
+        updatedAt: updatedDeck.updatedAt,
+        isPublic: updatedDeck.isPublic,
+        views: updatedDeck.views || 0,
+        viewedBy: updatedDeck.viewedBy || [],
+      };
+    } catch (error) {
+      console.error(`Error incrementing view count for deck ${deckId}:`, error);
       throw error;
     }
   },

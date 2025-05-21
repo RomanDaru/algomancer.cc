@@ -43,10 +43,13 @@ export const deckService = {
 
   /**
    * Get public decks
+   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
    */
-  async getPublicDecks(): Promise<Deck[]> {
+  async getPublicDecks(
+    sortBy: "popular" | "newest" = "newest"
+  ): Promise<Deck[]> {
     try {
-      return await deckDbService.getPublicDecks();
+      return await deckDbService.getPublicDecks(sortBy);
     } catch (error) {
       console.error("Error getting public decks:", error);
       throw error;
@@ -125,9 +128,7 @@ export const deckService = {
   /**
    * Get full card details for a deck
    */
-  async getDeckWithCards(
-    deckId: string
-  ): Promise<{
+  async getDeckWithCards(deckId: string): Promise<{
     deck: Deck | null;
     cards: Card[];
     user?: { name: string; username: string | null };
@@ -159,12 +160,15 @@ export const deckService = {
 
   /**
    * Get public decks with user information
+   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
    */
-  async getPublicDecksWithUserInfo(): Promise<
+  async getPublicDecksWithUserInfo(
+    sortBy: "popular" | "newest" = "newest"
+  ): Promise<
     { deck: Deck; user: { name: string; username: string | null } }[]
   > {
     try {
-      const decks = await deckDbService.getPublicDecks();
+      const decks = await deckDbService.getPublicDecks(sortBy);
 
       // Get user information for each deck
       const decksWithUserInfo = await Promise.all(
@@ -258,6 +262,50 @@ export const deckService = {
       return updatedDeck;
     } catch (error) {
       console.error(`Error updating cards in deck ${deckId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get decks containing a specific card with user information
+   */
+  async getDecksContainingCardWithUserInfo(
+    cardId: string,
+    limit?: number
+  ): Promise<
+    { deck: Deck; user: { name: string; username: string | null } }[]
+  > {
+    try {
+      const decks = await deckDbService.getDecksContainingCard(cardId, limit);
+
+      // Get user information for each deck
+      const decksWithUserInfo = await Promise.all(
+        decks.map(async (deck) => {
+          const user = await deckDbService.getDeckUserInfo(
+            deck.userId.toString()
+          );
+          return { deck, user };
+        })
+      );
+
+      return decksWithUserInfo;
+    } catch (error) {
+      console.error(`Error getting decks containing card ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Increment the view count for a deck
+   */
+  async incrementDeckViews(
+    deckId: string,
+    viewerId: string
+  ): Promise<Deck | null> {
+    try {
+      return await deckDbService.incrementDeckViews(deckId, viewerId);
+    } catch (error) {
+      console.error(`Error incrementing view count for deck ${deckId}:`, error);
       throw error;
     }
   },

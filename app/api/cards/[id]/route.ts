@@ -10,7 +10,11 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const card = await cardDbService.getCardById(params.id);
+    // In Next.js 14, we need to await the params object
+    const resolvedParams = await params;
+    const cardId = resolvedParams.id;
+
+    const card = await cardDbService.getCardById(cardId);
 
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
@@ -18,7 +22,7 @@ export async function GET(
 
     return NextResponse.json(card);
   } catch (error) {
-    console.error(`Error getting card with ID ${params.id}:`, error);
+    console.error(`Error getting card:`, error);
     return NextResponse.json({ error: "Failed to get card" }, { status: 500 });
   }
 }
@@ -32,10 +36,14 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // In Next.js 14, we need to await the params object
+    const resolvedParams = await params;
+    const cardId = resolvedParams.id;
+
     const card = await request.json();
 
     // Ensure the ID in the URL matches the card ID
-    if (card.id !== params.id) {
+    if (card.id !== cardId) {
       return NextResponse.json({ error: "Card ID mismatch" }, { status: 400 });
     }
 
@@ -47,7 +55,7 @@ export async function PUT(
 
     return NextResponse.json(updatedCard);
   } catch (error) {
-    console.error(`Error updating card with ID ${params.id}:`, error);
+    console.error(`Error updating card:`, error);
     return NextResponse.json(
       { error: "Failed to update card" },
       { status: 500 }
@@ -64,6 +72,10 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // In Next.js 14, we need to await the params object
+    const resolvedParams = await params;
+    const cardId = resolvedParams.id;
+
     // Get confirmation from request
     const { searchParams } = new URL(request.url);
     const confirmDelete = searchParams.get("confirm") === "true";
@@ -79,7 +91,7 @@ export async function DELETE(
     }
 
     // Create a backup before deletion
-    const card = await cardDbService.getCardById(params.id);
+    const card = await cardDbService.getCardById(cardId);
     if (!card) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
@@ -88,7 +100,7 @@ export async function DELETE(
     console.log(`Deleting card: ${JSON.stringify(card)}`);
 
     // Proceed with deletion
-    const success = await cardDbService.deleteCard(params.id, true);
+    const success = await cardDbService.deleteCard(cardId, true);
 
     if (!success) {
       return NextResponse.json(
@@ -99,11 +111,11 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Card ${params.id} has been deleted`,
+      message: `Card ${cardId} has been deleted`,
       deletedCard: card, // Include the deleted card in the response for potential recovery
     });
   } catch (error) {
-    console.error(`Error deleting card with ID ${params.id}:`, error);
+    console.error(`Error deleting card:`, error);
     return NextResponse.json(
       {
         error: "Failed to delete card",

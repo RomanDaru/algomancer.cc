@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Deck } from "@/app/lib/types/user";
 import { Card } from "@/app/lib/types/card";
 import { formatDistanceToNow } from "date-fns";
@@ -18,24 +19,22 @@ interface DeckWithUser {
 
 export default function PublicDecksPage() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const cardId = searchParams.get("card");
+
   const [decksWithUsers, setDecksWithUsers] = useState<DeckWithUser[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
+  const [filteredCard, setFilteredCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"newest" | "popular">("newest");
 
   // Fetch public decks and cards
   useEffect(() => {
     async function fetchData() {
       try {
         setIsLoading(true);
-
-        // Fetch public decks
-        const decksResponse = await fetch("/api/decks/public");
-        if (!decksResponse.ok) {
-          throw new Error("Failed to fetch public decks");
-        }
-        const decksData = await decksResponse.json();
-        setDecksWithUsers(decksData);
+        setError(null);
 
         // Fetch all cards for element display
         const cardsResponse = await fetch("/api/cards");
@@ -44,6 +43,33 @@ export default function PublicDecksPage() {
         }
         const cardsData = await cardsResponse.json();
         setCards(cardsData);
+
+        // If we have a card ID, fetch the specific card and decks containing it
+        if (cardId) {
+          // Fetch the specific card
+          const cardResponse = await fetch(`/api/cards/${cardId}`);
+          if (!cardResponse.ok) {
+            throw new Error("Failed to fetch card details");
+          }
+          const cardData = await cardResponse.json();
+          setFilteredCard(cardData);
+
+          // Fetch decks containing this card
+          const decksResponse = await fetch(`/api/decks/card/${cardId}`);
+          if (!decksResponse.ok) {
+            throw new Error("Failed to fetch decks containing this card");
+          }
+          const decksData = await decksResponse.json();
+          setDecksWithUsers(decksData);
+        } else {
+          // Fetch all public decks if no card filter
+          const decksResponse = await fetch(`/api/decks/public?sort=${sortBy}`);
+          if (!decksResponse.ok) {
+            throw new Error("Failed to fetch public decks");
+          }
+          const decksData = await decksResponse.json();
+          setDecksWithUsers(decksData);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error instanceof Error ? error.message : "An error occurred");
@@ -53,7 +79,7 @@ export default function PublicDecksPage() {
     }
 
     fetchData();
-  }, []);
+  }, [cardId, sortBy]);
 
   if (isLoading) {
     return (
@@ -67,7 +93,45 @@ export default function PublicDecksPage() {
     <div className='container mx-auto px-4 py-8'>
       <div className='max-w-7xl mx-auto'>
         <div className='flex justify-between items-center mb-6'>
-          <h1 className='text-2xl font-bold text-white'>Community Decks</h1>
+          {filteredCard ? (
+            <div className='flex items-center'>
+              <Link
+                href='/decks'
+                className='text-algomancy-purple hover:text-algomancy-gold mr-3'>
+                ← Back to All Decks
+              </Link>
+              <h1 className='text-2xl font-bold text-white'>
+                Decks with {filteredCard.name}
+              </h1>
+            </div>
+          ) : (
+            <div className='flex flex-col md:flex-row md:items-center'>
+              <h1 className='text-2xl font-bold text-white'>Community Decks</h1>
+              <div className='mt-2 md:mt-0 md:ml-6 flex items-center'>
+                <span className='text-gray-400 mr-2'>Sort by:</span>
+                <div className='flex space-x-2'>
+                  <button
+                    onClick={() => setSortBy("newest")}
+                    className={`px-3 py-1 text-xs rounded-full border ${
+                      sortBy === "newest"
+                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                    }`}>
+                    Newest
+                  </button>
+                  <button
+                    onClick={() => setSortBy("popular")}
+                    className={`px-3 py-1 text-xs rounded-full border ${
+                      sortBy === "popular"
+                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                    }`}>
+                    Most Popular
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {error && (
@@ -76,21 +140,77 @@ export default function PublicDecksPage() {
           </div>
         )}
 
-        <DeckGrid
-          decks={decksWithUsers.map((item) => item.deck)}
-          cards={cards}
-          users={decksWithUsers.reduce((acc, { deck, user }) => {
-            if (deck.userId) {
-              acc[deck.userId] = user;
+        {filteredCard && (
+          <div className='bg-algomancy-dark border border-algomancy-purple/30 rounded-lg p-4 mb-6'>
+            <div className='flex items-center'>
+              <div className='relative w-12 h-16 mr-4 rounded overflow-hidden'>
+                <img
+                  src={filteredCard.imageUrl}
+                  alt={filteredCard.name}
+                  className='object-cover w-full h-full'
+                />
+              </div>
+              <div>
+                <h2 className='text-lg font-semibold text-algomancy-gold'>
+                  {filteredCard.name}
+                </h2>
+                <p className='text-sm text-gray-300'>
+                  {filteredCard.element.type}{" "}
+                  {filteredCard.typeAndAttributes.mainType}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sort decks based on selected sort option */}
+        {(() => {
+          // Create a sorted copy of the decks
+          const sortedDecks = [...decksWithUsers].sort((a, b) => {
+            if (sortBy === "popular") {
+              // Sort by view count (most viewed first)
+              return (b.deck.views || 0) - (a.deck.views || 0);
+            } else {
+              // Sort by date (newest first)
+              return (
+                new Date(b.deck.updatedAt).getTime() -
+                new Date(a.deck.updatedAt).getTime()
+              );
             }
-            return acc;
-          }, {} as Record<string, { name: string; username: string | null }>)}
-          emptyMessage='No Public Decks Yet'
-          createDeckLink={session ? "/decks/create" : "/auth/signin"}
-          createDeckText={session ? "Create a Deck" : "Sign In to Create Decks"}
-          columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
-          className='py-4'
-        />
+          });
+
+          return (
+            <DeckGrid
+              decks={sortedDecks.map((item) => item.deck)}
+              cards={cards}
+              users={sortedDecks.reduce((acc, { deck, user }) => {
+                if (deck.userId) {
+                  acc[deck.userId] = user;
+                }
+                return acc;
+              }, {} as Record<string, { name: string; username: string | null }>)}
+              emptyMessage={
+                filteredCard
+                  ? `No decks found containing ${filteredCard.name}`
+                  : "No Public Decks Yet"
+              }
+              emptyAction={
+                filteredCard
+                  ? {
+                      text: `Create a deck with ${filteredCard.name}`,
+                      link: `/decks/create?card=${filteredCard.id}`,
+                    }
+                  : undefined
+              }
+              createDeckLink={session ? "/decks/create" : "/auth/signin"}
+              createDeckText={
+                session ? "Create a Deck" : "Sign In to Create Decks"
+              }
+              columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
+              className='py-4'
+            />
+          );
+        })()}
       </div>
     </div>
   );

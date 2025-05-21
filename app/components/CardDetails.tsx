@@ -1,12 +1,59 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Card as CardType } from "@/app/lib/types/card";
+import { Deck } from "@/app/lib/types/user";
+import { formatDistanceToNow } from "date-fns";
+import ElementIcons from "./ElementIcons";
+import { ElementType } from "@/app/lib/utils/elements";
 
 interface CardDetailsProps {
   card: CardType;
   onClose?: () => void;
 }
 
+interface DeckWithUser {
+  deck: Deck;
+  user: {
+    name: string;
+    username: string | null;
+  };
+}
+
 export default function CardDetails({ card, onClose }: CardDetailsProps) {
+  const [decksWithCard, setDecksWithCard] = useState<DeckWithUser[]>([]);
+  const [isLoadingDecks, setIsLoadingDecks] = useState(false);
+  const [deckError, setDeckError] = useState<string | null>(null);
+
+  // Fetch decks containing this card
+  useEffect(() => {
+    async function fetchDecksWithCard() {
+      setIsLoadingDecks(true);
+      setDeckError(null);
+
+      try {
+        const response = await fetch(`/api/decks/card/${card.id}?limit=3`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch decks containing this card");
+        }
+
+        const data = await response.json();
+        setDecksWithCard(data);
+      } catch (error) {
+        console.error("Error fetching decks:", error);
+        setDeckError(
+          error instanceof Error ? error.message : "An error occurred"
+        );
+      } finally {
+        setIsLoadingDecks(false);
+      }
+    }
+
+    fetchDecksWithCard();
+  }, [card.id]);
   return (
     <div className='flex flex-col md:flex-row gap-6'>
       {/* Close button */}
@@ -53,7 +100,14 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
             <h3 className='font-semibold text-algomancy-blue-light'>
               Mana Cost
             </h3>
-            <p className='text-white'>{card.manaCost}</p>
+            <p className='text-white'>
+              {/* Display X instead of 0 for Spell cards with 0 mana cost, but not for tokens */}
+              {card.manaCost === 0 &&
+              card.typeAndAttributes.mainType === "Spell" &&
+              !card.typeAndAttributes.subType.toLowerCase().includes("token")
+                ? "X"
+                : card.manaCost}
+            </p>
           </div>
           <div>
             <h3 className='font-semibold text-algomancy-blue-light'>Element</h3>
@@ -68,12 +122,15 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
               {card.typeAndAttributes.subType} {card.typeAndAttributes.mainType}
             </p>
           </div>
-          <div>
-            <h3 className='font-semibold text-algomancy-blue-light'>Stats</h3>
-            <p>
-              Power: {card.stats.power} / Defense: {card.stats.defense}
-            </p>
-          </div>
+          {/* Only show Power/Defense stats for non-Spell cards */}
+          {!card.typeAndAttributes.mainType.includes("Spell") && (
+            <div>
+              <h3 className='font-semibold text-algomancy-blue-light'>Stats</h3>
+              <p>
+                Power: {card.stats.power} / Defense: {card.stats.defense}
+              </p>
+            </div>
+          )}
           <div>
             <h3 className='font-semibold text-algomancy-blue-light'>Timing</h3>
             <p>{card.timing.type}</p>
@@ -105,6 +162,74 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
           <p>
             {card.set.name} ({card.set.complexity})
           </p>
+        </div>
+
+        {/* Decks containing this card */}
+        <div className='mt-6 pt-4 border-t border-algomancy-purple/30'>
+          <h3 className='font-semibold text-algomancy-blue-light mb-3'>
+            Popular Decks with this Card
+          </h3>
+
+          {isLoadingDecks ? (
+            <div className='text-center py-3'>
+              <p className='text-gray-400'>Loading decks...</p>
+            </div>
+          ) : deckError ? (
+            <div className='text-center py-3'>
+              <p className='text-red-400'>{deckError}</p>
+            </div>
+          ) : decksWithCard.length === 0 ? (
+            <div className='text-center py-3 space-y-4'>
+              <p className='text-gray-400'>
+                No public decks found with this card.
+              </p>
+              <Link
+                href={`/decks/create?card=${card.id}`}
+                className='inline-block px-4 py-2 bg-algomancy-purple/30 hover:bg-algomancy-purple/50 text-white rounded-md transition-colors'>
+                Create a deck with this card
+              </Link>
+            </div>
+          ) : (
+            <div className='space-y-3'>
+              {decksWithCard.map(({ deck, user }) => (
+                <Link
+                  key={deck._id.toString()}
+                  href={`/decks/${deck._id.toString()}`}
+                  className='block p-3 bg-algomancy-dark border border-algomancy-purple/20 rounded-md hover:bg-algomancy-purple/10 transition-colors'>
+                  <div className='flex justify-between items-start'>
+                    <div>
+                      <h4 className='text-white font-medium'>{deck.name}</h4>
+                      <div className='text-sm text-algomancy-gold mt-1'>
+                        {user.username ? (
+                          <>@{user.username}</>
+                        ) : (
+                          <span className='text-gray-400'>{user.name}</span>
+                        )}
+                        <span className='text-gray-500 text-xs ml-2'>
+                          •{" "}
+                          {formatDistanceToNow(new Date(deck.updatedAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className='text-sm text-white'>
+                      {deck.cards.reduce((sum, card) => sum + card.quantity, 0)}{" "}
+                      cards
+                    </div>
+                  </div>
+                </Link>
+              ))}
+
+              <div className='text-center mt-4'>
+                <Link
+                  href={`/decks?card=${card.id}`}
+                  className='text-algomancy-purple hover:text-algomancy-gold text-sm'>
+                  View all decks with this card
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

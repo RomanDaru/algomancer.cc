@@ -91,7 +91,14 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
     const manaCurveByElement: Record<number, Record<string, number>> = {};
 
     deckCardsWithDetails.forEach(({ card, quantity }) => {
-      const cost = card.manaCost;
+      // For X-cost spells, we'll put them in a special "X" category (using -1 as the key)
+      const isXCostSpell =
+        card.manaCost === 0 &&
+        card.typeAndAttributes.mainType === "Spell" &&
+        !card.typeAndAttributes.subType.toLowerCase().includes("token");
+
+      // Use -1 as the key for X-cost spells, otherwise use the actual mana cost
+      const cost = isXCostSpell ? -1 : card.manaCost;
       const element = card.element.type;
 
       // Update total count for this mana cost
@@ -160,6 +167,24 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
               Mana Curve
             </h4>
             <div className='flex items-end h-32 space-x-2 mb-4'>
+              {/* X cost column */}
+              {stats.manaCurve[-1] > 0 && (
+                <div className='flex flex-col items-center flex-1'>
+                  <div className='w-full flex flex-col justify-end h-24'>
+                    <ColorBar
+                      elementCounts={stats.manaCurveByElement[-1] || {}}
+                      maxValue={maxManaCurveValue}
+                      totalCards={stats.manaCurve[-1]}
+                    />
+                  </div>
+                  <div className='text-xs text-gray-400 mt-1'>X</div>
+                  <div className='text-xs text-white'>
+                    {stats.manaCurve[-1] || 0}
+                  </div>
+                </div>
+              )}
+
+              {/* Regular mana costs 0-9 */}
               {Array.from({ length: 10 }, (_, i) => i).map((cost) => (
                 <div key={cost} className='flex flex-col items-center flex-1'>
                   <div className='w-full flex flex-col justify-end h-24'>

@@ -19,6 +19,10 @@ interface DeckGridProps {
     username: string | null;
   };
   emptyMessage?: string;
+  emptyAction?: {
+    text: string;
+    link: string;
+  };
   createDeckLink?: string;
   createDeckText?: string;
   viewAllLink?: string;
@@ -39,6 +43,7 @@ export default function DeckGrid({
   users,
   user,
   emptyMessage = "No decks found",
+  emptyAction,
   createDeckLink,
   createDeckText = "Create Deck",
   viewAllLink,
@@ -71,13 +76,24 @@ export default function DeckGrid({
     return (
       <div className='text-center py-8 text-gray-400'>
         <p>{emptyMessage}</p>
-        {createDeckLink && (
-          <Link
-            href={createDeckLink}
-            className='mt-4 inline-block px-4 py-2 text-sm rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark'>
-            {createDeckText}
-          </Link>
-        )}
+        <div className='mt-4 space-y-3'>
+          {emptyAction && (
+            <Link
+              href={emptyAction.link}
+              className='inline-block px-4 py-2 text-sm rounded-md bg-algomancy-purple/30 hover:bg-algomancy-purple/50 text-white transition-colors'>
+              {emptyAction.text}
+            </Link>
+          )}
+          {createDeckLink && (
+            <div className={emptyAction ? "mt-2" : ""}>
+              <Link
+                href={createDeckLink}
+                className='inline-block px-4 py-2 text-sm rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark'>
+                {createDeckText}
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     );
   }

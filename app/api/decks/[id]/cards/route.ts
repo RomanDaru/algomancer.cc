@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { deckService } from '@/app/lib/services/deckService';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { NextRequest, NextResponse } from "next/server";
+import { deckService } from "@/app/lib/services/deckService";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * PUT /api/decks/[id]/cards
@@ -12,48 +12,52 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // In Next.js 14, we need to await the params object
+    const resolvedParams = await params;
+    const deckId = resolvedParams.id;
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: "Authentication required" },
         { status: 401 }
       );
     }
-    
+
     // Get the existing deck
-    const existingDeck = await deckService.getDeckById(params.id);
-    
+    const existingDeck = await deckService.getDeckById(deckId);
+
     if (!existingDeck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+      return NextResponse.json({ error: "Deck not found" }, { status: 404 });
     }
-    
+
     // Check if the user owns this deck
     if (existingDeck.userId.toString() !== session.user.id) {
       return NextResponse.json(
-        { error: 'You do not have permission to update this deck' },
+        { error: "You do not have permission to update this deck" },
         { status: 403 }
       );
     }
-    
+
     // Get the updated cards
     const { cards } = await request.json();
-    
+
     if (!Array.isArray(cards)) {
       return NextResponse.json(
-        { error: 'Invalid cards data' },
+        { error: "Invalid cards data" },
         { status: 400 }
       );
     }
-    
+
     // Update the deck cards
-    const updatedDeck = await deckService.updateDeckCards(params.id, cards);
-    
+    const updatedDeck = await deckService.updateDeckCards(deckId, cards);
+
     return NextResponse.json(updatedDeck);
   } catch (error) {
-    console.error(`Error updating cards in deck ${params.id}:`, error);
+    console.error(`Error updating cards in deck:`, error);
     return NextResponse.json(
-      { error: 'Failed to update deck cards' },
+      { error: "Failed to update deck cards" },
       { status: 500 }
     );
   }
@@ -68,48 +72,56 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    // In Next.js 14, we need to await the params object
+    const resolvedParams = await params;
+    const deckId = resolvedParams.id;
+
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.user?.id) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: "Authentication required" },
         { status: 401 }
       );
     }
-    
+
     // Get the existing deck
-    const existingDeck = await deckService.getDeckById(params.id);
-    
+    const existingDeck = await deckService.getDeckById(deckId);
+
     if (!existingDeck) {
-      return NextResponse.json({ error: 'Deck not found' }, { status: 404 });
+      return NextResponse.json({ error: "Deck not found" }, { status: 404 });
     }
-    
+
     // Check if the user owns this deck
     if (existingDeck.userId.toString() !== session.user.id) {
       return NextResponse.json(
-        { error: 'You do not have permission to update this deck' },
+        { error: "You do not have permission to update this deck" },
         { status: 403 }
       );
     }
-    
+
     // Get the card data
     const { cardId, quantity = 1 } = await request.json();
-    
+
     if (!cardId) {
       return NextResponse.json(
-        { error: 'Card ID is required' },
+        { error: "Card ID is required" },
         { status: 400 }
       );
     }
-    
+
     // Add the card to the deck
-    const updatedDeck = await deckService.addCardToDeck(params.id, cardId, quantity);
-    
+    const updatedDeck = await deckService.addCardToDeck(
+      deckId,
+      cardId,
+      quantity
+    );
+
     return NextResponse.json(updatedDeck);
   } catch (error) {
-    console.error(`Error adding card to deck ${params.id}:`, error);
+    console.error(`Error adding card to deck:`, error);
     return NextResponse.json(
-      { error: 'Failed to add card to deck' },
+      { error: "Failed to add card to deck" },
       { status: 500 }
     );
   }

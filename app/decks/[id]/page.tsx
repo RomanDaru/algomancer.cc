@@ -59,6 +59,16 @@ export default function DeckPage({ params }: DeckPageProps) {
         setDeck(data.deck);
         setCards(data.cards);
         setUser(data.user || null);
+
+        // Only increment view count after we have the deck data
+        // This ensures we have the correct deck information
+        if (data.deck) {
+          // Use setTimeout to delay the view count increment
+          // This prevents it from blocking the UI rendering
+          setTimeout(() => {
+            incrementViewCount(data.deck);
+          }, 1000);
+        }
       } catch (error) {
         console.error("Error fetching deck:", error);
         setError(error instanceof Error ? error.message : "An error occurred");
@@ -67,8 +77,39 @@ export default function DeckPage({ params }: DeckPageProps) {
       }
     }
 
+    // Function to increment view count
+    async function incrementViewCount(currentDeck = deck) {
+      try {
+        // If no deck is provided, don't proceed
+        if (!currentDeck) {
+          return;
+        }
+
+        // Only increment view count for public decks or if the user is not the owner
+        if (
+          session &&
+          session.user &&
+          session.user.id === currentDeck.userId.toString()
+        ) {
+          return; // Don't increment view count for the owner
+        }
+
+        // Check if the deck is public before incrementing view count
+        if (!currentDeck.isPublic) {
+          return; // Don't increment view count for private decks
+        }
+
+        await fetch(`/api/decks/${id}/view`, {
+          method: "POST",
+        });
+      } catch (error) {
+        console.error("Error incrementing view count:", error);
+        // Don't show an error to the user for this - non-critical feature
+      }
+    }
+
     fetchData();
-  }, [id]);
+  }, [id, session, deck?.userId]);
 
   // Handle deck deletion
   const handleDeleteDeck = async () => {

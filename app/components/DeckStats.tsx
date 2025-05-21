@@ -5,6 +5,11 @@ import { DeckCard } from "@/app/lib/types/user";
 import { useMemo } from "react";
 import { ElementType, ELEMENTS } from "@/app/lib/utils/elements";
 import ElementIcon from "./ElementIcon";
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { Pie } from "react-chartjs-2";
+
+// Register Chart.js components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface ColorBarProps {
   elementCounts: Record<string, number>;
@@ -129,22 +134,12 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
       typeDistribution[type] = (typeDistribution[type] || 0) + quantity;
     });
 
-    // Attribute distribution
-    const attributeDistribution: Record<string, number> = {};
-    deckCardsWithDetails.forEach(({ card, quantity }) => {
-      card.typeAndAttributes.attributes.forEach((attribute) => {
-        attributeDistribution[attribute] =
-          (attributeDistribution[attribute] || 0) + quantity;
-      });
-    });
-
     return {
       totalCards,
       manaCurve,
       manaCurveByElement,
       elementDistribution,
       typeDistribution,
-      attributeDistribution,
     };
   }, [cards, deckCards]);
 
@@ -307,41 +302,90 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
             <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
               Card Type Distribution
             </h4>
-            <div className='grid grid-cols-2 gap-3'>
-              {Object.entries(stats.typeDistribution)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([type, count]) => (
-                  <div
-                    key={type}
-                    className='flex justify-between items-center py-1'>
-                    <span className='text-sm text-white'>{type}</span>
-                    <span className='text-sm text-gray-400'>{count}</span>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* Top Attributes */}
-          {Object.keys(stats.attributeDistribution).length > 0 && (
-            <div>
-              <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
-                Top Attributes
-              </h4>
-              <div className='grid grid-cols-2 gap-3'>
-                {Object.entries(stats.attributeDistribution)
-                  .sort(([, a], [, b]) => b - a)
-                  .slice(0, 6)
-                  .map(([attribute, count]) => (
-                    <div
-                      key={attribute}
-                      className='flex justify-between items-center py-1'>
-                      <span className='text-sm text-white'>{attribute}</span>
-                      <span className='text-sm text-gray-400'>{count}</span>
-                    </div>
-                  ))}
+            <div className='flex justify-center items-center'>
+              {/* Pie Chart */}
+              <div className='w-full max-w-lg mx-auto'>
+                <Pie
+                  data={{
+                    // Create custom labels with counts included
+                    labels: Object.entries(stats.typeDistribution).map(
+                      ([type, count]) => `${type} (${count})`
+                    ),
+                    datasets: [
+                      {
+                        data: Object.values(stats.typeDistribution),
+                        backgroundColor: [
+                          "#EC2826", // Fire color
+                          "#5ACBF3", // Water color
+                          "#F38F30", // Earth color
+                          "#6DBF59", // Wood color
+                          "#D7D9D9", // Metal color
+                          "#9B7CB9", // Colorless/Purple color
+                        ],
+                        borderColor: [
+                          "rgba(236, 40, 38, 0.8)",
+                          "rgba(90, 203, 243, 0.8)",
+                          "rgba(243, 143, 48, 0.8)",
+                          "rgba(109, 191, 89, 0.8)",
+                          "rgba(215, 217, 217, 0.8)",
+                          "rgba(155, 124, 185, 0.8)",
+                        ],
+                        borderWidth: 1,
+                        hoverOffset: 10,
+                      },
+                    ],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    layout: {
+                      padding: {
+                        top: 20,
+                        bottom: 20,
+                        left: 20,
+                        right: 20,
+                      },
+                    },
+                    plugins: {
+                      legend: {
+                        position: "bottom",
+                        align: "center",
+                        labels: {
+                          color: "white",
+                          font: {
+                            size: 14,
+                            weight: "bold",
+                          },
+                          padding: 15,
+                          usePointStyle: true,
+                          pointStyle: "circle",
+                          // Sort labels alphabetically
+                          sort: (a, b) => (a.text > b.text ? 1 : -1),
+                          boxWidth: 15,
+                          boxHeight: 15,
+                        },
+                      },
+                      tooltip: {
+                        callbacks: {
+                          label: function (context) {
+                            const value = context.raw || 0;
+                            const total = context.dataset.data.reduce(
+                              (a: number, b: number) => a + b,
+                              0
+                            );
+                            const percentage = Math.round(
+                              ((value as number) / total) * 100
+                            );
+                            return `${percentage}% (${value} cards)`;
+                          },
+                        },
+                      },
+                    },
+                  }}
+                />
               </div>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

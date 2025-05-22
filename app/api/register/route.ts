@@ -1,23 +1,69 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import mongoose from "@/app/lib/db/mongodb";
+import {
+  validatePassword,
+  validateEmail,
+  validateUsername,
+} from "@/app/lib/utils/validation";
+import {
+  sanitizeUserRegistration,
+  containsSuspiciousContent,
+} from "@/app/lib/utils/sanitization";
 
 export async function POST(request: Request) {
   try {
     const { name, username, email, password } = await request.json();
 
+    // Check for suspicious content before processing
+    const inputs = [name, username, email].filter(Boolean);
+    if (inputs.some((input) => containsSuspiciousContent(input))) {
+      return NextResponse.json(
+        { error: "Invalid characters detected in input" },
+        { status: 400 }
+      );
+    }
+
+    // Sanitize inputs comprehensively
+    const sanitized = sanitizeUserRegistration({
+      name,
+      username,
+      email,
+    });
+
     // Validate input
-    if (!name || !email || !password) {
+    if (!sanitized.name || !sanitized.email || !password) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Username is optional but if provided, it must be at least 3 characters
-    if (username && username.length < 3) {
+    // Validate email format
+    const emailValidation = validateEmail(sanitized.email);
+    if (!emailValidation.isValid) {
       return NextResponse.json(
-        { error: "Username must be at least 3 characters" },
+        { error: emailValidation.error || "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
+    // Validate username if provided
+    if (sanitized.username) {
+      const usernameValidation = validateUsername(sanitized.username);
+      if (!usernameValidation.isValid) {
+        return NextResponse.json(
+          { error: usernameValidation.error || "Invalid username" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return NextResponse.json(
+        { error: "Password does not meet security requirements" },
         { status: 400 }
       );
     }
@@ -38,7 +84,9 @@ export async function POST(request: Request) {
     const db = mongoose.connection.db;
 
     // Check if user already exists with the same email
-    const existingUserByEmail = await db.collection("users").findOne({ email });
+    const existingUserByEmail = await db.collection("users").findOne({
+      email: sanitized.email,
+    });
     if (existingUserByEmail) {
       return NextResponse.json(
         { error: "Email already exists" },
@@ -47,10 +95,10 @@ export async function POST(request: Request) {
     }
 
     // Check if username is already taken (if provided)
-    if (username) {
+    if (sanitized.username) {
       const existingUserByUsername = await db
         .collection("users")
-        .findOne({ username });
+        .findOne({ username: sanitized.username });
       if (existingUserByUsername) {
         return NextResponse.json(
           { error: "Username already taken" },
@@ -64,9 +112,9 @@ export async function POST(request: Request) {
 
     // Create user
     const result = await db.collection("users").insertOne({
-      name,
-      username: username || null, // Store username if provided, otherwise null
-      email,
+      name: sanitized.name,
+      username: sanitized.username || null, // Store username if provided, otherwise null
+      email: sanitized.email,
       hashedPassword,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -76,9 +124,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         id: result.insertedId,
-        name,
-        username: username || null,
-        email,
+        name: sanitized.name,
+        username: sanitized.username || null,
+        email: sanitized.email,
       },
       { status: 201 }
     );

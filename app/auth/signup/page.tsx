@@ -4,6 +4,12 @@ import { useState, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import PasswordStrengthIndicator from "@/app/components/PasswordStrengthIndicator";
+import {
+  validatePassword,
+  validateEmail,
+  validateUsername,
+} from "@/app/lib/utils/validation";
 
 export default function SignUp() {
   const router = useRouter();
@@ -15,15 +21,62 @@ export default function SignUp() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Validation states
+  const [emailError, setEmailError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+
   const register = useCallback(async () => {
+    // Clear previous errors
+    setError("");
+    setEmailError("");
+    setUsernameError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
+
+    // Validate all fields
+    let hasErrors = false;
+
+    // Validate name
+    if (!name.trim()) {
+      setError("Name is required");
+      hasErrors = true;
+    }
+
+    // Validate email
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.isValid) {
+      setEmailError(emailValidation.error || "Invalid email");
+      hasErrors = true;
+    }
+
+    // Validate username
+    const usernameValidation = validateUsername(username);
+    if (!usernameValidation.isValid) {
+      setUsernameError(usernameValidation.error || "Invalid username");
+      hasErrors = true;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      setPasswordError("Password does not meet requirements");
+      hasErrors = true;
+    }
+
+    // Validate password confirmation
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setConfirmPasswordError("Passwords do not match");
+      hasErrors = true;
+    }
+
+    if (hasErrors) {
       return;
     }
 
     try {
       setIsLoading(true);
-      setError("");
 
       const response = await fetch("/api/register", {
         method: "POST",
@@ -67,6 +120,36 @@ export default function SignUp() {
     }
   }, [name, username, email, password, confirmPassword, router]);
 
+  // Real-time validation handlers
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    if (emailError && value) {
+      const validation = validateEmail(value);
+      if (validation.isValid) {
+        setEmailError("");
+      }
+    }
+  };
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    if (usernameError && value) {
+      const validation = validateUsername(value);
+      if (validation.isValid) {
+        setUsernameError("");
+      }
+    }
+  };
+
+  const handleConfirmPasswordChange = (value: string) => {
+    setConfirmPassword(value);
+    if (confirmPasswordError && value) {
+      if (value === password) {
+        setConfirmPasswordError("");
+      }
+    }
+  };
+
   return (
     <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
       <div className='w-full max-w-md p-8 space-y-8 bg-algomancy-darker border border-algomancy-purple/30 rounded-lg'>
@@ -86,7 +169,7 @@ export default function SignUp() {
             <label
               htmlFor='name'
               className='block text-sm font-medium text-gray-300'>
-              Name
+              Name <span className='text-red-500'>*</span>
             </label>
             <input
               id='name'
@@ -104,25 +187,29 @@ export default function SignUp() {
             <label
               htmlFor='username'
               className='block text-sm font-medium text-gray-300'>
-              Username
+              Username <span className='text-gray-500 text-xs'>(optional)</span>
             </label>
             <input
               id='username'
               name='username'
               type='text'
-              required
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className='mt-1 block w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple'
+              onChange={(e) => handleUsernameChange(e.target.value)}
+              className={`mt-1 block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
+                usernameError ? "border-red-500" : "border-algomancy-purple/30"
+              }`}
               placeholder='Choose a username'
             />
+            {usernameError && (
+              <p className='mt-1 text-sm text-red-400'>{usernameError}</p>
+            )}
           </div>
 
           <div>
             <label
               htmlFor='email'
               className='block text-sm font-medium text-gray-300'>
-              Email
+              Email <span className='text-red-500'>*</span>
             </label>
             <input
               id='email'
@@ -130,35 +217,34 @@ export default function SignUp() {
               type='email'
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className='mt-1 block w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple'
+              onChange={(e) => handleEmailChange(e.target.value)}
+              className={`mt-1 block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
+                emailError ? "border-red-500" : "border-algomancy-purple/30"
+              }`}
               placeholder='your@email.com'
             />
+            {emailError && (
+              <p className='mt-1 text-sm text-red-400'>{emailError}</p>
+            )}
           </div>
 
-          <div>
-            <label
-              htmlFor='password'
-              className='block text-sm font-medium text-gray-300'>
-              Password
-            </label>
-            <input
-              id='password'
-              name='password'
-              type='password'
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className='mt-1 block w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple'
-              placeholder='••••••••'
-            />
-          </div>
+          <PasswordStrengthIndicator
+            password={password}
+            value={password}
+            onChange={setPassword}
+            placeholder='••••••••'
+            showStrength={true}
+            showToggle={true}
+          />
+          {passwordError && (
+            <p className='text-sm text-red-400 mt-1'>{passwordError}</p>
+          )}
 
           <div>
             <label
               htmlFor='confirmPassword'
-              className='block text-sm font-medium text-gray-300'>
-              Confirm Password
+              className='block text-sm font-medium text-gray-300 mb-1'>
+              Confirm Password <span className='text-red-500'>*</span>
             </label>
             <input
               id='confirmPassword'
@@ -166,10 +252,25 @@ export default function SignUp() {
               type='password'
               required
               value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className='mt-1 block w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple'
+              onChange={(e) => handleConfirmPasswordChange(e.target.value)}
+              className={`block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
+                confirmPasswordError
+                  ? "border-red-500"
+                  : "border-algomancy-purple/30"
+              }`}
               placeholder='••••••••'
             />
+            {confirmPasswordError && (
+              <p className='mt-1 text-sm text-red-400'>
+                {confirmPasswordError}
+              </p>
+            )}
+            {confirmPassword && password && confirmPassword === password && (
+              <p className='mt-1 text-sm text-green-400 flex items-center'>
+                <span className='w-1 h-1 bg-green-400 rounded-full mr-2 flex-shrink-0'></span>
+                Passwords match
+              </p>
+            )}
           </div>
 
           <div>

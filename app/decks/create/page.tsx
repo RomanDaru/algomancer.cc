@@ -19,12 +19,10 @@ export default function CreateDeckPage() {
   const [initialDeckCards, setInitialDeckCards] = useState<DeckCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect to sign in if not authenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
+  // Determine if user is in guest mode
+  const isGuestMode = status === "unauthenticated";
+
+  // No longer redirect to sign in - allow guest access
 
   // Fetch all cards and the initial card if provided
   useEffect(() => {
@@ -58,16 +56,12 @@ export default function CreateDeckPage() {
     fetchData();
   }, [cardId]);
 
-  if (status === "loading" || isLoading) {
+  if (isLoading) {
     return (
       <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
         <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
       </div>
     );
-  }
-
-  if (!session) {
-    return null;
   }
 
   return (
@@ -79,7 +73,11 @@ export default function CreateDeckPage() {
             ? `Create New Deck with ${initialCard.name}`
             : "Create New Deck"}
         </h1>
-        <DeckBuilder cards={cards} initialDeckCards={initialDeckCards} />
+        <DeckBuilder
+          cards={cards}
+          initialDeckCards={initialDeckCards}
+          isGuestMode={isGuestMode}
+        />
       </div>
     </div>
   );

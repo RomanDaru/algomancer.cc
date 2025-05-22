@@ -202,9 +202,9 @@ export default function PublicDecksPage() {
                     }
                   : undefined
               }
-              createDeckLink={session ? "/decks/create" : "/auth/signin"}
+              createDeckLink='/decks/create'
               createDeckText={
-                session ? "Create a Deck" : "Sign In to Create Decks"
+                session ? "Create a Deck" : "Try Deck Builder (Guest Mode)"
               }
               columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
               className='py-4'

@@ -8,8 +8,10 @@ import CardGrid from "./CardGrid";
 import DeckViewer from "./DeckViewer";
 import DeckStats from "./DeckStats";
 import CardHoverPreview from "./CardHoverPreview";
+import GuestModePrompt from "./GuestModePrompt";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { GuestDeckManager } from "@/app/lib/utils/guestDeckManager";
 
 interface DeckBuilderProps {
   cards: Card[];
@@ -19,6 +21,7 @@ interface DeckBuilderProps {
   initialIsPublic?: boolean;
   deckId?: string;
   isEditing?: boolean;
+  isGuestMode?: boolean;
 }
 
 export default function DeckBuilder({
@@ -29,6 +32,7 @@ export default function DeckBuilder({
   initialIsPublic = false,
   deckId,
   isEditing = false,
+  isGuestMode = false,
 }: DeckBuilderProps) {
   const router = useRouter();
   const [deckName, setDeckName] = useState(initialDeckName);
@@ -39,9 +43,47 @@ export default function DeckBuilder({
   const [filteredCards, setFilteredCards] = useState<Card[]>(cards);
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [isSaving, setIsSaving] = useState(false);
+  const [showGuestPrompt, setShowGuestPrompt] = useState(false);
 
   // Maximum number of copies of a card allowed in a deck
   const MAX_COPIES = 4;
+
+  // Load guest deck data on mount if in guest mode
+  useEffect(() => {
+    if (isGuestMode && !isEditing) {
+      const guestDeck = GuestDeckManager.loadGuestDeck();
+      if (guestDeck) {
+        setDeckName(guestDeck.name);
+        setDeckDescription(guestDeck.description);
+        setDeckCards(guestDeck.cards);
+        setIsPublic(guestDeck.isPublic);
+      }
+    }
+  }, [isGuestMode, isEditing]);
+
+  // Auto-save guest deck changes
+  useEffect(() => {
+    if (
+      isGuestMode &&
+      !isEditing &&
+      (deckName || deckDescription || deckCards.length > 0)
+    ) {
+      const timeoutId = setTimeout(() => {
+        try {
+          GuestDeckManager.saveGuestDeck({
+            name: deckName || "Untitled Deck",
+            description: deckDescription,
+            cards: deckCards,
+            isPublic,
+          });
+        } catch (error) {
+          console.error("Failed to auto-save guest deck:", error);
+        }
+      }, 1000); // Debounce auto-save by 1 second
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [deckName, deckDescription, deckCards, isPublic, isGuestMode, isEditing]);
 
   // Handle adding a card to the deck
   const handleAddCard = (cardId: string) => {
@@ -113,6 +155,12 @@ export default function DeckBuilder({
       return;
     }
 
+    // If in guest mode, show prompt to sign in
+    if (isGuestMode) {
+      setShowGuestPrompt(true);
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -170,6 +218,31 @@ export default function DeckBuilder({
 
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+      {/* Guest Mode Prompt */}
+      {isGuestMode && (
+        <div className='lg:col-span-3'>
+          <GuestModePrompt
+            deckName={deckName}
+            variant='banner'
+            onDismiss={() => setShowGuestPrompt(false)}
+          />
+        </div>
+      )}
+
+      {/* Guest Mode Modal Prompt */}
+      {showGuestPrompt && (
+        <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
+          <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg max-w-md w-full'>
+            <GuestModePrompt
+              deckName={deckName}
+              variant='modal'
+              showDismiss={true}
+              onDismiss={() => setShowGuestPrompt(false)}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Left Column - Deck Info and Stats */}
       <div className='lg:col-span-1 space-y-4'>
         <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
@@ -225,8 +298,18 @@ export default function DeckBuilder({
             <button
               onClick={handleSaveDeck}
               disabled={isSaving}
-              className='w-full py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark text-white rounded disabled:opacity-50'>
-              {isSaving ? "Saving..." : isEditing ? "Update Deck" : "Save Deck"}
+              className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
+                isGuestMode
+                  ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
+                  : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
+              }`}>
+              {isSaving
+                ? "Saving..."
+                : isGuestMode
+                ? "Sign In to Save Deck"
+                : isEditing
+                ? "Update Deck"
+                : "Save Deck"}
             </button>
           </div>
         </div>

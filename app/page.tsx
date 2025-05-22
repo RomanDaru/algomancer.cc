@@ -45,7 +45,7 @@ export default function Home() {
             Create Deck
           </h2>
           <p className='text-gray-400 text-center text-sm mb-3'>
-            Build your own custom deck
+            Build your own custom deck (no signup required)
           </p>
           <span className='flex items-center text-algomancy-purple text-sm'>
             Get Started{" "}

@@ -9,6 +9,8 @@ import { Card } from "@/app/lib/types/card";
 import { formatDistanceToNow } from "date-fns";
 import { toast, Toaster } from "react-hot-toast";
 import DeckGrid from "@/app/components/DeckGrid";
+import GuestDeckMigrationBanner from "@/app/components/GuestDeckMigrationBanner";
+import { GuestDeckMigration } from "@/app/lib/utils/guestDeckMigration";
 
 export default function MyDecks() {
   const { data: session, status } = useSession();
@@ -17,6 +19,11 @@ export default function MyDecks() {
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showMigrationBanner, setShowMigrationBanner] = useState(false);
+  const [migrationData, setMigrationData] = useState<{
+    deckName: string;
+    totalCards: number;
+  } | null>(null);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -24,6 +31,27 @@ export default function MyDecks() {
       router.push("/auth/signin");
     }
   }, [status, router]);
+
+  // Check for guest deck migration when user becomes authenticated
+  // Note: Primary migration is now handled by GuestDeckMigrationHandler
+  // This is kept as a fallback for edge cases
+  useEffect(() => {
+    if (status === "authenticated") {
+      // Add a small delay to let the primary migration handler run first
+      const timer = setTimeout(() => {
+        const guestDeckInfo = GuestDeckMigration.getGuestDeckInfo();
+        if (guestDeckInfo) {
+          setMigrationData({
+            deckName: guestDeckInfo.deckName,
+            totalCards: guestDeckInfo.totalCards,
+          });
+          setShowMigrationBanner(true);
+        }
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   // Fetch user's decks and cards
   useEffect(() => {
@@ -86,6 +114,28 @@ export default function MyDecks() {
             Create New Deck
           </Link>
         </div>
+
+        {/* Guest Deck Migration Banner */}
+        {showMigrationBanner && migrationData && (
+          <GuestDeckMigrationBanner
+            deckName={migrationData.deckName}
+            totalCards={migrationData.totalCards}
+            onMigrate={async () => {
+              const result = await GuestDeckMigration.migrateGuestDeck();
+              if (result.success) {
+                setShowMigrationBanner(false);
+                // Refresh the decks list
+                window.location.reload();
+              }
+              return result;
+            }}
+            onDiscard={() => {
+              GuestDeckMigration.discardGuestDeck();
+              setShowMigrationBanner(false);
+            }}
+            onDismiss={() => setShowMigrationBanner(false)}
+          />
+        )}
 
         {error && (
           <div className='bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 text-white'>

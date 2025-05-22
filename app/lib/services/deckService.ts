@@ -43,10 +43,10 @@ export const deckService = {
 
   /**
    * Get public decks
-   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
+   * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
    */
   async getPublicDecks(
-    sortBy: "popular" | "newest" = "newest"
+    sortBy: "popular" | "newest" | "liked" = "newest"
   ): Promise<Deck[]> {
     try {
       return await deckDbService.getPublicDecks(sortBy);
@@ -160,10 +160,10 @@ export const deckService = {
 
   /**
    * Get public decks with user information
-   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
+   * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
    */
   async getPublicDecksWithUserInfo(
-    sortBy: "popular" | "newest" = "newest"
+    sortBy: "popular" | "newest" | "liked" = "newest"
   ): Promise<
     { deck: Deck; user: { name: string; username: string | null } }[]
   > {
@@ -367,7 +367,9 @@ export const deckService = {
       // Get user information for each deck
       const decksWithUserInfo = await Promise.all(
         likedDecks.map(async (deck) => {
-          const user = await deckDbService.getUserInfo(deck.userId.toString());
+          const user = await deckDbService.getDeckUserInfo(
+            deck.userId.toString()
+          );
           return { deck, user };
         })
       );

@@ -30,19 +30,23 @@ export const deckDbService = {
 
   /**
    * Get public decks with user information
-   * @param sortBy Optional parameter to sort by 'popular' (views) or 'newest' (default)
+   * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
    */
   async getPublicDecks(
-    sortBy: "popular" | "newest" = "newest"
+    sortBy: "popular" | "newest" | "liked" = "newest"
   ): Promise<Deck[]> {
     try {
       await connectToDatabase();
 
       // Sort by the specified field
-      const sortOptions =
-        sortBy === "popular"
-          ? { views: -1 } // Sort by views (descending)
-          : { createdAt: -1 }; // Sort by createdAt (descending)
+      let sortOptions;
+      if (sortBy === "popular") {
+        sortOptions = { views: -1 }; // Sort by views (descending)
+      } else if (sortBy === "liked") {
+        sortOptions = { likes: -1 }; // Sort by likes (descending)
+      } else {
+        sortOptions = { createdAt: -1 }; // Sort by createdAt (descending)
+      }
 
       const deckDocs = await DeckModel.find({ isPublic: true }).sort(
         sortOptions
@@ -459,6 +463,8 @@ export const deckDbService = {
         isPublic: updatedDeck.isPublic,
         views: updatedDeck.views || 0,
         viewedBy: updatedDeck.viewedBy || [],
+        likes: updatedDeck.likes || 0,
+        likedBy: updatedDeck.likedBy || [],
       };
     } catch (error) {
       console.error(`Error incrementing view count for deck ${deckId}:`, error);

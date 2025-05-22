@@ -30,6 +30,7 @@ export default function PublicDecksPage() {
   const [sortBy, setSortBy] = useState<"newest" | "popular" | "liked">(
     "newest"
   );
+  const [sortTransition, setSortTransition] = useState(false);
 
   // Fetch public decks and cards
   useEffect(() => {
@@ -64,8 +65,8 @@ export default function PublicDecksPage() {
           const decksData = await decksResponse.json();
           setDecksWithUsers(decksData);
         } else {
-          // Fetch all public decks if no card filter
-          const decksResponse = await fetch(`/api/decks/public?sort=${sortBy}`);
+          // Fetch all public decks (always newest first, we'll sort client-side)
+          const decksResponse = await fetch(`/api/decks/public?sort=newest`);
           if (!decksResponse.ok) {
             throw new Error("Failed to fetch public decks");
           }
@@ -81,7 +82,20 @@ export default function PublicDecksPage() {
     }
 
     fetchData();
-  }, [cardId, sortBy]);
+  }, [cardId]); // Only refetch when cardId changes, not sortBy
+
+  // Handle smooth sorting transitions
+  const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
+    if (newSortBy === sortBy) return;
+
+    setSortTransition(true);
+    setSortBy(newSortBy);
+
+    // Reset transition after animation
+    setTimeout(() => {
+      setSortTransition(false);
+    }, 300);
+  };
 
   if (isLoading) {
     return (
@@ -113,8 +127,8 @@ export default function PublicDecksPage() {
                 <span className='text-gray-400 mr-2'>Sort by:</span>
                 <div className='flex space-x-2'>
                   <button
-                    onClick={() => setSortBy("newest")}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    onClick={() => handleSortChange("newest")}
+                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
                       sortBy === "newest"
                         ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
                         : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
@@ -122,17 +136,17 @@ export default function PublicDecksPage() {
                     Newest
                   </button>
                   <button
-                    onClick={() => setSortBy("liked")}
-                    className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                    onClick={() => handleSortChange("liked")}
+                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
                       sortBy === "liked"
-                        ? "bg-algomancy-purple text-white"
-                        : "bg-algomancy-dark text-gray-300 hover:bg-algomancy-purple/50"
+                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
                     }`}>
                     Most Liked
                   </button>
                   <button
-                    onClick={() => setSortBy("popular")}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    onClick={() => handleSortChange("popular")}
+                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
                       sortBy === "popular"
                         ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
                         : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
@@ -174,57 +188,62 @@ export default function PublicDecksPage() {
           </div>
         )}
 
-        {/* Sort decks based on selected sort option */}
-        {(() => {
-          // Create a sorted copy of the decks
-          const sortedDecks = [...decksWithUsers].sort((a, b) => {
-            if (sortBy === "popular") {
-              // Sort by view count (most viewed first)
-              return (b.deck.views || 0) - (a.deck.views || 0);
-            } else if (sortBy === "liked") {
-              // Sort by like count (most liked first)
-              return (b.deck.likes || 0) - (a.deck.likes || 0);
-            } else {
-              // Sort by creation date (newest first)
-              return (
-                new Date(b.deck.createdAt).getTime() -
-                new Date(a.deck.createdAt).getTime()
-              );
-            }
-          });
+        {/* Deck Grid with smooth transitions */}
+        <div
+          className={`transition-all duration-300 ${
+            sortTransition ? "opacity-50 scale-95" : "opacity-100 scale-100"
+          }`}>
+          {(() => {
+            // Create a sorted copy of the decks
+            const sortedDecks = [...decksWithUsers].sort((a, b) => {
+              if (sortBy === "popular") {
+                // Sort by view count (most viewed first)
+                return (b.deck.views || 0) - (a.deck.views || 0);
+              } else if (sortBy === "liked") {
+                // Sort by like count (most liked first)
+                return (b.deck.likes || 0) - (a.deck.likes || 0);
+              } else {
+                // Sort by creation date (newest first)
+                return (
+                  new Date(b.deck.createdAt).getTime() -
+                  new Date(a.deck.createdAt).getTime()
+                );
+              }
+            });
 
-          return (
-            <DeckGrid
-              decks={sortedDecks.map((item) => item.deck)}
-              cards={cards}
-              users={sortedDecks.reduce((acc, { deck, user }) => {
-                if (deck.userId) {
-                  acc[deck.userId] = user;
+            return (
+              <DeckGrid
+                decks={sortedDecks.map((item) => item.deck)}
+                cards={cards}
+                users={sortedDecks.reduce((acc, { deck, user }) => {
+                  if (deck.userId) {
+                    acc[deck.userId] = user;
+                  }
+                  return acc;
+                }, {} as Record<string, { name: string; username: string | null }>)}
+                emptyMessage={
+                  filteredCard
+                    ? `No decks found containing ${filteredCard.name}`
+                    : "No Public Decks Yet"
                 }
-                return acc;
-              }, {} as Record<string, { name: string; username: string | null }>)}
-              emptyMessage={
-                filteredCard
-                  ? `No decks found containing ${filteredCard.name}`
-                  : "No Public Decks Yet"
-              }
-              emptyAction={
-                filteredCard
-                  ? {
-                      text: `Create a deck with ${filteredCard.name}`,
-                      link: `/decks/create?card=${filteredCard.id}`,
-                    }
-                  : undefined
-              }
-              createDeckLink='/decks/create'
-              createDeckText={
-                session ? "Create a Deck" : "Try Deck Builder (Guest Mode)"
-              }
-              columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
-              className='py-4'
-            />
-          );
-        })()}
+                emptyAction={
+                  filteredCard
+                    ? {
+                        text: `Create a deck with ${filteredCard.name}`,
+                        link: `/decks/create?card=${filteredCard.id}`,
+                      }
+                    : undefined
+                }
+                createDeckLink='/decks/create'
+                createDeckText={
+                  session ? "Create a Deck" : "Try Deck Builder (Guest Mode)"
+                }
+                columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
+                className='py-4'
+              />
+            );
+          })()}
+        </div>
       </div>
     </div>
   );

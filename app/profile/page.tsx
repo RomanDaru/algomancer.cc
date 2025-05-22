@@ -162,32 +162,27 @@ export default function Profile() {
                 />
               </div>
 
-              {/* Stats Section */}
+              {/* Liked Decks Section */}
               <div className='bg-algomancy-dark border border-algomancy-purple/20 rounded-lg p-6'>
-                <h2 className='text-xl font-semibold text-white mb-4'>Stats</h2>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='bg-algomancy-darker border border-algomancy-purple/10 rounded-lg p-4 text-center'>
-                    <p className='text-gray-400 text-sm'>Decks Created</p>
-                    <p className='text-2xl font-bold text-algomancy-gold'>
-                      {decks.length}
-                    </p>
-                  </div>
-                  <div className='bg-algomancy-darker border border-algomancy-purple/10 rounded-lg p-4 text-center'>
-                    <p className='text-gray-400 text-sm'>Favorite Cards</p>
-                    <p className='text-2xl font-bold text-algomancy-gold'>0</p>
-                  </div>
-                  <div className='bg-algomancy-darker border border-algomancy-purple/10 rounded-lg p-4 text-center'>
-                    <p className='text-gray-400 text-sm'>Account Age</p>
-                    <p className='text-2xl font-bold text-algomancy-gold'>
-                      New
-                    </p>
-                  </div>
-                  <div className='bg-algomancy-darker border border-algomancy-purple/10 rounded-lg p-4 text-center'>
-                    <p className='text-gray-400 text-sm'>Last Login</p>
-                    <p className='text-2xl font-bold text-algomancy-gold'>
-                      Today
-                    </p>
-                  </div>
+                <div className='flex justify-between items-center mb-4'>
+                  <h2 className='text-xl font-semibold text-white'>
+                    Liked Decks
+                  </h2>
+                  <Link
+                    href='/profile/liked-decks'
+                    className='px-3 py-1 text-xs rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark'>
+                    View All
+                  </Link>
+                </div>
+                <div className='text-center py-8 text-gray-400'>
+                  <p className='mb-4'>
+                    ❤️ Discover and like amazing decks from the community!
+                  </p>
+                  <Link
+                    href='/decks'
+                    className='inline-block px-4 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark rounded-md text-white text-sm transition-colors'>
+                    Browse Community Decks
+                  </Link>
                 </div>
               </div>
             </div>

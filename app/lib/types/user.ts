@@ -22,6 +22,8 @@ export interface Deck {
   isPublic: boolean;
   views: number;
   viewedBy: string[];
+  likes: number;
+  likedBy: ObjectId[];
 }
 
 export interface DeckCard {

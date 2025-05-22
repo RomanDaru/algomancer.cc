@@ -26,6 +26,8 @@ const DeckSchema = new Schema(
     isPublic: { type: Boolean, default: false },
     views: { type: Number, default: 0 }, // Track number of views
     viewedBy: { type: [String], default: [] }, // Store IPs or session IDs that have viewed the deck
+    likes: { type: Number, default: 0 }, // Track number of likes
+    likedBy: { type: [Schema.Types.ObjectId], default: [], ref: "User" }, // Store user IDs who liked the deck
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -50,6 +52,8 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
     isPublic: deck.isPublic,
     views: deck.views || 0,
     viewedBy: deck.viewedBy || [],
+    likes: deck.likes || 0,
+    likedBy: deck.likedBy || [],
   };
 }
 

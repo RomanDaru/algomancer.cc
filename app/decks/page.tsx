@@ -27,7 +27,9 @@ export default function PublicDecksPage() {
   const [filteredCard, setFilteredCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<"newest" | "popular">("newest");
+  const [sortBy, setSortBy] = useState<"newest" | "popular" | "liked">(
+    "newest"
+  );
 
   // Fetch public decks and cards
   useEffect(() => {
@@ -120,6 +122,15 @@ export default function PublicDecksPage() {
                     Newest
                   </button>
                   <button
+                    onClick={() => setSortBy("liked")}
+                    className={`px-3 py-1 rounded-md text-sm transition-colors ${
+                      sortBy === "liked"
+                        ? "bg-algomancy-purple text-white"
+                        : "bg-algomancy-dark text-gray-300 hover:bg-algomancy-purple/50"
+                    }`}>
+                    Most Liked
+                  </button>
+                  <button
                     onClick={() => setSortBy("popular")}
                     className={`px-3 py-1 text-xs rounded-full border ${
                       sortBy === "popular"
@@ -170,6 +181,9 @@ export default function PublicDecksPage() {
             if (sortBy === "popular") {
               // Sort by view count (most viewed first)
               return (b.deck.views || 0) - (a.deck.views || 0);
+            } else if (sortBy === "liked") {
+              // Sort by like count (most liked first)
+              return (b.deck.likes || 0) - (a.deck.likes || 0);
             } else {
               // Sort by creation date (newest first)
               return (

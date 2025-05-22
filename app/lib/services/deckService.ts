@@ -325,4 +325,60 @@ export const deckService = {
       throw error;
     }
   },
+
+  /**
+   * Toggle like status for a deck
+   */
+  async toggleDeckLike(
+    deckId: string,
+    userId: ObjectId
+  ): Promise<{ liked: boolean; likes: number } | null> {
+    try {
+      return await deckDbService.toggleDeckLike(deckId, userId);
+    } catch (error) {
+      console.error(`Error toggling like for deck ${deckId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get decks liked by a user
+   */
+  async getUserLikedDecks(userId: string): Promise<Deck[]> {
+    try {
+      return await deckDbService.getUserLikedDecks(userId);
+    } catch (error) {
+      console.error(`Error getting liked decks for user ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get liked decks with user information
+   */
+  async getUserLikedDecksWithUserInfo(
+    userId: string
+  ): Promise<
+    Array<{ deck: Deck; user: { name: string; username: string | null } }>
+  > {
+    try {
+      const likedDecks = await this.getUserLikedDecks(userId);
+
+      // Get user information for each deck
+      const decksWithUserInfo = await Promise.all(
+        likedDecks.map(async (deck) => {
+          const user = await deckDbService.getUserInfo(deck.userId.toString());
+          return { deck, user };
+        })
+      );
+
+      return decksWithUserInfo;
+    } catch (error) {
+      console.error(
+        `Error getting liked decks with user info for user ${userId}:`,
+        error
+      );
+      throw error;
+    }
+  },
 };

@@ -312,6 +312,79 @@ export const deckDbService = {
   },
 
   /**
+   * Toggle like status for a deck
+   */
+  async toggleDeckLike(
+    deckId: string,
+    userId: ObjectId
+  ): Promise<{ liked: boolean; likes: number } | null> {
+    try {
+      await connectToDatabase();
+
+      // First, check if the deck exists
+      const deck = await DeckModel.findById(new ObjectId(deckId));
+      if (!deck) {
+        return null;
+      }
+
+      // Check if user has already liked the deck
+      const userIdString = userId.toString();
+      const alreadyLiked = deck.likedBy.some(
+        (id) => id.toString() === userIdString
+      );
+
+      let updateOperation;
+      let newLikeCount;
+
+      if (alreadyLiked) {
+        // Unlike: remove user from likedBy array and decrement likes
+        updateOperation = {
+          $pull: { likedBy: userId },
+          $inc: { likes: -1 },
+        };
+        newLikeCount = Math.max(0, (deck.likes || 0) - 1);
+      } else {
+        // Like: add user to likedBy array and increment likes
+        updateOperation = {
+          $addToSet: { likedBy: userId },
+          $inc: { likes: 1 },
+        };
+        newLikeCount = (deck.likes || 0) + 1;
+      }
+
+      // Update the deck
+      await DeckModel.findByIdAndUpdate(new ObjectId(deckId), updateOperation, {
+        new: true,
+      });
+
+      return {
+        liked: !alreadyLiked,
+        likes: newLikeCount,
+      };
+    } catch (error) {
+      console.error(`Error toggling like for deck ${deckId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get decks liked by a user
+   */
+  async getUserLikedDecks(userId: string): Promise<Deck[]> {
+    try {
+      await connectToDatabase();
+      const deckDocs = await DeckModel.find({
+        likedBy: new ObjectId(userId),
+        isPublic: true, // Only return public decks
+      }).sort({ updatedAt: -1 });
+      return deckDocs.map(convertDocumentToDeck);
+    } catch (error) {
+      console.error(`Error getting liked decks for user ${userId}:`, error);
+      throw error;
+    }
+  },
+
+  /**
    * Increment the view count for a deck
    * Uses the viewerId to prevent duplicate views from the same user/session
    */

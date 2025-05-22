@@ -5,6 +5,7 @@ import { Card } from "@/app/lib/types/card";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import ElementIcons from "./ElementIcons";
+import LikeButton from "./LikeButton";
 import { ElementType, generateElementGradient } from "@/app/lib/utils/elements";
 
 interface DeckCardProps {
@@ -153,6 +154,14 @@ export default function DeckCard({
                 </svg>
                 {typeof deck.views === "number" ? deck.views : 0}
               </span>
+              <div onClick={(e) => e.preventDefault()}>
+                <LikeButton
+                  deckId={deck._id.toString()}
+                  initialLikes={deck.likes || 0}
+                  size='sm'
+                  showCount={true}
+                />
+              </div>
             </div>
             <span className='text-white/80'>
               {formatDistanceToNow(new Date(deck.createdAt), {

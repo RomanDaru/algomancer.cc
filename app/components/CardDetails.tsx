@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import ElementIcons from "./ElementIcons";
 import {
   ElementType,
-  getDeckElements,
+  getAllDeckElements,
   generateElementGradient,
 } from "@/app/lib/utils/elements";
 import CardImageSkeleton from "./CardImageSkeleton";
@@ -243,9 +243,9 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                     quantity: number;
                   }[];
 
-                  // Get the dominant elements (max 3)
+                  // Get ALL elements in the deck
                   if (cardsWithQuantities.length > 0) {
-                    deckElements = getDeckElements(cardsWithQuantities, 3);
+                    deckElements = getAllDeckElements(cardsWithQuantities);
                   }
                 } else {
                   // Fallback: Use the deck ID for consistent colors when card data isn't available

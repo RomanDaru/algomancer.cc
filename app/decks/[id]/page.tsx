@@ -17,7 +17,7 @@ import ElementIcons from "@/app/components/ElementIcons";
 import DeckDetailViewer from "@/app/components/DeckDetailViewer";
 import {
   ElementType,
-  getDeckElements,
+  getAllDeckElements,
   generateElementGradient,
 } from "@/app/lib/utils/elements";
 
@@ -213,10 +213,10 @@ export default function DeckPage({ params }: DeckPageProps) {
     quantity: number;
   }[];
 
-  // Get the dominant elements (max 3)
+  // Get ALL elements in the deck
   const deckElements =
     cardsWithQuantities.length > 0
-      ? getDeckElements(cardsWithQuantities, 3)
+      ? getAllDeckElements(cardsWithQuantities)
       : ["Colorless"];
 
   // Generate gradient based on deck elements - use non-vibrant colors

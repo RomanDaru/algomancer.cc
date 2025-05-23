@@ -8,6 +8,8 @@ import { Card } from "@/app/lib/types/card";
 import { formatDistanceToNow } from "date-fns";
 import { useSession } from "next-auth/react";
 import DeckGrid from "@/app/components/DeckGrid";
+import ElementFilter from "@/app/components/ElementFilter";
+import { ElementType, getAllDeckElements } from "@/app/lib/utils/elements";
 
 interface DeckWithUser {
   deck: Deck;
@@ -31,6 +33,7 @@ export default function PublicDecksPage() {
     "newest"
   );
   const [sortTransition, setSortTransition] = useState(false);
+  const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
 
   // Fetch public decks and cards
   useEffect(() => {
@@ -106,144 +109,189 @@ export default function PublicDecksPage() {
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
-      <div className='max-w-7xl mx-auto'>
-        <div className='flex justify-between items-center mb-6'>
-          {filteredCard ? (
-            <div className='flex items-center'>
-              <Link
-                href='/decks'
-                className='text-algomancy-purple hover:text-algomancy-gold mr-3'>
-                ← Back to All Decks
-              </Link>
-              <h1 className='text-2xl font-bold text-white'>
-                Decks with {filteredCard.name}
-              </h1>
-            </div>
-          ) : (
-            <div className='flex flex-col md:flex-row md:items-center'>
+    <div className='mx-auto px-6 py-8 max-w-[95%]'>
+      <div className='flex justify-between items-center mb-6'>
+        {filteredCard ? (
+          <div className='flex items-center'>
+            <Link
+              href='/decks'
+              className='text-algomancy-purple hover:text-algomancy-gold mr-3'>
+              ← Back to All Decks
+            </Link>
+            <h1 className='text-2xl font-bold text-white'>
+              Decks with {filteredCard.name}
+            </h1>
+          </div>
+        ) : (
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-center w-full'>
+            {/* Left side - Title */}
+            <div className='flex-shrink-0'>
               <h1 className='text-2xl font-bold text-white'>Community Decks</h1>
-              <div className='mt-2 md:mt-0 md:ml-6 flex items-center'>
-                <span className='text-gray-400 mr-2'>Sort by:</span>
-                <div className='flex space-x-2'>
-                  <button
-                    onClick={() => handleSortChange("newest")}
-                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
-                      sortBy === "newest"
-                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
-                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
-                    }`}>
-                    Newest
-                  </button>
-                  <button
-                    onClick={() => handleSortChange("liked")}
-                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
-                      sortBy === "liked"
-                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
-                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
-                    }`}>
-                    Most Liked
-                  </button>
-                  <button
-                    onClick={() => handleSortChange("popular")}
-                    className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
-                      sortBy === "popular"
-                        ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
-                        : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
-                    }`}>
-                    Most Popular
-                  </button>
-                </div>
+            </div>
+
+            {/* Center - Sort by section */}
+            <div className='flex items-center justify-center'>
+              <span className='text-gray-400 mr-3'>Sort by:</span>
+              <div className='flex space-x-2'>
+                <button
+                  onClick={() => handleSortChange("newest")}
+                  className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                    sortBy === "newest"
+                      ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                      : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                  }`}>
+                  Newest
+                </button>
+                <button
+                  onClick={() => handleSortChange("liked")}
+                  className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                    sortBy === "liked"
+                      ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                      : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                  }`}>
+                  Most Liked
+                </button>
+                <button
+                  onClick={() => handleSortChange("popular")}
+                  className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                    sortBy === "popular"
+                      ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
+                      : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                  }`}>
+                  Most Popular
+                </button>
               </div>
             </div>
-          )}
+
+            {/* Right side - Element Filter */}
+            <div className='flex justify-end'>
+              <ElementFilter onElementsChange={setSelectedElements} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className='bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 text-white'>
+          <p>{error}</p>
         </div>
+      )}
 
-        {error && (
-          <div className='bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 text-white'>
-            <p>{error}</p>
-          </div>
-        )}
-
-        {filteredCard && (
-          <div className='bg-algomancy-dark border border-algomancy-purple/30 rounded-lg p-4 mb-6'>
-            <div className='flex items-center'>
-              <div className='relative w-12 h-16 mr-4 rounded overflow-hidden'>
-                <img
-                  src={filteredCard.imageUrl}
-                  alt={filteredCard.name}
-                  className='object-cover w-full h-full'
-                />
-              </div>
-              <div>
-                <h2 className='text-lg font-semibold text-algomancy-gold'>
-                  {filteredCard.name}
-                </h2>
-                <p className='text-sm text-gray-300'>
-                  {filteredCard.element.type}{" "}
-                  {filteredCard.typeAndAttributes.mainType}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Deck Grid with smooth transitions */}
-        <div
-          className={`transition-all duration-300 ${
-            sortTransition ? "opacity-50 scale-95" : "opacity-100 scale-100"
-          }`}>
-          {(() => {
-            // Create a sorted copy of the decks
-            const sortedDecks = [...decksWithUsers].sort((a, b) => {
-              if (sortBy === "popular") {
-                // Sort by view count (most viewed first)
-                return (b.deck.views || 0) - (a.deck.views || 0);
-              } else if (sortBy === "liked") {
-                // Sort by like count (most liked first)
-                return (b.deck.likes || 0) - (a.deck.likes || 0);
-              } else {
-                // Sort by creation date (newest first)
-                return (
-                  new Date(b.deck.createdAt).getTime() -
-                  new Date(a.deck.createdAt).getTime()
-                );
-              }
-            });
-
-            return (
-              <DeckGrid
-                decks={sortedDecks.map((item) => item.deck)}
-                cards={cards}
-                users={sortedDecks.reduce((acc, { deck, user }) => {
-                  if (deck.userId) {
-                    acc[deck.userId] = user;
-                  }
-                  return acc;
-                }, {} as Record<string, { name: string; username: string | null }>)}
-                emptyMessage={
-                  filteredCard
-                    ? `No decks found containing ${filteredCard.name}`
-                    : "No Public Decks Yet"
-                }
-                emptyAction={
-                  filteredCard
-                    ? {
-                        text: `Create a deck with ${filteredCard.name}`,
-                        link: `/decks/create?card=${filteredCard.id}`,
-                      }
-                    : undefined
-                }
-                createDeckLink='/decks/create'
-                createDeckText={
-                  session ? "Create a Deck" : "Try Deck Builder (Guest Mode)"
-                }
-                columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
-                className='py-4'
+      {filteredCard && (
+        <div className='bg-algomancy-dark border border-algomancy-purple/30 rounded-lg p-4 mb-6'>
+          <div className='flex items-center'>
+            <div className='relative w-12 h-16 mr-4 rounded overflow-hidden'>
+              <img
+                src={filteredCard.imageUrl}
+                alt={filteredCard.name}
+                className='object-cover w-full h-full'
               />
-            );
-          })()}
+            </div>
+            <div>
+              <h2 className='text-lg font-semibold text-algomancy-gold'>
+                {filteredCard.name}
+              </h2>
+              <p className='text-sm text-gray-300'>
+                {filteredCard.element.type}{" "}
+                {filteredCard.typeAndAttributes.mainType}
+              </p>
+            </div>
+          </div>
         </div>
+      )}
+
+      {/* Deck Grid with smooth transitions */}
+      <div
+        className={`transition-all duration-300 ${
+          sortTransition ? "opacity-50 scale-95" : "opacity-100 scale-100"
+        }`}>
+        {(() => {
+          // Filter decks by selected elements first
+          let filteredDecks = decksWithUsers;
+
+          if (selectedElements.length > 0) {
+            filteredDecks = decksWithUsers.filter(({ deck }) => {
+              // Get deck elements
+              const cardsWithQuantities = deck.cards
+                .map((deckCard) => {
+                  const card = cards.find((c) => c.id === deckCard.cardId);
+                  return {
+                    card,
+                    quantity: deckCard.quantity,
+                  };
+                })
+                .filter((item) => item.card !== undefined) as {
+                card: Card;
+                quantity: number;
+              }[];
+
+              if (cardsWithQuantities.length === 0) return false;
+
+              // Get ALL elements used in the deck, not just dominant ones
+              const deckElements = getAllDeckElements(cardsWithQuantities);
+
+              // Filtering logic:
+              // Show decks that contain ALL selected elements (inclusive filtering)
+              // Deck can have additional elements beyond the selected ones
+              return selectedElements.every((element) =>
+                deckElements.includes(element)
+              );
+            });
+          }
+
+          // Create a sorted copy of the filtered decks
+          const sortedDecks = [...filteredDecks].sort((a, b) => {
+            if (sortBy === "popular") {
+              // Sort by view count (most viewed first)
+              return (b.deck.views || 0) - (a.deck.views || 0);
+            } else if (sortBy === "liked") {
+              // Sort by like count (most liked first)
+              return (b.deck.likes || 0) - (a.deck.likes || 0);
+            } else {
+              // Sort by creation date (newest first)
+              return (
+                new Date(b.deck.createdAt).getTime() -
+                new Date(a.deck.createdAt).getTime()
+              );
+            }
+          });
+
+          return (
+            <DeckGrid
+              decks={sortedDecks.map((item) => item.deck)}
+              cards={cards}
+              users={sortedDecks.reduce((acc, { deck, user }) => {
+                if (deck.userId) {
+                  acc[deck.userId.toString()] = user;
+                }
+                return acc;
+              }, {} as Record<string, { name: string; username: string | null }>)}
+              emptyMessage={
+                filteredCard
+                  ? `No decks found containing ${filteredCard.name}`
+                  : selectedElements.length > 0
+                  ? `No decks found with ${selectedElements.join(
+                      ", "
+                    )} elements`
+                  : "No Public Decks Yet"
+              }
+              emptyAction={
+                filteredCard
+                  ? {
+                      text: `Create a deck with ${filteredCard.name}`,
+                      link: `/decks/create?card=${filteredCard.id}`,
+                    }
+                  : undefined
+              }
+              createDeckLink='/decks/create'
+              createDeckText={
+                session ? "Create a Deck" : "Try Deck Builder (Guest Mode)"
+              }
+              columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
+              className='py-4'
+            />
+          );
+        })()}
       </div>
     </div>
   );

@@ -6,7 +6,11 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import ElementIcons from "./ElementIcons";
 import LikeButton from "./LikeButton";
-import { ElementType, generateElementGradient } from "@/app/lib/utils/elements";
+import {
+  ElementType,
+  generateElementGradient,
+  getAllDeckElements,
+} from "@/app/lib/utils/elements";
 
 interface DeckCardProps {
   deck: Deck;
@@ -46,9 +50,9 @@ export default function DeckCard({
       quantity: number;
     }[];
 
-    // Get the dominant elements (max 3)
+    // Get ALL elements in the deck
     if (cardsWithQuantities.length > 0) {
-      deckElements = getDeckElements(cardsWithQuantities, 3);
+      deckElements = getAllDeckElements(cardsWithQuantities);
     }
   } else {
     // Fallback: Use the deck ID for consistent colors when card data isn't available

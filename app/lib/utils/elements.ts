@@ -60,6 +60,49 @@ export const ELEMENTS: Record<ElementType, ElementInfo> = {
 };
 
 /**
+ * Get ALL elements present in a deck (including hybrid elements)
+ * @param cards Array of cards in the deck
+ * @returns Array of all element types present in the deck
+ */
+export function getAllDeckElements(
+  cards: { card: Card; quantity: number }[]
+): ElementType[] {
+  if (!cards || cards.length === 0) {
+    return ["Colorless"];
+  }
+
+  const allElementsInDeck = new Set<ElementType>();
+
+  cards.forEach(({ card }) => {
+    if (card.element && card.element.type) {
+      const elementType = card.element.type;
+      // Handle both single and hybrid elements
+      if (elementType.includes("/")) {
+        // Hybrid element - add both parts
+        const parts = elementType.split("/");
+        parts.forEach((part) => {
+          const trimmedPart = part.trim();
+          // Only add if it's a valid basic element
+          if (
+            ["Fire", "Water", "Earth", "Wood", "Metal"].includes(trimmedPart)
+          ) {
+            allElementsInDeck.add(trimmedPart as ElementType);
+          }
+        });
+      } else {
+        // Single element - only add if it's a valid basic element
+        if (["Fire", "Water", "Earth", "Wood", "Metal"].includes(elementType)) {
+          allElementsInDeck.add(elementType as ElementType);
+        }
+      }
+    }
+  });
+
+  const result = Array.from(allElementsInDeck);
+  return result.length > 0 ? result : ["Colorless"];
+}
+
+/**
  * Get the dominant elements in a deck based on single-element cards only
  * @param cards Array of cards in the deck
  * @param maxElements Maximum number of elements to return

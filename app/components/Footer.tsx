@@ -20,7 +20,7 @@ export default function Footer() {
           </div>
 
           {/* Right side - Support section */}
-          <div className='flex flex-col items-center md:items-end space-y-3'>
+          <div className='flex flex-col md:flex-row items-center md:items-center space-y-3 md:space-y-0 md:space-x-4'>
             <div className='text-center md:text-right'>
               <p className='text-sm text-gray-300 mb-1'>
                 Supporting Algomancer.gg
@@ -35,7 +35,7 @@ export default function Footer() {
               href='https://www.buymeacoffee.com/RomanDaru'
               target='_blank'
               rel='noopener noreferrer'
-              className='transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-algomancy-purple/20'
+              className='transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-algomancy-purple/20 flex-shrink-0'
               title='Support the development of Algomancer.gg'>
               <img
                 src='https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png'

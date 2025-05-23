@@ -51,16 +51,18 @@ export default function ElementFilter({
             key={element}
             onClick={() => toggleElement(element)}
             className={`relative p-1.5 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer ${
-              isSelected ? "shadow-lg shadow-algomancy-gold/30" : ""
+              isSelected
+                ? "bg-algomancy-purple/40 border border-algomancy-purple"
+                : "hover:bg-algomancy-purple/20"
             }`}
             title={`${isSelected ? "Remove" : "Add"} ${element} filter`}>
             <ElementIcon element={element} size={28} showTooltip={false} />
 
             {/* Selection indicator */}
             {isSelected && (
-              <div className='absolute -top-1 -right-1 w-3.5 h-3.5 bg-algomancy-gold rounded-full flex items-center justify-center'>
+              <div className='absolute -top-1 -right-1 w-3.5 h-3.5 bg-algomancy-purple rounded-full flex items-center justify-center'>
                 <svg
-                  className='w-2 h-2 text-black'
+                  className='w-2 h-2 text-white'
                   fill='currentColor'
                   viewBox='0 0 20 20'>
                   <path

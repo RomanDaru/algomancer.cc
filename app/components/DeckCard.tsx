@@ -114,75 +114,84 @@ export default function DeckCard({
           style={gradientStyle}
         />
 
-        <div className='relative p-5 z-10'>
-          <div className='flex justify-between items-start'>
-            <h2 className='text-white text-lg font-medium'>{deck.name}</h2>
-            <ElementIcons
-              elements={deckElements}
-              size={20}
-              className='ml-2'
-              showTooltips={true}
-            />
-          </div>
-
-          {deck.description && (
-            <p className='text-white/80 text-sm mt-2 line-clamp-2'>
-              {deck.description}
-            </p>
-          )}
-
-          <div className='flex justify-between items-center mt-6 text-sm'>
-            <div className='flex items-center space-x-4'>
-              <span className='text-white'>{totalCards} cards</span>
-              <span
-                className='text-white/80 flex items-center'
-                title={`${deck.views || 0} views`}>
-                <svg
-                  xmlns='http://www.w3.org/2000/svg'
-                  className='h-4 w-4 mr-1'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'>
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
-                  />
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
-                  />
-                </svg>
-                {typeof deck.views === "number" ? deck.views : 0}
-              </span>
-              <div onClick={(e) => e.preventDefault()}>
-                <LikeButton
-                  deckId={deck._id.toString()}
-                  initialLikes={deck.likes || 0}
-                  size='sm'
-                  showCount={true}
-                />
-              </div>
+        <div className='relative p-5 z-10 h-full flex flex-col'>
+          {/* Top section */}
+          <div>
+            <div className='flex justify-between items-start'>
+              <h2 className='text-white text-lg font-medium'>{deck.name}</h2>
+              <ElementIcons
+                elements={deckElements}
+                size={20}
+                className='ml-2'
+                showTooltips={true}
+              />
             </div>
-            <span className='text-white/80'>
-              {formatDistanceToNow(new Date(deck.createdAt), {
-                addSuffix: true,
-              })}
-            </span>
+
+            {deck.description && (
+              <p className='text-white/80 text-sm mt-2 line-clamp-2'>
+                {deck.description}
+              </p>
+            )}
           </div>
 
-          <div className='flex items-center mt-2 text-sm'>
-            <span className='text-white/80'>By </span>
-            {user.username ? (
-              <span className='text-white ml-1'>@{user.username}</span>
-            ) : (
-              <span className='text-white/80 ml-1'>
-                {user.name || "Unknown User"}
+          {/* Spacer to push bottom section down */}
+          <div className='flex-grow'></div>
+
+          {/* Bottom section - maintains original spacing but positioned at bottom */}
+          <div className='mt-6'>
+            <div className='flex justify-between items-center text-sm'>
+              <div className='flex items-center space-x-4'>
+                <span className='text-white'>{totalCards} cards</span>
+                <span
+                  className='text-white/80 flex items-center'
+                  title={`${deck.views || 0} views`}>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-4 w-4 mr-1'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+                    />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
+                    />
+                  </svg>
+                  {typeof deck.views === "number" ? deck.views : 0}
+                </span>
+                <div onClick={(e) => e.preventDefault()}>
+                  <LikeButton
+                    deckId={deck._id.toString()}
+                    initialLikes={deck.likes || 0}
+                    size='sm'
+                    showCount={true}
+                  />
+                </div>
+              </div>
+              <span className='text-white/80'>
+                {formatDistanceToNow(new Date(deck.createdAt), {
+                  addSuffix: true,
+                })}
               </span>
-            )}
+            </div>
+
+            <div className='flex items-center mt-2 text-sm'>
+              <span className='text-white/80'>By </span>
+              {user.username ? (
+                <span className='text-white ml-1'>@{user.username}</span>
+              ) : (
+                <span className='text-white/80 ml-1'>
+                  {user.name || "Unknown User"}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import DisclaimerModal from "./DisclaimerModal";
+import ContactModal from "./ContactModal";
 
 /**
  * Footer component for Algomancer.cc
@@ -9,6 +10,7 @@ import DisclaimerModal from "./DisclaimerModal";
  */
 export default function Footer() {
   const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   return (
     <footer className='bg-algomancy-darker border-t border-algomancy-purple/30 text-white mt-auto'>
       <div className='container mx-auto px-4 py-6'>
@@ -57,6 +59,12 @@ export default function Footer() {
             © {new Date().getFullYear()} Algomancer.cc. Built for the Algomancy
             community.{" "}
             <button
+              onClick={() => setIsContactOpen(true)}
+              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline'>
+              Contact & Feedback
+            </button>
+            {" • "}
+            <button
               onClick={() => setIsDisclaimerOpen(true)}
               className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline'>
               Legal Disclaimer
@@ -64,6 +72,12 @@ export default function Footer() {
           </p>
         </div>
       </div>
+
+      {/* Contact Modal */}
+      <ContactModal
+        isOpen={isContactOpen}
+        onClose={() => setIsContactOpen(false)}
+      />
 
       {/* Disclaimer Modal */}
       <DisclaimerModal

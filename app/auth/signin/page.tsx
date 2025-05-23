@@ -90,11 +90,18 @@ export default function SignIn() {
           </div>
 
           <div>
-            <label
-              htmlFor='password'
-              className='block text-sm font-medium text-gray-300'>
-              Password
-            </label>
+            <div className='flex justify-between items-center'>
+              <label
+                htmlFor='password'
+                className='block text-sm font-medium text-gray-300'>
+                Password
+              </label>
+              <Link
+                href='/auth/forgot-password'
+                className='text-sm text-algomancy-purple hover:text-algomancy-purple-light'>
+                Forgot password?
+              </Link>
+            </div>
             <input
               id='password'
               name='password'

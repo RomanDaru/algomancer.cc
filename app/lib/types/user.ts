@@ -9,6 +9,8 @@ export interface User {
   image?: string;
   createdAt: Date;
   updatedAt: Date;
+  resetToken?: string; // Password reset token
+  resetTokenExpiry?: Date; // Password reset token expiry
 }
 
 export interface Deck {

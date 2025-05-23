@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { validatePassword } from "@/app/lib/utils/validation";
 
-export default function ResetPassword() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -304,5 +304,23 @@ export default function ResetPassword() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
+          <div className='w-full max-w-md p-8 space-y-8 bg-algomancy-darker border border-algomancy-purple/30 rounded-lg'>
+            <div className='text-center'>
+              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-algomancy-purple mx-auto'></div>
+              <p className='mt-4 text-gray-400'>Loading...</p>
+            </div>
+          </div>
+        </div>
+      }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Algomancer - Card Database",
+  title: "Algomancer.cc - Card Database",
   description: "Deck builder and card database for Algomancy",
 };
 

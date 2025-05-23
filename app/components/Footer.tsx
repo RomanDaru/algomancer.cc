@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Footer component for Algomancer.gg
+ * Footer component for Algomancer.cc
  * Provides site footer with BuyMeACoffee link and other information
  */
 export default function Footer() {
@@ -12,7 +12,7 @@ export default function Footer() {
           {/* Left side - Site info */}
           <div className='flex flex-col items-center md:items-start space-y-2'>
             <div className='text-algomancy-gold font-semibold'>
-              Algomancer.gg
+              Algomancer.cc
             </div>
             <div className='text-sm text-gray-400'>
               Your ultimate companion for the Algomancy card game
@@ -23,7 +23,7 @@ export default function Footer() {
           <div className='flex flex-col md:flex-row items-center md:items-center space-y-3 md:space-y-0 md:space-x-4'>
             <div className='text-center md:text-right'>
               <p className='text-sm text-gray-300 mb-1'>
-                Supporting Algomancer.gg
+                Supporting Algomancer.cc
               </p>
               <p className='text-xs text-gray-400 max-w-xs'>
                 This project is self-funded and built with passion for the
@@ -36,7 +36,7 @@ export default function Footer() {
               target='_blank'
               rel='noopener noreferrer'
               className='transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-algomancy-purple/20 flex-shrink-0'
-              title='Support the development of Algomancer.gg'>
+              title='Support the development of Algomancer.cc'>
               <img
                 src='https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png'
                 alt='Buy Me A Coffee'
@@ -50,7 +50,7 @@ export default function Footer() {
         {/* Bottom section - Copyright */}
         <div className='mt-6 pt-4 border-t border-algomancy-purple/20 text-center'>
           <p className='text-xs text-gray-500'>
-            © {new Date().getFullYear()} Algomancer.gg. Built for the Algomancy
+            © {new Date().getFullYear()} Algomancer.cc. Built for the Algomancy
             community.
           </p>
         </div>

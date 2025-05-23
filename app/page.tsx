@@ -6,7 +6,7 @@ export default function Home() {
     <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-black'>
       <div className='max-w-3xl w-full text-center mb-16'>
         <h1 className='text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
-          Algomancer.gg
+          Algomancer.cc
         </h1>
 
         <p className='text-xl md:text-2xl mb-8 text-gray-300 leading-relaxed'>

@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 /**
- * Navbar component for Algomancer.gg
+ * Navbar component for Algomancer.cc
  * Provides navigation, authentication controls, and responsive mobile menu
  */
 export default function Navbar() {
@@ -103,8 +103,8 @@ export default function Navbar() {
             <Link
               href='/'
               className='text-xl font-bold text-algomancy-gold-DEFAULT'
-              aria-label='Algomancer.gg Home'
-              title='Go to Algomancer.gg Home'>
+              aria-label='Algomancer.cc Home'
+              title='Go to Algomancer.cc Home'>
               Algomancer
             </Link>
           </div>

@@ -12,6 +12,8 @@ import {
   getDeckElements,
   generateElementGradient,
 } from "@/app/lib/utils/elements";
+import CardImageSkeleton from "./CardImageSkeleton";
+import { optimizeCardDetail } from "@/app/lib/utils/imageOptimization";
 
 interface CardDetailsProps {
   card: CardType;
@@ -33,6 +35,8 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
   );
   const [isLoadingDecks, setIsLoadingDecks] = useState(false);
   const [deckError, setDeckError] = useState<string | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // Fetch decks containing this card
   useEffect(() => {
@@ -66,7 +70,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
       {/* Close button */}
       {onClose && (
         <button
-          className='absolute top-4 right-4 text-gray-400 hover:text-white bg-algomancy-purple/20 hover:bg-algomancy-purple/40 rounded-full p-2 transition-colors z-10'
+          className='absolute top-4 right-4 text-gray-400 hover:text-white bg-algomancy-purple/20 hover:bg-algomancy-purple/40 rounded-full p-2 transition-colors z-10 cursor-pointer'
           onClick={onClose}>
           <svg
             xmlns='http://www.w3.org/2000/svg'
@@ -85,14 +89,34 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
         </button>
       )}
 
-      {/* Card Image */}
-      <div className='relative w-full md:w-1/2 aspect-[2/3]'>
+      {/* Card Image with Loading State */}
+      <div className='relative w-full md:w-1/2 aspect-[2/3] rounded-lg overflow-hidden'>
+        {/* Show skeleton while loading */}
+        {!imageLoaded && !imageError && (
+          <CardImageSkeleton className='absolute inset-0' />
+        )}
+
+        {/* Show error state if image fails to load */}
+        {imageError && (
+          <div className='absolute inset-0 bg-algomancy-darker flex items-center justify-center rounded-lg'>
+            <div className='text-center text-gray-400'>
+              <div className='text-4xl mb-3'>🃏</div>
+              <div className='text-sm'>Image unavailable</div>
+            </div>
+          </div>
+        )}
+
+        {/* Actual image */}
         <Image
-          src={card.imageUrl}
+          src={optimizeCardDetail(card.imageUrl)}
           alt={card.name}
           fill
-          className='object-cover rounded-lg'
+          className={`object-cover rounded-lg transition-opacity duration-300 ${
+            imageLoaded ? "opacity-100" : "opacity-0"
+          }`}
           sizes='(max-width: 768px) 100vw, 50vw'
+          onLoad={() => setImageLoaded(true)}
+          onError={() => setImageError(true)}
         />
       </div>
 

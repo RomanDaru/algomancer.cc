@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Deck } from "@/app/lib/types/user";
@@ -19,7 +19,7 @@ interface DeckWithUser {
   };
 }
 
-export default function PublicDecksPage() {
+function PublicDecksContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const cardId = searchParams.get("card");
@@ -294,5 +294,18 @@ export default function PublicDecksPage() {
         })()}
       </div>
     </div>
+  );
+}
+
+export default function PublicDecksPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
+          <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
+        </div>
+      }>
+      <PublicDecksContent />
+    </Suspense>
   );
 }

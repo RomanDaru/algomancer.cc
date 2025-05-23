@@ -1,10 +1,14 @@
 "use client";
 
+import { useState } from "react";
+import DisclaimerModal from "./DisclaimerModal";
+
 /**
  * Footer component for Algomancer.cc
  * Provides site footer with BuyMeACoffee link and other information
  */
 export default function Footer() {
+  const [isDisclaimerOpen, setIsDisclaimerOpen] = useState(false);
   return (
     <footer className='bg-algomancy-darker border-t border-algomancy-purple/30 text-white mt-auto'>
       <div className='container mx-auto px-4 py-6'>
@@ -51,10 +55,21 @@ export default function Footer() {
         <div className='mt-6 pt-4 border-t border-algomancy-purple/20 text-center'>
           <p className='text-xs text-gray-500'>
             © {new Date().getFullYear()} Algomancer.cc. Built for the Algomancy
-            community.
+            community.{" "}
+            <button
+              onClick={() => setIsDisclaimerOpen(true)}
+              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline'>
+              Legal Disclaimer
+            </button>
           </p>
         </div>
       </div>
+
+      {/* Disclaimer Modal */}
+      <DisclaimerModal
+        isOpen={isDisclaimerOpen}
+        onClose={() => setIsDisclaimerOpen(false)}
+      />
     </footer>
   );
 }

@@ -39,6 +39,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     try {
       // EmailJS template parameters
       const templateParams = {
+        to_email: "algomancercc@gmail.com", // Send to dedicated project email
         contact_type:
           selectedType.charAt(0).toUpperCase() + selectedType.slice(1),
         priority: selectedType === "bug" ? formData.priority : "N/A",

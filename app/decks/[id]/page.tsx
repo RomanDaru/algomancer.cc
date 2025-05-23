@@ -10,6 +10,7 @@ import Link from "next/link";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DeckStats from "@/app/components/DeckStats";
 import LikeButton from "@/app/components/LikeButton";
+import ShareButton from "@/app/components/ShareButton";
 import { toast, Toaster } from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
 import React from "react";
@@ -289,6 +290,14 @@ export default function DeckPage({ params }: DeckPageProps) {
                     initialLikes={deck.likes || 0}
                     size='sm'
                     showCount={true}
+                    className='text-white'
+                  />
+                </span>
+                <span className='ml-3'>
+                  <ShareButton
+                    deckId={deck._id.toString()}
+                    deckName={deck.name}
+                    size='sm'
                     className='text-white'
                   />
                 </span>

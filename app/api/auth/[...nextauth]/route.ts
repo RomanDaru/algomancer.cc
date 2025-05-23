@@ -12,7 +12,7 @@ const uri = process.env.MONGODB_URI || "";
 const client = new MongoClient(uri);
 const clientPromise = client.connect();
 
-export const authOptions = {
+const authOptions = {
   // Configure one or more authentication providers
   providers: [
     GoogleProvider({
@@ -125,4 +125,4 @@ export const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST };
+export { handler as GET, handler as POST, authOptions };

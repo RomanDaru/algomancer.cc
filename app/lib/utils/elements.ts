@@ -60,10 +60,10 @@ export const ELEMENTS: Record<ElementType, ElementInfo> = {
 };
 
 /**
- * Get the dominant elements in a deck based on card elements
+ * Get the dominant elements in a deck based on single-element cards only
  * @param cards Array of cards in the deck
  * @param maxElements Maximum number of elements to return
- * @returns Array of element types sorted by frequency
+ * @returns Array of element types sorted by frequency (based on single-element cards only)
  */
 export function getDeckElements(
   cards: { card: Card; quantity: number }[],
@@ -73,7 +73,7 @@ export function getDeckElements(
     return ["Colorless"];
   }
 
-  // Count elements
+  // Count elements from single-element cards only
   const elementCounts: Record<string, number> = {};
 
   cards.forEach(({ card, quantity }) => {
@@ -82,20 +82,12 @@ export function getDeckElements(
       // Extract the element type(s) from the card
       const elementType = card.element.type;
 
-      // Handle basic elements
+      // Only count single-element cards (ignore hybrid/multicolor cards)
       if (!elementType.includes("/")) {
         elementCounts[elementType] =
           (elementCounts[elementType] || 0) + quantity;
       }
-      // Handle hybrid elements (split them into their basic components)
-      else {
-        const [primary, secondary] = elementType.split("/") as [
-          BasicElementType,
-          BasicElementType
-        ];
-        elementCounts[primary] = (elementCounts[primary] || 0) + quantity;
-        elementCounts[secondary] = (elementCounts[secondary] || 0) + quantity;
-      }
+      // Skip hybrid elements - we don't count them for deck element representation
     }
   });
 

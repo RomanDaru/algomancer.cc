@@ -229,21 +229,6 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
                 </div>
               </div>
             </div>
-
-            {/* Element Legend */}
-            <div className='flex flex-wrap gap-2 mt-3 justify-center'>
-              {Object.entries(BASIC_ELEMENTS).map(([key, element]) => (
-                <div key={key} className='flex items-center'>
-                  <div
-                    className='w-3 h-3 rounded-full mr-1'
-                    style={{
-                      backgroundColor: ELEMENTS[element as ElementType].color,
-                    }}
-                  />
-                  <span className='text-xs text-gray-400'>{element}</span>
-                </div>
-              ))}
-            </div>
           </div>
 
           {/* Element Distribution */}

@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DeckStats from "@/app/components/DeckStats";
+import LikeButton from "@/app/components/LikeButton";
 import { toast, Toaster } from "react-hot-toast";
 import { formatDistanceToNow } from "date-fns";
 import React from "react";
@@ -234,38 +235,36 @@ export default function DeckPage({ params }: DeckPageProps) {
 
           <div className='relative p-6 flex flex-col md:flex-row justify-between items-start md:items-center'>
             <div>
-              <div className='flex items-center'>
-                <h1 className='text-2xl font-bold text-white mr-3'>
-                  {deck.name}
-                </h1>
+              {/* Top row: Element icons + Deck name + Creator name */}
+              <div className='flex items-center flex-wrap gap-3'>
                 <ElementIcons
                   elements={deckElements}
                   size={24}
                   showTooltips={true}
                 />
-              </div>
-
-              <div className='flex items-center mt-1'>
-                <span className='text-algomancy-gold font-medium'>
+                <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
+                <span className='text-algomancy-gold font-medium text-lg'>
                   {user?.username ? (
                     <>@{user.username}</>
                   ) : (
-                    <span className='text-gray-400'>
+                    <span className='text-gray-300'>
                       {user?.name || "Unknown User"}
                     </span>
                   )}
                 </span>
-                <span className='text-gray-500 text-xs ml-2'>
-                  •{" "}
+              </div>
+
+              {/* Bottom row: Date, Views, Likes */}
+              <div className='flex items-center mt-2 text-sm text-white'>
+                <span>
                   {formatDistanceToNow(new Date(deck.createdAt), {
                     addSuffix: true,
                   })}
                 </span>
-                <span className='text-gray-500 text-xs ml-2 flex items-center'>
-                  •{" "}
+                <span className='ml-3 flex items-center'>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
-                    className='h-3 w-3 mr-1'
+                    className='h-4 w-4 mr-1'
                     fill='none'
                     viewBox='0 0 24 24'
                     stroke='currentColor'>
@@ -282,12 +281,21 @@ export default function DeckPage({ params }: DeckPageProps) {
                       d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
                     />
                   </svg>
-                  {typeof deck.views === "number" ? deck.views : 0} views
+                  {typeof deck.views === "number" ? deck.views : 0}
+                </span>
+                <span className='ml-3'>
+                  <LikeButton
+                    deckId={deck._id.toString()}
+                    initialLikes={deck.likes || 0}
+                    size='sm'
+                    showCount={true}
+                    className='text-white'
+                  />
                 </span>
               </div>
 
               {deck.description && (
-                <p className='text-gray-300 mt-2'>{deck.description}</p>
+                <p className='text-gray-300 mt-3'>{deck.description}</p>
               )}
             </div>
 

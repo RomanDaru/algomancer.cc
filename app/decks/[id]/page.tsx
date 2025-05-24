@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns";
 import React from "react";
 import ElementIcons from "@/app/components/ElementIcons";
 import DeckDetailViewer from "@/app/components/DeckDetailViewer";
+import YouTubeEmbed from "@/app/components/YouTubeEmbed";
 import {
   ElementType,
   getAllDeckElements,
@@ -343,6 +344,22 @@ export default function DeckPage({ params }: DeckPageProps) {
             />
           </div>
         </div>
+
+        {/* YouTube Video Section - Bottom */}
+        {deck.youtubeUrl && (
+          <div className='mt-8'>
+            <div className='max-w-4xl mx-auto'>
+              <h2 className='text-2xl font-bold text-white mb-4 text-center'>
+                Deck Showcase Video
+              </h2>
+              <YouTubeEmbed
+                url={deck.youtubeUrl}
+                title={`${deck.name} - Deck Showcase`}
+                showTitle={false}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -115,6 +115,7 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
           cards={cards}
           initialDeckName={deck.name}
           initialDeckDescription={deck.description || ""}
+          initialYouTubeUrl={deck.youtubeUrl || ""}
           initialDeckCards={deck.cards}
           initialIsPublic={deck.isPublic || false}
           deckId={id}

@@ -4,6 +4,7 @@ import { Deck } from "@/app/lib/types/user";
 import { Card } from "@/app/lib/types/card";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { PlayIcon } from "@heroicons/react/24/solid";
 import ElementIcons from "./ElementIcons";
 import LikeButton from "./LikeButton";
 import {
@@ -182,14 +183,25 @@ export default function DeckCard({
               </span>
             </div>
 
-            <div className='flex items-center mt-2 text-sm'>
-              <span className='text-white/80'>By </span>
-              {user.username ? (
-                <span className='text-white ml-1'>@{user.username}</span>
-              ) : (
-                <span className='text-white/80 ml-1'>
-                  {user.name || "Unknown User"}
-                </span>
+            <div className='flex items-center justify-between mt-2 text-sm'>
+              <div className='flex items-center'>
+                <span className='text-white/80'>By </span>
+                {user.username ? (
+                  <span className='text-white ml-1'>@{user.username}</span>
+                ) : (
+                  <span className='text-white/80 ml-1'>
+                    {user.name || "Unknown User"}
+                  </span>
+                )}
+              </div>
+
+              {/* YouTube video indicator - same row as username */}
+              {deck.youtubeUrl && (
+                <div
+                  className='bg-red-600 rounded-full p-1 shadow-sm'
+                  title='Has video showcase'>
+                  <PlayIcon className='w-3 h-3 text-white' />
+                </div>
               )}
             </div>
           </div>

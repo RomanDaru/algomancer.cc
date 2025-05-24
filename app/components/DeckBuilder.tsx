@@ -12,11 +12,13 @@ import GuestModePrompt from "./GuestModePrompt";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { GuestDeckManager } from "@/app/lib/utils/guestDeckManager";
+import { validateAndNormalizeYouTubeUrl } from "@/app/lib/utils/youtube";
 
 interface DeckBuilderProps {
   cards: Card[];
   initialDeckName?: string;
   initialDeckDescription?: string;
+  initialYouTubeUrl?: string;
   initialDeckCards?: DeckCard[];
   initialIsPublic?: boolean;
   deckId?: string;
@@ -28,6 +30,7 @@ export default function DeckBuilder({
   cards,
   initialDeckName = "",
   initialDeckDescription = "",
+  initialYouTubeUrl = "",
   initialDeckCards = [],
   initialIsPublic = false,
   deckId,
@@ -39,6 +42,7 @@ export default function DeckBuilder({
   const [deckDescription, setDeckDescription] = useState(
     initialDeckDescription
   );
+  const [youtubeUrl, setYoutubeUrl] = useState(initialYouTubeUrl);
   const [deckCards, setDeckCards] = useState<DeckCard[]>(initialDeckCards);
   const [filteredCards, setFilteredCards] = useState<Card[]>(cards);
   const [isPublic, setIsPublic] = useState(initialIsPublic);
@@ -155,6 +159,17 @@ export default function DeckBuilder({
       return;
     }
 
+    // Validate YouTube URL if provided
+    let normalizedYouTubeUrl = "";
+    if (youtubeUrl.trim()) {
+      const validatedUrl = validateAndNormalizeYouTubeUrl(youtubeUrl.trim());
+      if (!validatedUrl) {
+        toast.error("Please enter a valid YouTube URL");
+        return;
+      }
+      normalizedYouTubeUrl = validatedUrl;
+    }
+
     // If in guest mode, show prompt to sign in
     if (isGuestMode) {
       setShowGuestPrompt(true);
@@ -167,6 +182,7 @@ export default function DeckBuilder({
       const deckData = {
         name: deckName,
         description: deckDescription,
+        youtubeUrl: normalizedYouTubeUrl,
         cards: deckCards,
         isPublic,
       };
@@ -280,6 +296,25 @@ export default function DeckBuilder({
                 className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white h-24'
                 placeholder='Enter deck description'
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor='youtubeUrl'
+                className='block text-sm font-medium text-gray-300 mb-1'>
+                YouTube Video URL (Optional)
+              </label>
+              <input
+                type='url'
+                id='youtubeUrl'
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
+                placeholder='https://www.youtube.com/watch?v=...'
+              />
+              <p className='text-xs text-gray-400 mt-1'>
+                Add a YouTube video to showcase your deck in action
+              </p>
             </div>
 
             <div className='flex items-center'>

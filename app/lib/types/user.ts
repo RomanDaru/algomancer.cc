@@ -17,6 +17,7 @@ export interface Deck {
   _id: ObjectId;
   name: string;
   description?: string;
+  youtubeUrl?: string; // YouTube video URL for deck showcase
   userId: ObjectId;
   cards: DeckCard[];
   createdAt: Date;

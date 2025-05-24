@@ -21,6 +21,7 @@ const DeckSchema = new Schema(
   {
     name: { type: String, required: true },
     description: { type: String },
+    youtubeUrl: { type: String }, // YouTube video URL for deck showcase
     userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     cards: { type: [DeckCardSchema], default: [] },
     isPublic: { type: Boolean, default: false },
@@ -45,6 +46,7 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
     _id: deck._id,
     name: deck.name,
     description: deck.description,
+    youtubeUrl: deck.youtubeUrl,
     userId: deck.userId,
     cards: deck.cards,
     createdAt: deck.createdAt,
@@ -64,6 +66,7 @@ export function convertDeckToDocument(
   return {
     name: deck.name,
     description: deck.description,
+    youtubeUrl: deck.youtubeUrl,
     userId: deck.userId,
     cards: deck.cards,
     isPublic: deck.isPublic,

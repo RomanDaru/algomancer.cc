@@ -23,6 +23,40 @@ const nextConfig = {
       },
     ],
   },
+  // SEO optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: true,
+  // Enable experimental features for better SEO
+  // experimental: {
+  //   optimizeCss: true,
+  // },
+  // Headers for better SEO and security - temporarily disabled for build testing
+  // async headers() {
+  //   return [
+  //     {
+  //       source: "/(.*)",
+  //       headers: [
+  //         {
+  //           key: "X-Content-Type-Options",
+  //           value: "nosniff",
+  //         },
+  //         {
+  //           key: "X-Frame-Options",
+  //           value: "DENY",
+  //         },
+  //         {
+  //           key: "X-XSS-Protection",
+  //           value: "1; mode=block",
+  //         },
+  //         {
+  //           key: "Referrer-Policy",
+  //           value: "origin-when-cross-origin",
+  //         },
+  //       ],
+  //     },
+  //   ];
+  // },
 };
 
 module.exports = nextConfig;

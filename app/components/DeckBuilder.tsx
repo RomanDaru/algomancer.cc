@@ -260,8 +260,187 @@ export default function DeckBuilder({
         </div>
       )}
 
-      {/* Left Column - Deck Info and Stats */}
-      <div className='lg:col-span-1 space-y-4'>
+      {/* Mobile: Card Browser First */}
+      <div className='lg:hidden lg:col-span-2 order-1'>
+        {/* Card Browser - Taller on mobile */}
+        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
+          <h3 className='text-lg font-semibold text-white mb-4'>
+            Card Browser
+          </h3>
+
+          <CardSearch cards={cards} onSearchResults={setFilteredCards} />
+
+          <div className='mt-4'>
+            {filteredCards.length > 0 ? (
+              <div className='grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto custom-scrollbar'>
+                {filteredCards.map((card) => {
+                  const deckCard = deckCards.find(
+                    (dc) => dc.cardId === card.id
+                  );
+                  const quantity = deckCard?.quantity || 0;
+
+                  return (
+                    <div key={card.id} className='flex flex-col'>
+                      {/* Mobile: Simple card without preview */}
+                      <div
+                        className='relative cursor-pointer hover:opacity-80 transition-opacity'
+                        onClick={() => handleAddCard(card.id)}>
+                        <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
+                          <img
+                            src={card.imageUrl}
+                            alt={card.name}
+                            className='object-cover w-full h-full'
+                          />
+                        </div>
+                      </div>
+
+                      {/* Controls beneath the card */}
+                      <div className='flex items-center justify-center mt-2 space-x-2'>
+                        <button
+                          onClick={() => handleAddCard(card.id)}
+                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                          title='Add one copy'
+                          aria-label={`Add one copy of ${card.name}`}>
+                          <PlusIcon className='w-4 h-4' aria-hidden='true' />
+                        </button>
+                        <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
+                          {quantity}/{MAX_COPIES}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveCard(card.id)}
+                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                          title='Remove one copy'
+                          aria-label={`Remove one copy of ${card.name}`}>
+                          <MinusIcon className='w-4 h-4' aria-hidden='true' />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className='text-center py-12'>
+                <p className='text-xl text-gray-400'>
+                  No cards found matching your search criteria.
+                </p>
+                <p className='text-gray-500 mt-2'>
+                  Try adjusting your search terms.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile: Deck Viewer Second */}
+      <div className='lg:hidden order-2'>
+        <DeckViewer
+          cards={cards}
+          deckCards={deckCards}
+          onAddCard={handleAddCard}
+          onRemoveCard={handleRemoveCard}
+          onRemoveAllCopies={handleRemoveAllCopies}
+          maxCopies={MAX_COPIES}
+        />
+      </div>
+
+      {/* Mobile: Deck Info and Stats Last */}
+      <div className='lg:hidden space-y-4 order-3'>
+        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
+          <h3 className='text-lg font-semibold text-white mb-4'>
+            Deck Information
+          </h3>
+
+          <div className='space-y-4'>
+            <div>
+              <label
+                htmlFor='deckName-mobile'
+                className='block text-sm font-medium text-gray-300 mb-1'>
+                Deck Name
+              </label>
+              <input
+                type='text'
+                id='deckName-mobile'
+                value={deckName}
+                onChange={(e) => setDeckName(e.target.value)}
+                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
+                placeholder='Enter deck name'
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor='deckDescription-mobile'
+                className='block text-sm font-medium text-gray-300 mb-1'>
+                Description
+              </label>
+              <textarea
+                id='deckDescription-mobile'
+                value={deckDescription}
+                onChange={(e) => setDeckDescription(e.target.value)}
+                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white h-24'
+                placeholder='Enter deck description'
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor='youtubeUrl-mobile'
+                className='block text-sm font-medium text-gray-300 mb-1'>
+                YouTube Video URL (Optional)
+              </label>
+              <input
+                type='url'
+                id='youtubeUrl-mobile'
+                value={youtubeUrl}
+                onChange={(e) => setYoutubeUrl(e.target.value)}
+                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
+                placeholder='https://www.youtube.com/watch?v=...'
+              />
+              <p className='text-xs text-gray-400 mt-1'>
+                Add a YouTube video to showcase your deck in action
+              </p>
+            </div>
+
+            <div className='flex items-center'>
+              <input
+                type='checkbox'
+                id='isPublic-mobile'
+                checked={isPublic}
+                onChange={(e) => setIsPublic(e.target.checked)}
+                className='mr-2'
+              />
+              <label
+                htmlFor='isPublic-mobile'
+                className='text-sm text-gray-300'>
+                Make this deck public
+              </label>
+            </div>
+
+            <button
+              onClick={handleSaveDeck}
+              disabled={isSaving}
+              className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
+                isGuestMode
+                  ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
+                  : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
+              }`}>
+              {isSaving
+                ? "Saving..."
+                : isGuestMode
+                ? "Sign In to Save Deck"
+                : isEditing
+                ? "Update Deck"
+                : "Save Deck"}
+            </button>
+          </div>
+        </div>
+
+        <DeckStats cards={cards} deckCards={deckCards} />
+      </div>
+
+      {/* Desktop: Left Column - Deck Info and Stats */}
+      <div className='hidden lg:block lg:col-span-1 space-y-4'>
         <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
           <h3 className='text-lg font-semibold text-white mb-4'>
             Deck Information
@@ -353,9 +532,9 @@ export default function DeckBuilder({
         <DeckStats cards={cards} deckCards={deckCards} />
       </div>
 
-      {/* Right Column - Card Browser and Deck Viewer */}
-      <div className='lg:col-span-2'>
-        {/* Card Browser - Limited to 2 rows */}
+      {/* Desktop: Right Column - Card Browser and Deck Viewer */}
+      <div className='hidden lg:block lg:col-span-2'>
+        {/* Card Browser */}
         <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
           <h3 className='text-lg font-semibold text-white mb-4'>
             Card Browser
@@ -374,6 +553,7 @@ export default function DeckBuilder({
 
                   return (
                     <div key={card.id} className='flex flex-col'>
+                      {/* Desktop: CardHoverPreview */}
                       <CardHoverPreview
                         card={card}
                         onClick={() => handleAddCard(card.id)}>

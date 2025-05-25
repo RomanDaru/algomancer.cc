@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { Card as CardType } from "@/app/lib/types/card";
 import CardImageSkeleton from "./CardImageSkeleton";
+import ElementIcon from "./ElementIcon";
+import { ElementType } from "@/app/lib/utils/elements";
 import {
   optimizeCardThumbnail,
   optimizeCardCompact,
@@ -12,7 +14,7 @@ import {
 interface CardProps {
   card: CardType;
   onClick?: () => void;
-  viewMode?: "large" | "compact";
+  viewMode?: "large" | "compact" | "list";
 }
 
 export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
@@ -21,10 +23,50 @@ export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
 
   // Optimize image URL based on view mode
   const optimizedImageUrl =
-    viewMode === "large"
+    viewMode === "large" || viewMode === "list"
       ? optimizeCardThumbnail(card.imageUrl)
       : optimizeCardCompact(card.imageUrl);
 
+  // List view layout
+  if (viewMode === "list") {
+    // Parse element type for hybrid cards
+    const elementType = card.element.type;
+    const isHybrid = elementType.includes("/");
+    const elements = isHybrid
+      ? elementType.split("/").map((e) => e.trim() as ElementType)
+      : [elementType as ElementType];
+
+    return (
+      <div
+        className='flex items-center justify-between py-2 px-3 border border-algomancy-purple/30 hover:border-algomancy-purple hover:bg-algomancy-purple/10 rounded-lg cursor-pointer transition-colors'
+        onClick={onClick}>
+        <div className='flex items-center space-x-2'>
+          {/* Element Indicator(s) - Handle both single and hybrid elements */}
+          <div className='flex items-center'>
+            {elements.map((element, index) => (
+              <ElementIcon
+                key={`${element}-${index}`}
+                element={element}
+                size={16}
+                showTooltip={false}
+                className={index > 0 ? "-ml-1" : ""}
+              />
+            ))}
+          </div>
+
+          {/* Mana Cost */}
+          <span className='text-sm text-algomancy-gold font-medium min-w-[20px]'>
+            {card.manaCost}
+          </span>
+
+          {/* Card Name */}
+          <span className='text-sm text-white truncate'>{card.name}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Grid view layout (large and compact)
   return (
     <div
       className={`relative w-full aspect-[3/4] rounded-md overflow-hidden shadow-md cursor-pointer group transition-all duration-300 hover:z-10 ${

@@ -5,7 +5,11 @@ import Card from "./Card";
 import { useState, useRef, useEffect } from "react";
 import CardDetails from "./CardDetails";
 import CardSearch from "./CardSearch";
-import { ViewColumnsIcon, Squares2X2Icon } from "@heroicons/react/24/outline";
+import {
+  ViewColumnsIcon,
+  Squares2X2Icon,
+  ListBulletIcon,
+} from "@heroicons/react/24/outline";
 
 interface CardGridProps {
   cards: CardType[];
@@ -14,7 +18,9 @@ interface CardGridProps {
 export default function CardGrid({ cards }: CardGridProps) {
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
   const [filteredCards, setFilteredCards] = useState<CardType[]>(cards);
-  const [viewMode, setViewMode] = useState<"large" | "compact">("large");
+  const [viewMode, setViewMode] = useState<"large" | "compact" | "list">(
+    "compact"
+  );
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Handle click outside modal
@@ -59,6 +65,25 @@ export default function CardGrid({ cards }: CardGridProps) {
     setFilteredCards(cards);
   }, [cards]);
 
+  // Set appropriate default view mode based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768; // md breakpoint
+      if (isMobile && viewMode === "large") {
+        setViewMode("compact");
+      } else if (!isMobile && viewMode === "list") {
+        setViewMode("large");
+      }
+    };
+
+    // Set initial view mode
+    handleResize();
+
+    // Listen for resize events
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [viewMode]);
+
   return (
     <div className='w-full'>
       {/* Search Component */}
@@ -76,40 +101,75 @@ export default function CardGrid({ cards }: CardGridProps) {
 
         {/* View Toggle */}
         <div className='flex space-x-2'>
-          <button
-            onClick={() => setViewMode("large")}
-            className={`p-2 rounded ${
-              viewMode === "large"
-                ? "bg-algomancy-purple text-white"
-                : "bg-algomancy-dark text-gray-400 hover:text-white"
-            }`}
-            title='Large View'
-            aria-label='Large View'
-            aria-pressed={viewMode === "large"}>
-            <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
-          </button>
-          <button
-            onClick={() => setViewMode("compact")}
-            className={`p-2 rounded ${
-              viewMode === "compact"
-                ? "bg-algomancy-purple text-white"
-                : "bg-algomancy-dark text-gray-400 hover:text-white"
-            }`}
-            title='Compact View'
-            aria-label='Compact View'
-            aria-pressed={viewMode === "compact"}>
-            <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
-          </button>
+          {/* Mobile View Toggle (Compact + List) */}
+          <div className='flex space-x-2 md:hidden'>
+            <button
+              onClick={() => setViewMode("compact")}
+              className={`p-2 rounded ${
+                viewMode === "compact"
+                  ? "bg-algomancy-purple text-white"
+                  : "bg-algomancy-dark text-gray-400 hover:text-white"
+              }`}
+              title='Compact View'
+              aria-label='Compact View'
+              aria-pressed={viewMode === "compact"}>
+              <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`p-2 rounded ${
+                viewMode === "list"
+                  ? "bg-algomancy-purple text-white"
+                  : "bg-algomancy-dark text-gray-400 hover:text-white"
+              }`}
+              title='List View'
+              aria-label='List View'
+              aria-pressed={viewMode === "list"}>
+              <ListBulletIcon className='w-5 h-5' aria-hidden='true' />
+            </button>
+          </div>
+
+          {/* Desktop View Toggle (Large + Compact) */}
+          <div className='hidden md:flex space-x-2'>
+            <button
+              onClick={() => setViewMode("large")}
+              className={`p-2 rounded ${
+                viewMode === "large"
+                  ? "bg-algomancy-purple text-white"
+                  : "bg-algomancy-dark text-gray-400 hover:text-white"
+              }`}
+              title='Large View'
+              aria-label='Large View'
+              aria-pressed={viewMode === "large"}>
+              <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
+            </button>
+            <button
+              onClick={() => setViewMode("compact")}
+              className={`p-2 rounded ${
+                viewMode === "compact"
+                  ? "bg-algomancy-purple text-white"
+                  : "bg-algomancy-dark text-gray-400 hover:text-white"
+              }`}
+              title='Compact View'
+              aria-label='Compact View'
+              aria-pressed={viewMode === "compact"}>
+              <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Card Grid - Matching the reference image layout */}
+      {/* Card Grid - Responsive layout based on view mode */}
       {filteredCards.length > 0 ? (
         <div
-          className={`grid gap-4 ${
-            viewMode === "large"
-              ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-              : "grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12"
+          className={`${
+            viewMode === "list"
+              ? "space-y-2"
+              : `grid gap-2 sm:gap-4 ${
+                  viewMode === "large"
+                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                    : "grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12"
+                }`
           }`}>
           {filteredCards.map((card) => (
             <div key={card.id}>

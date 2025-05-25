@@ -108,7 +108,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   ];
 
   return (
-    <div className='fixed inset-0 z-50 overflow-y-auto'>
+    <div className='fixed inset-0 z-50 overflow-y-auto custom-scrollbar'>
       {/* Backdrop */}
       <div
         className='fixed inset-0 bg-black bg-opacity-50 transition-opacity'
@@ -117,7 +117,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
       {/* Modal */}
       <div className='flex min-h-full items-center justify-center p-4'>
-        <div className='relative bg-algomancy-darker border border-algomancy-purple/30 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto'>
+        <div className='relative bg-algomancy-darker border border-algomancy-purple/30 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar'>
           {/* Header */}
           <div className='flex items-center justify-between p-6 border-b border-algomancy-purple/30'>
             <h2 className='text-xl font-semibold text-white'>
@@ -146,7 +146,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                       key={type.id}
                       type='button'
                       onClick={() => setSelectedType(type.id)}
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      className={`p-4 rounded-lg border-2 transition-all text-left cursor-pointer ${
                         selectedType === type.id
                           ? "border-algomancy-purple bg-algomancy-purple/20"
                           : "border-algomancy-purple/30 hover:border-algomancy-purple/50"
@@ -285,13 +285,13 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                   type='button'
                   onClick={onClose}
                   disabled={isLoading}
-                  className='px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50'>
+                  className='px-4 py-2 text-gray-400 hover:text-white transition-colors disabled:opacity-50 cursor-pointer'>
                   Cancel
                 </button>
                 <button
                   type='submit'
                   disabled={isLoading || submitStatus === "success"}
-                  className='px-6 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center'>
+                  className='px-6 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex items-center'>
                   {isLoading ? (
                     <>
                       <svg

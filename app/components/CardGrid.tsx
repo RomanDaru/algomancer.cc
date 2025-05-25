@@ -135,7 +135,7 @@ export default function CardGrid({ cards }: CardGridProps) {
         <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
           <div
             ref={modalRef}
-            className='relative bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6 max-w-6xl w-full max-h-[95vh] overflow-y-auto'>
+            className='relative bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6 max-w-6xl w-full max-h-[95vh] overflow-y-auto custom-scrollbar'>
             <CardDetails
               card={selectedCard}
               onClose={() => setSelectedCard(null)}

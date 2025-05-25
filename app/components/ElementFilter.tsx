@@ -80,7 +80,7 @@ export default function ElementFilter({
       {selectedElements.length > 0 && (
         <button
           onClick={clearAllElements}
-          className='text-xs text-algomancy-purple hover:text-algomancy-gold transition-colors ml-2'>
+          className='text-xs text-algomancy-purple hover:text-algomancy-gold transition-colors ml-2 cursor-pointer'>
           Clear
         </button>
       )}

@@ -60,13 +60,13 @@ export default function Footer() {
             community.{" "}
             <button
               onClick={() => setIsContactOpen(true)}
-              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline'>
+              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline cursor-pointer'>
               Contact & Feedback
             </button>
             {" • "}
             <button
               onClick={() => setIsDisclaimerOpen(true)}
-              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline'>
+              className='text-algomancy-purple hover:text-algomancy-gold transition-colors underline cursor-pointer'>
               Legal Disclaimer
             </button>
           </p>

@@ -305,7 +305,7 @@ export default function CardSearch({
                   <button
                     key={element}
                     onClick={() => applyFilter(element)}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    className={`px-3 py-1 text-xs rounded-full border cursor-pointer ${
                       isActive
                         ? "bg-algomancy-blue/40 border-algomancy-blue text-white"
                         : "bg-algomancy-dark border-algomancy-blue/30 hover:bg-algomancy-blue/20"

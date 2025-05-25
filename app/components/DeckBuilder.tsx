@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { GuestDeckManager } from "@/app/lib/utils/guestDeckManager";
 import { validateAndNormalizeYouTubeUrl } from "@/app/lib/utils/youtube";
+import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 
 interface DeckBuilderProps {
   cards: Card[];
@@ -50,7 +51,7 @@ export default function DeckBuilder({
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
 
   // Maximum number of copies of a card allowed in a deck
-  const MAX_COPIES = 4;
+  const MAX_COPIES = 2;
 
   // Load guest deck data on mount if in guest mode
   useEffect(() => {
@@ -364,7 +365,7 @@ export default function DeckBuilder({
 
           <div className='mt-4'>
             {filteredCards.length > 0 ? (
-              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-[320px] overflow-y-auto'>
+              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-[320px] overflow-y-auto custom-scrollbar'>
                 {filteredCards.map((card) => {
                   const deckCard = deckCards.find(
                     (dc) => dc.cardId === card.id
@@ -372,27 +373,44 @@ export default function DeckBuilder({
                   const quantity = deckCard?.quantity || 0;
 
                   return (
-                    <CardHoverPreview
-                      key={card.id}
-                      card={card}
-                      onClick={() => handleAddCard(card.id)}>
-                      <div className='relative'>
-                        <div className='cursor-pointer hover:opacity-80 transition-opacity'>
-                          <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                            <img
-                              src={card.imageUrl}
-                              alt={card.name}
-                              className='object-cover w-full h-full'
-                            />
-                            {quantity > 0 && (
-                              <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
-                                {quantity}
-                              </div>
-                            )}
+                    <div key={card.id} className='flex flex-col'>
+                      <CardHoverPreview
+                        card={card}
+                        onClick={() => handleAddCard(card.id)}>
+                        <div className='relative'>
+                          <div className='cursor-pointer hover:opacity-80 transition-opacity'>
+                            <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
+                              <img
+                                src={card.imageUrl}
+                                alt={card.name}
+                                className='object-cover w-full h-full'
+                              />
+                            </div>
                           </div>
                         </div>
+                      </CardHoverPreview>
+
+                      {/* Controls beneath the card */}
+                      <div className='flex items-center justify-center mt-2 space-x-2'>
+                        <button
+                          onClick={() => handleAddCard(card.id)}
+                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                          title='Add one copy'
+                          aria-label={`Add one copy of ${card.name}`}>
+                          <PlusIcon className='w-4 h-4' aria-hidden='true' />
+                        </button>
+                        <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
+                          {quantity}/{MAX_COPIES}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveCard(card.id)}
+                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                          title='Remove one copy'
+                          aria-label={`Remove one copy of ${card.name}`}>
+                          <MinusIcon className='w-4 h-4' aria-hidden='true' />
+                        </button>
                       </div>
-                    </CardHoverPreview>
+                    </div>
                   );
                 })}
               </div>
@@ -416,6 +434,7 @@ export default function DeckBuilder({
           onAddCard={handleAddCard}
           onRemoveCard={handleRemoveCard}
           onRemoveAllCopies={handleRemoveAllCopies}
+          maxCopies={MAX_COPIES}
         />
       </div>
     </div>

@@ -272,7 +272,7 @@ export default function Navbar() {
                             signOut({ callbackUrl: "/" });
                             setIsProfileMenuOpen(false);
                           }}
-                          className='block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10'
+                          className='block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 cursor-pointer'
                           role='menuitem'
                           tabIndex={0}>
                           Sign Out
@@ -283,13 +283,31 @@ export default function Navbar() {
                 </div>
               </div>
             ) : (
-              <div className='flex items-center'>
+              <div className='flex items-center space-x-3'>
+                {/* Auth Buttons - Sign In only on mobile, both on desktop */}
+                <div className='flex space-x-2'>
+                  <Link
+                    href='/auth/signin'
+                    className='px-3 py-1.5 text-sm rounded-md border border-algomancy-purple/50 hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 transition-colors cursor-pointer'
+                    aria-label='Sign in to your account'
+                    title='Sign in to your account'>
+                    Sign In
+                  </Link>
+                  <Link
+                    href='/auth/signup'
+                    className='hidden md:block px-3 py-1.5 text-sm rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 transition-colors cursor-pointer'
+                    aria-label='Create a new account'
+                    title='Create a new account'>
+                    Sign Up
+                  </Link>
+                </div>
+
                 {/* Mobile Menu Buttons for non-authenticated users */}
-                <div className='md:hidden mr-3' ref={menuButtonRef}>
+                <div className='md:hidden' ref={menuButtonRef}>
                   {!isMenuOpen ? (
                     <button
                       onClick={(e) => handleMenuToggle(e, true)}
-                      className='p-2 rounded-md hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50'
+                      className='p-2 rounded-md hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 cursor-pointer'
                       aria-label='Open menu'
                       aria-expanded='false'
                       aria-controls='mobile-menu'>
@@ -311,7 +329,7 @@ export default function Navbar() {
                   ) : (
                     <button
                       onClick={(e) => handleMenuToggle(e, false)}
-                      className='p-2 rounded-md hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50'
+                      className='p-2 rounded-md hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 cursor-pointer'
                       aria-label='Close menu'
                       aria-expanded='true'
                       aria-controls='mobile-menu'>
@@ -331,24 +349,6 @@ export default function Navbar() {
                       </svg>
                     </button>
                   )}
-                </div>
-
-                {/* Auth Buttons */}
-                <div className='flex space-x-2'>
-                  <Link
-                    href='/auth/signin'
-                    className='px-3 py-1.5 text-sm rounded-md border border-algomancy-purple/50 hover:bg-algomancy-purple/20 focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 transition-colors'
-                    aria-label='Sign in to your account'
-                    title='Sign in to your account'>
-                    Sign In
-                  </Link>
-                  <Link
-                    href='/auth/signup'
-                    className='px-3 py-1.5 text-sm rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50 transition-colors'
-                    aria-label='Create a new account'
-                    title='Create a new account'>
-                    Sign Up
-                  </Link>
                 </div>
               </div>
             )}
@@ -461,7 +461,7 @@ export default function Navbar() {
                     signOut({ callbackUrl: "/" });
                     handleMenuToggle(e, false, true);
                   }}
-                  className='block w-full text-left px-3 py-2 rounded-md text-red-400 hover:bg-red-500/10'>
+                  className='block w-full text-left px-3 py-2 rounded-md text-red-400 hover:bg-red-500/10 cursor-pointer'>
                   Sign Out
                 </button>
               </>
@@ -472,14 +472,14 @@ export default function Navbar() {
                 <div className='border-t border-algomancy-purple/20 my-2'></div>
                 <Link
                   href='/auth/signin'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20 cursor-pointer'
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                 >
                   Sign In
                 </Link>
                 <Link
                   href='/auth/signup'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  className='block px-3 py-2 rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark cursor-pointer'
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                 >
                   Sign Up

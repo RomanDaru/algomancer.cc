@@ -21,6 +21,7 @@ interface DeckViewerProps {
   onAddCard: (cardId: string) => void;
   onRemoveCard: (cardId: string) => void;
   onRemoveAllCopies: (cardId: string) => void;
+  maxCopies: number;
 }
 
 type ViewMode = "list" | "compact" | "large";
@@ -32,6 +33,7 @@ export default function DeckViewer({
   onAddCard,
   onRemoveCard,
   onRemoveAllCopies,
+  maxCopies,
 }: DeckViewerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("compact");
   const [sortMode, setSortMode] = useState<SortMode>("default");
@@ -262,26 +264,26 @@ export default function DeckViewer({
                         <div className='flex items-center space-x-1'>
                           <button
                             onClick={() => onRemoveCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white'
+                            className='p-1 text-gray-400 hover:text-white cursor-pointer'
                             title='Remove one copy'
                             aria-label={`Remove one copy of ${card.name}`}>
                             <MinusIcon className='w-4 h-4' aria-hidden='true' />
                           </button>
                           <span
-                            className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-1.5 py-0.5 min-w-5 text-center'
+                            className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-1.5 py-0.5 min-w-8 text-center'
                             aria-label={`${quantity} copies`}>
-                            {quantity}
+                            {quantity}/{maxCopies}
                           </span>
                           <button
                             onClick={() => onAddCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white'
+                            className='p-1 text-gray-400 hover:text-white cursor-pointer'
                             title='Add one copy'
                             aria-label={`Add one copy of ${card.name}`}>
                             <PlusIcon className='w-4 h-4' aria-hidden='true' />
                           </button>
                           <button
                             onClick={() => onRemoveAllCopies(card.id)}
-                            className='p-1 text-gray-400 hover:text-white ml-1'
+                            className='p-1 text-gray-400 hover:text-white ml-1 cursor-pointer'
                             title='Remove all copies'
                             aria-label={`Remove all copies of ${card.name}`}>
                             <XMarkIcon className='w-4 h-4' aria-hidden='true' />
@@ -302,77 +304,48 @@ export default function DeckViewer({
                   role='grid'>
                   {groupedCards[type]
                     .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                    .map(({ card }) => (
-                      <CardHoverPreview
-                        key={card.id}
-                        card={card}
-                        onClick={() => onAddCard(card.id)}>
-                        <div
-                          className='relative group cursor-pointer'
-                          role='gridcell'
-                          aria-label={`${card.name} card`}>
-                          <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                            <Image
-                              src={card.imageUrl}
-                              alt={`${card.name} card`}
-                              fill
-                              className='object-cover'
-                              sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
-                            />
-                            {deckCards.find((dc) => dc.cardId === card.id)
-                              ?.quantity > 0 && (
-                              <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
-                                {
-                                  deckCards.find((dc) => dc.cardId === card.id)
-                                    ?.quantity
-                                }
-                              </div>
-                            )}
+                    .map(({ card, quantity }) => (
+                      <div key={card.id} className='flex flex-col'>
+                        <CardHoverPreview
+                          card={card}
+                          onClick={() => onAddCard(card.id)}>
+                          <div
+                            className='relative cursor-pointer'
+                            role='gridcell'
+                            aria-label={`${card.name} card`}>
+                            <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
+                              <Image
+                                src={card.imageUrl}
+                                alt={`${card.name} card`}
+                                fill
+                                className='object-cover'
+                                sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
+                              />
+                            </div>
                           </div>
+                        </CardHoverPreview>
 
-                          <div className='absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1'>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRemoveCard(card.id);
-                              }}
-                              className='p-1 bg-black/60 rounded-full text-white hover:bg-black/80'
-                              title='Remove one copy'
-                              aria-label={`Remove one copy of ${card.name}`}>
-                              <MinusIcon
-                                className='w-4 h-4'
-                                aria-hidden='true'
-                              />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onAddCard(card.id);
-                              }}
-                              className='p-1 bg-black/60 rounded-full text-white hover:bg-black/80'
-                              title='Add one copy'
-                              aria-label={`Add one copy of ${card.name}`}>
-                              <PlusIcon
-                                className='w-4 h-4'
-                                aria-hidden='true'
-                              />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRemoveAllCopies(card.id);
-                              }}
-                              className='p-1 bg-black/60 rounded-full text-white hover:bg-black/80'
-                              title='Remove all copies'
-                              aria-label={`Remove all copies of ${card.name}`}>
-                              <XMarkIcon
-                                className='w-4 h-4'
-                                aria-hidden='true'
-                              />
-                            </button>
-                          </div>
+                        {/* Controls beneath the card */}
+                        <div className='flex items-center justify-center mt-2 space-x-2'>
+                          <button
+                            onClick={() => onAddCard(card.id)}
+                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                            title='Add one copy'
+                            aria-label={`Add one copy of ${card.name}`}>
+                            <PlusIcon className='w-4 h-4' aria-hidden='true' />
+                          </button>
+                          <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
+                            {quantity}/{maxCopies}
+                          </span>
+                          <button
+                            onClick={() => onRemoveCard(card.id)}
+                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                            title='Remove one copy'
+                            aria-label={`Remove one copy of ${card.name}`}>
+                            <MinusIcon className='w-4 h-4' aria-hidden='true' />
+                          </button>
                         </div>
-                      </CardHoverPreview>
+                      </div>
                     ))}
                 </div>
               )}
@@ -387,62 +360,42 @@ export default function DeckViewer({
                   role='grid'>
                   {groupedCards[type]
                     .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                    .map(({ card }) => (
-                      <div
-                        key={card.id}
-                        className='relative group cursor-pointer'
-                        onClick={() => onAddCard(card.id)}
-                        role='gridcell'
-                        aria-label={`${card.name} card`}>
-                        <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                          <Image
-                            src={card.imageUrl}
-                            alt={`${card.name} card`}
-                            fill
-                            className='object-cover'
-                            sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
-                          />
-                          {deckCards.find((dc) => dc.cardId === card.id)
-                            ?.quantity > 0 && (
-                            <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
-                              {
-                                deckCards.find((dc) => dc.cardId === card.id)
-                                  ?.quantity
-                              }
-                            </div>
-                          )}
+                    .map(({ card, quantity }) => (
+                      <div key={card.id} className='flex flex-col'>
+                        <div
+                          className='relative cursor-pointer'
+                          onClick={() => onAddCard(card.id)}
+                          role='gridcell'
+                          aria-label={`${card.name} card`}>
+                          <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
+                            <Image
+                              src={card.imageUrl}
+                              alt={`${card.name} card`}
+                              fill
+                              className='object-cover'
+                              sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
+                            />
+                          </div>
                         </div>
 
-                        <div className='absolute top-1 left-1 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1'>
+                        {/* Controls beneath the card */}
+                        <div className='flex items-center justify-center mt-2 space-x-2'>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveCard(card.id);
-                            }}
-                            className='p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80'
-                            title='Remove one copy'
-                            aria-label={`Remove one copy of ${card.name}`}>
-                            <MinusIcon className='w-5 h-5' aria-hidden='true' />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onAddCard(card.id);
-                            }}
-                            className='p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80'
+                            onClick={() => onAddCard(card.id)}
+                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
                             title='Add one copy'
                             aria-label={`Add one copy of ${card.name}`}>
                             <PlusIcon className='w-5 h-5' aria-hidden='true' />
                           </button>
+                          <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
+                            {quantity}/{maxCopies}
+                          </span>
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRemoveAllCopies(card.id);
-                            }}
-                            className='p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80'
-                            title='Remove all copies'
-                            aria-label={`Remove all copies of ${card.name}`}>
-                            <XMarkIcon className='w-5 h-5' aria-hidden='true' />
+                            onClick={() => onRemoveCard(card.id)}
+                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
+                            title='Remove one copy'
+                            aria-label={`Remove one copy of ${card.name}`}>
+                            <MinusIcon className='w-5 h-5' aria-hidden='true' />
                           </button>
                         </div>
                       </div>

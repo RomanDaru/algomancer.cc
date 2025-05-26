@@ -7,6 +7,7 @@ import { ElementType, ELEMENTS } from "@/app/lib/utils/elements";
 import ElementIcon from "./ElementIcon";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "react-chartjs-2";
+import { AffinityRequirements } from "@/app/lib/utils/affinityUtils";
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -62,6 +63,76 @@ function ColorBar({ elementCounts, maxValue, totalCards }: ColorBarProps) {
             }}
             className='hover:brightness-125 hover:z-10'
             title={`${element}: ${count} cards`}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+interface AffinityBarProps {
+  affinityRequirements: AffinityRequirements;
+  maxValue: number;
+}
+
+function AffinityColorBar({
+  affinityRequirements,
+  maxValue,
+}: AffinityBarProps) {
+  // Convert affinity requirements to element counts format
+  const elementCounts: Record<string, number> = {};
+
+  Object.entries(affinityRequirements).forEach(([element, value]) => {
+    if (value > 0) {
+      elementCounts[element.charAt(0).toUpperCase() + element.slice(1)] = value;
+    }
+  });
+
+  if (Object.keys(elementCounts).length === 0) {
+    return null;
+  }
+
+  // Calculate the height percentage based on the total affinity requirements for this mana cost
+  const totalAffinityForThisCost = Object.values(affinityRequirements).reduce(
+    (sum, val) => sum + val,
+    0
+  );
+  const heightPercent = Math.max(
+    (totalAffinityForThisCost / maxValue) * 100,
+    5
+  );
+
+  // Sort elements by affinity value (descending) for consistent stacking
+  const sortedElements = Object.entries(elementCounts).sort(
+    ([, a], [, b]) => b - a
+  );
+
+  return (
+    <div
+      className='w-full flex flex-col-reverse rounded-t overflow-hidden'
+      style={{ height: `${heightPercent}%` }}>
+      {sortedElements.map(([element, value]) => {
+        // Calculate the height percentage for this element within the bar
+        // This should be proportional to its value relative to the total affinity for this cost
+        const elementPercent = (value / totalAffinityForThisCost) * 100;
+
+        // Get element color
+        const elementColor =
+          ELEMENTS[element as ElementType]?.color ||
+          ELEMENTS["Colorless"].color;
+
+        return (
+          <div
+            key={element}
+            style={{
+              height: `${elementPercent}%`,
+              background: elementColor,
+              width: "100%",
+              minHeight: "4px", // Ensure even small segments are visible
+              transition: "all 0.2s ease",
+            }}
+            className='hover:opacity-80 hover:z-10 transition-opacity duration-200'
+            title={`${element}: ${value} affinity required`}
           />
         );
       })}
@@ -143,8 +214,85 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
     };
   }, [cards, deckCards]);
 
+  // Calculate affinity curve (peak affinity by mana cost)
+  const affinityCurve = useMemo(() => {
+    const affinityCurve: Record<
+      number,
+      {
+        fire: number;
+        water: number;
+        earth: number;
+        wood: number;
+        metal: number;
+      }
+    > = {};
+
+    deckCards.forEach((deckCard) => {
+      const card = cards.find((c) => c.id === deckCard.cardId);
+      if (card && card.stats.affinity) {
+        // For X-cost spells, use -1 as the key
+        const isXCostSpell =
+          card.manaCost === 0 &&
+          card.typeAndAttributes.mainType === "Spell" &&
+          !card.typeAndAttributes.subType.toLowerCase().includes("token");
+
+        const cost = isXCostSpell ? -1 : card.manaCost;
+        const affinity = card.stats.affinity;
+
+        // Initialize mana cost entry if it doesn't exist
+        if (!affinityCurve[cost]) {
+          affinityCurve[cost] = {
+            fire: 0,
+            water: 0,
+            earth: 0,
+            wood: 0,
+            metal: 0,
+          };
+        }
+
+        // Update peak values for this mana cost
+        affinityCurve[cost].fire = Math.max(
+          affinityCurve[cost].fire,
+          affinity.fire || 0
+        );
+        affinityCurve[cost].water = Math.max(
+          affinityCurve[cost].water,
+          affinity.water || 0
+        );
+        affinityCurve[cost].earth = Math.max(
+          affinityCurve[cost].earth,
+          affinity.earth || 0
+        );
+        affinityCurve[cost].wood = Math.max(
+          affinityCurve[cost].wood,
+          affinity.wood || 0
+        );
+        affinityCurve[cost].metal = Math.max(
+          affinityCurve[cost].metal,
+          affinity.metal || 0
+        );
+      }
+    });
+
+    return affinityCurve;
+  }, [cards, deckCards]);
+
   // Get max value for mana curve to scale the bars
   const maxManaCurveValue = Math.max(...Object.values(stats.manaCurve), 1);
+
+  // Get max total affinity value for scaling affinity bars
+  const maxAffinityValue = useMemo(() => {
+    let maxValue = 1;
+    Object.values(affinityCurve).forEach((affinity) => {
+      const totalAffinity = Object.values(affinity).reduce(
+        (sum, val) => sum + val,
+        0
+      );
+      maxValue = Math.max(maxValue, totalAffinity);
+    });
+
+    return maxValue;
+  }, [affinityCurve]);
 
   return (
     <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6'>
@@ -230,6 +378,167 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
               </div>
             </div>
           </div>
+
+          {/* Affinity Curve */}
+          {Object.keys(affinityCurve).length > 0 && (
+            <div>
+              <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
+                Affinity Curve (Peak Requirements)
+              </h4>
+
+              {/* Mobile view - Simplified */}
+              <div className='sm:hidden mb-4'>
+                <div className='grid grid-cols-2 gap-2 text-sm'>
+                  {Object.entries(affinityCurve)
+                    .sort(([a], [b]) => {
+                      const costA = a === "-1" ? -1 : parseInt(a);
+                      const costB = b === "-1" ? -1 : parseInt(b);
+                      return costA - costB;
+                    })
+                    .map(([cost, affinity]) => {
+                      const totalAffinity = Object.values(affinity).reduce(
+                        (sum, val) => sum + val,
+                        0
+                      );
+                      const nonZeroElements = Object.entries(affinity).filter(
+                        ([_, val]) => val > 0
+                      );
+
+                      return (
+                        <div key={cost} className='bg-gray-800 rounded p-2'>
+                          <div className='text-gray-400 text-xs mb-1'>
+                            {cost === "-1" ? "X" : cost} cost
+                          </div>
+                          <div className='space-y-1'>
+                            {nonZeroElements.map(([element, value]) => {
+                              const elementType = (element
+                                .charAt(0)
+                                .toUpperCase() +
+                                element.slice(1)) as ElementType;
+                              const elementColor =
+                                ELEMENTS[elementType]?.color ||
+                                ELEMENTS["Colorless"].color;
+
+                              return (
+                                <div
+                                  key={element}
+                                  className='flex items-center justify-between'>
+                                  <div className='flex items-center'>
+                                    <div
+                                      className='w-3 h-3 rounded-full mr-2'
+                                      style={{ backgroundColor: elementColor }}
+                                    />
+                                    <span className='text-white text-xs capitalize'>
+                                      {element}
+                                    </span>
+                                  </div>
+                                  <span className='text-white text-xs font-bold'>
+                                    {value}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Desktop affinity curve */}
+              <div className='hidden sm:flex items-end h-32 space-x-2 mb-4'>
+                {/* X cost column */}
+                {affinityCurve[-1] && (
+                  <div className='flex flex-col items-center flex-1'>
+                    <div className='w-full flex flex-col justify-end h-24'>
+                      <AffinityColorBar
+                        affinityRequirements={affinityCurve[-1]}
+                        maxValue={maxAffinityValue}
+                      />
+                    </div>
+                    <div className='text-xs text-gray-400 mt-1'>X</div>
+                    <div className='text-xs text-white'>
+                      {Object.values(affinityCurve[-1]).reduce(
+                        (sum, val) => sum + val,
+                        0
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Regular mana costs 0-9 */}
+                {Array.from({ length: 10 }, (_, i) => i).map((cost) => (
+                  <div key={cost} className='flex flex-col items-center flex-1'>
+                    <div className='w-full flex flex-col justify-end h-24'>
+                      {affinityCurve[cost] && (
+                        <AffinityColorBar
+                          affinityRequirements={affinityCurve[cost]}
+                          maxValue={maxAffinityValue}
+                        />
+                      )}
+                    </div>
+                    <div className='text-xs text-gray-400 mt-1'>{cost}</div>
+                    <div className='text-xs text-white'>
+                      {affinityCurve[cost]
+                        ? Object.values(affinityCurve[cost]).reduce(
+                            (sum, val) => sum + val,
+                            0
+                          )
+                        : 0}
+                    </div>
+                  </div>
+                ))}
+
+                {/* 10+ cost column */}
+                <div className='flex flex-col items-center flex-1'>
+                  <div className='w-full flex flex-col justify-end h-24'>
+                    {Object.entries(affinityCurve).filter(
+                      ([cost]) => parseInt(cost) >= 10
+                    ).length > 0 && (
+                      <AffinityColorBar
+                        affinityRequirements={Object.entries(affinityCurve)
+                          .filter(([cost]) => parseInt(cost) >= 10)
+                          .reduce(
+                            (acc, [_, affinity]) => {
+                              // Combine all affinities for costs >= 10 (take max values)
+                              acc.fire = Math.max(acc.fire, affinity.fire);
+                              acc.water = Math.max(acc.water, affinity.water);
+                              acc.earth = Math.max(acc.earth, affinity.earth);
+                              acc.wood = Math.max(acc.wood, affinity.wood);
+                              acc.metal = Math.max(acc.metal, affinity.metal);
+                              return acc;
+                            },
+                            {
+                              fire: 0,
+                              water: 0,
+                              earth: 0,
+                              wood: 0,
+                              metal: 0,
+                            } as AffinityRequirements
+                          )}
+                        maxValue={maxAffinityValue}
+                      />
+                    )}
+                  </div>
+                  <div className='text-xs text-gray-400 mt-1'>10+</div>
+                  <div className='text-xs text-white'>
+                    {Object.entries(affinityCurve).filter(
+                      ([cost]) => parseInt(cost) >= 10
+                    ).length > 0
+                      ? Object.entries(affinityCurve)
+                          .filter(([cost]) => parseInt(cost) >= 10)
+                          .reduce((sum, [_, affinity]) => {
+                            return (
+                              sum +
+                              Object.values(affinity).reduce((s, v) => s + v, 0)
+                            );
+                          }, 0)
+                      : 0}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Element Distribution */}
           <div>

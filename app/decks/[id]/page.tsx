@@ -31,7 +31,15 @@ interface DeckPageProps {
 
 export default function DeckPage({ params }: DeckPageProps) {
   // Access params directly - we'll handle the warning later in a better way
-  const { id } = params;
+  const [id, setId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolvedParams = await params;
+      setId(resolvedParams.id);
+    };
+    resolveParams();
+  }, [params]);
   const { data: session, status } = useSession();
   const router = useRouter();
   const [deck, setDeck] = useState<Deck | null>(null);
@@ -46,6 +54,8 @@ export default function DeckPage({ params }: DeckPageProps) {
 
   // Fetch deck and cards
   useEffect(() => {
+    if (!id) return; // Wait for id to be resolved
+
     async function fetchData() {
       try {
         const response = await fetch(`/api/decks/${id}`);

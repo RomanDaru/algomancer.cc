@@ -70,18 +70,18 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
       {/* Close button */}
       {onClose && (
         <button
-          className='absolute top-4 right-4 text-gray-400 hover:text-white bg-algomancy-purple/20 hover:bg-algomancy-purple/40 rounded-full p-2 transition-colors z-10 cursor-pointer'
+          className='absolute top-3 right-3 md:top-4 md:right-4 text-white hover:text-algomancy-gold bg-black/60 hover:bg-algomancy-purple/60 rounded-full p-2 md:p-2 transition-colors z-10 cursor-pointer border border-white/20 hover:border-algomancy-purple/50 shadow-lg'
           onClick={onClose}>
           <svg
             xmlns='http://www.w3.org/2000/svg'
-            className='h-6 w-6'
+            className='h-5 w-5 md:h-6 md:w-6'
             fill='none'
             viewBox='0 0 24 24'
-            stroke='currentColor'>
+            stroke='currentColor'
+            strokeWidth={2.5}>
             <path
               strokeLinecap='round'
               strokeLinejoin='round'
-              strokeWidth={2}
               d='M6 18L18 6M6 6l12 12'
             />
           </svg>

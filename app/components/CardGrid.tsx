@@ -5,6 +5,8 @@ import Card from "./Card";
 import { useState, useRef, useEffect } from "react";
 import CardDetails from "./CardDetails";
 import CardSearch from "./CardSearch";
+import InfiniteScrollTrigger from "./InfiniteScrollTrigger";
+import { useInfiniteScroll } from "@/app/hooks/useInfiniteScroll";
 import {
   ViewColumnsIcon,
   Squares2X2Icon,
@@ -19,9 +21,23 @@ export default function CardGrid({ cards }: CardGridProps) {
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
   const [filteredCards, setFilteredCards] = useState<CardType[]>(cards);
   const [viewMode, setViewMode] = useState<"large" | "compact" | "list">(
-    "compact"
+    "large"
   );
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Infinite scroll hook
+  const {
+    displayedItems: displayedCards,
+    loadMore,
+    isLoading,
+    hasMore,
+    totalItems,
+    displayedCount,
+  } = useInfiniteScroll({
+    items: filteredCards,
+    itemsPerPage: 30,
+    initialLoad: 50,
+  });
 
   // Handle click outside modal
   useEffect(() => {
@@ -93,9 +109,13 @@ export default function CardGrid({ cards }: CardGridProps) {
       <div className='mb-4 flex justify-between items-center'>
         <div className='text-gray-300'>
           {filteredCards.length === cards.length ? (
-            <p>Showing all {cards.length} cards</p>
+            <p>
+              Showing {displayedCount} of {totalItems} cards
+            </p>
           ) : (
-            <p>Found {filteredCards.length} cards</p>
+            <p>
+              Found {totalItems} cards • Showing {displayedCount}
+            </p>
           )}
         </div>
 
@@ -160,27 +180,37 @@ export default function CardGrid({ cards }: CardGridProps) {
       </div>
 
       {/* Card Grid - Responsive layout based on view mode */}
-      {filteredCards.length > 0 ? (
-        <div
-          className={`${
-            viewMode === "list"
-              ? "space-y-2"
-              : `grid gap-2 sm:gap-4 ${
-                  viewMode === "large"
-                    ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
-                    : "grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12"
-                }`
-          }`}>
-          {filteredCards.map((card) => (
-            <div key={card.id}>
-              <Card
-                card={card}
-                onClick={() => setSelectedCard(card)}
-                viewMode={viewMode}
-              />
-            </div>
-          ))}
-        </div>
+      {totalItems > 0 ? (
+        <>
+          <div
+            className={`${
+              viewMode === "list"
+                ? "space-y-2"
+                : `grid gap-2 sm:gap-4 ${
+                    viewMode === "large"
+                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                      : "grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12"
+                  }`
+            }`}>
+            {displayedCards.map((card, index) => (
+              <div key={card.id}>
+                <Card
+                  card={card}
+                  onClick={() => setSelectedCard(card)}
+                  viewMode={viewMode}
+                  priority={index < 12} // Prioritize first 12 cards
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Infinite Scroll Trigger */}
+          <InfiniteScrollTrigger
+            onLoadMore={loadMore}
+            isLoading={isLoading}
+            hasMore={hasMore}
+          />
+        </>
       ) : (
         <div className='text-center py-12'>
           <p className='text-xl text-gray-400'>

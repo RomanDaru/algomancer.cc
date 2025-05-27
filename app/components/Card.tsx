@@ -15,9 +15,15 @@ interface CardProps {
   card: CardType;
   onClick?: () => void;
   viewMode?: "large" | "compact" | "list";
+  priority?: boolean;
 }
 
-export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
+export default function Card({
+  card,
+  onClick,
+  viewMode = "large",
+  priority = false,
+}: CardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -40,9 +46,9 @@ export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
       <div
         className='flex items-center justify-between py-2 px-3 border border-algomancy-purple/30 hover:border-algomancy-purple hover:bg-algomancy-purple/10 rounded-lg cursor-pointer transition-colors'
         onClick={onClick}>
-        <div className='flex items-center space-x-2'>
+        <div className='flex items-center'>
           {/* Element Indicator(s) - Handle both single and hybrid elements */}
-          <div className='flex items-center'>
+          <div className='flex items-center w-6 justify-start'>
             {elements.map((element, index) => (
               <ElementIcon
                 key={`${element}-${index}`}
@@ -55,8 +61,10 @@ export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
           </div>
 
           {/* Mana Cost */}
-          <span className='text-sm text-algomancy-gold font-medium min-w-[20px]'>
-            {card.manaCost}
+          <span className='text-sm text-algomancy-gold font-medium min-w-[20px] ml-4 mr-3'>
+            {card.manaCost === 0 && card.typeAndAttributes.mainType === "Spell"
+              ? "X"
+              : card.manaCost}
           </span>
 
           {/* Card Name */}
@@ -106,8 +114,8 @@ export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
               ? "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
               : "(max-width: 640px) 50vw, (max-width: 768px) 25vw, (max-width: 1024px) 16vw, (max-width: 1280px) 12vw, 8vw"
           }
-          loading='lazy'
-          priority={false}
+          loading={priority ? "eager" : "lazy"}
+          priority={priority}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
         />

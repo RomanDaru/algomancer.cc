@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AuthProvider from "./providers/AuthProvider";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,6 +84,9 @@ export const metadata: Metadata = {
   },
   verification: {
     google: "4RXCpQTGpClMZvyWmJbc-m_5-18TgSCHoiAhYWdhj4g",
+    other: {
+      "msvalidate.01": "5C0D9110EE5355100D2FB1F74036EA73",
+    },
   },
 };
 
@@ -101,6 +105,7 @@ export default function RootLayout({
           <Footer />
         </AuthProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

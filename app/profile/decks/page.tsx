@@ -65,8 +65,10 @@ export default function MyDecks() {
         const decksData = await decksResponse.json();
         setDecks(decksData);
 
-        // Fetch all cards for element display
-        const cardsResponse = await fetch("/api/cards");
+        // Fetch all cards for element display (with cache control)
+        const cardsResponse = await fetch("/api/cards", {
+          next: { revalidate: 300 }, // Cache for 5 minutes
+        });
         if (!cardsResponse.ok) {
           throw new Error("Failed to fetch cards");
         }

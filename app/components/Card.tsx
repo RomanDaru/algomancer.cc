@@ -106,6 +106,8 @@ export default function Card({ card, onClick, viewMode = "large" }: CardProps) {
               ? "(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, (max-width: 1280px) 25vw, 20vw"
               : "(max-width: 640px) 50vw, (max-width: 768px) 25vw, (max-width: 1024px) 16vw, (max-width: 1280px) 12vw, 8vw"
           }
+          loading='lazy'
+          priority={false}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
         />

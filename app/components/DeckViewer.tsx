@@ -374,6 +374,8 @@ export default function DeckViewer({
                               fill
                               className='object-cover'
                               sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
+                              loading='lazy'
+                              priority={false}
                             />
                           </div>
                         </div>

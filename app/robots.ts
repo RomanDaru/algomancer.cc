@@ -1,38 +1,37 @@
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: '*',
-        allow: '/',
+        userAgent: "*",
+        allow: "/",
         disallow: [
-          '/api/',
-          '/admin/',
-          '/setup/',
-          '/auth/callback',
-          '/profile/edit',
-          '/_next/',
-          '/test-optimization/',
-          '/creator-cards-test/',
+          "/api/",
+          "/admin/",
+          "/setup/",
+          "/auth/callback",
+          "/profile/edit",
+          "/_next/",
+          "/test-optimization/",
+          "/creator-cards-test/",
         ],
       },
       {
-        userAgent: 'Googlebot',
-        allow: '/',
+        userAgent: "Googlebot",
+        allow: "/",
         disallow: [
-          '/api/',
-          '/admin/',
-          '/setup/',
-          '/auth/callback',
-          '/profile/edit',
-          '/_next/',
-          '/test-optimization/',
-          '/creator-cards-test/',
+          "/api/",
+          "/admin/",
+          "/setup/",
+          "/auth/callback",
+          "/profile/edit",
+          "/_next/",
+          "/test-optimization/",
+          "/creator-cards-test/",
         ],
       },
     ],
-    sitemap: 'https://algomancer.cc/sitemap.xml',
-    host: 'https://algomancer.cc',
+    sitemap: "https://algomancer.cc/sitemap.xml",
   };
 }

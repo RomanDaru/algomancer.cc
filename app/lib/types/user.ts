@@ -56,6 +56,19 @@ export interface CompetitionWinner {
   deckId: ObjectId;
   userId: ObjectId;
   votes?: number;
+  // Populated user data (when fetched with user info)
+  user?: {
+    _id: ObjectId;
+    name: string;
+    email: string;
+    username?: string;
+  };
+  // Populated deck data (when fetched with deck info)
+  deck?: {
+    _id: ObjectId;
+    name: string;
+    description?: string;
+  };
 }
 
 export interface CompetitionEntry {
@@ -65,4 +78,27 @@ export interface CompetitionEntry {
   userId: ObjectId;
   submittedAt: Date;
   discordMessageId?: string;
+}
+
+export interface Badge {
+  _id: ObjectId;
+  type: "best_constructed_monthly" | "best_draft_monthly" | "hall_of_fame";
+  title: string;
+  description: string;
+  icon: string; // Emoji or icon identifier
+  color: string; // CSS color for the badge
+  month?: string; // Format: "YYYY-MM" for monthly badges
+  year?: number; // For yearly or special badges
+  awardedAt: Date;
+  createdAt: Date;
+}
+
+export interface UserBadge {
+  _id: ObjectId;
+  userId: ObjectId;
+  badgeId: ObjectId;
+  competitionId?: ObjectId; // Competition that earned this badge
+  awardedAt: Date;
+  // Populated badge data
+  badge?: Badge;
 }

@@ -1,78 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { competitionDbService } from "@/app/lib/db/services/competitionDbService";
+import { updateCompetitionStatus } from "@/app/lib/utils/competitionStatus";
 import { ObjectId } from "mongodb";
-
-// Mock data - same as in route.ts
-const mockCompetitions = [
-  {
-    _id: new ObjectId("674d1234567890abcdef0001"),
-    title: "Winter Constructed Championship",
-    description:
-      "Show off your best constructed deck in this seasonal championship! Build your most powerful deck and compete for the title.",
-    type: "constructed" as const,
-    status: "active" as const,
-    startDate: new Date("2024-12-01"),
-    endDate: new Date("2024-12-15"),
-    votingEndDate: new Date("2024-12-20"),
-    discordChannelId: "winter-constructed-2024",
-    submissionCount: 23,
-    winners: [],
-    createdAt: new Date("2024-11-25"),
-    updatedAt: new Date("2024-11-25"),
-  },
-  {
-    _id: new ObjectId("674d1234567890abcdef0002"),
-    title: "Draft Masters Tournament",
-    description:
-      "Test your drafting skills in this live draft competition! Create the best deck from limited card pools.",
-    type: "draft" as const,
-    status: "voting" as const,
-    startDate: new Date("2024-11-15"),
-    endDate: new Date("2024-11-30"),
-    votingEndDate: new Date("2024-12-05"),
-    discordChannelId: "draft-masters-2024",
-    submissionCount: 18,
-    winners: [],
-    createdAt: new Date("2024-11-10"),
-    updatedAt: new Date("2024-11-10"),
-  },
-  {
-    _id: new ObjectId("674d1234567890abcdef0003"),
-    title: "Autumn Constructed Classic",
-    description:
-      "Our previous constructed tournament featuring amazing deck innovations and creative strategies.",
-    type: "constructed" as const,
-    status: "completed" as const,
-    startDate: new Date("2024-10-01"),
-    endDate: new Date("2024-10-15"),
-    votingEndDate: new Date("2024-10-20"),
-    discordChannelId: "autumn-constructed-2024",
-    submissionCount: 31,
-    winners: [
-      {
-        place: 1 as const,
-        deckId: new ObjectId("674d1234567890abcdef1001"),
-        userId: new ObjectId("674d1234567890abcdef2001"),
-        votes: 45,
-      },
-      {
-        place: 2 as const,
-        deckId: new ObjectId("674d1234567890abcdef1002"),
-        userId: new ObjectId("674d1234567890abcdef2002"),
-        votes: 38,
-      },
-      {
-        place: 3 as const,
-        deckId: new ObjectId("674d1234567890abcdef1003"),
-        userId: new ObjectId("674d1234567890abcdef2003"),
-        votes: 32,
-      },
-    ],
-    createdAt: new Date("2024-09-25"),
-    updatedAt: new Date("2024-10-25"),
-  },
-];
 
 /**
  * GET /api/competitions/[id]
@@ -86,13 +17,9 @@ export async function GET(
     const resolvedParams = await params;
     const competitionId = resolvedParams.id;
 
-    // Find competition by ID
-    const competition = mockCompetitions.find(
-      (c) =>
-        c._id.toString() === competitionId ||
-        competitionId === "1" ||
-        competitionId === "2" ||
-        competitionId === "3" // Support old mock IDs
+    // Get competition from database
+    const competition = await competitionDbService.getCompetitionWithWinners(
+      competitionId
     );
 
     if (!competition) {
@@ -102,7 +29,35 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(competition);
+    // For now, use competition as-is without automatic status updates
+    // TODO: Re-enable automatic status updates once import issues are resolved
+    const updatedCompetition = competition;
+
+    // Ensure ObjectIds are properly serialized to strings
+    const serializedCompetition = {
+      ...updatedCompetition,
+      _id: updatedCompetition._id.toString(),
+      winners: updatedCompetition.winners.map((winner) => ({
+        ...winner,
+        deckId: winner.deckId.toString(),
+        userId: winner.userId.toString(),
+        // Preserve user and deck data if they exist
+        user: winner.user
+          ? {
+              ...winner.user,
+              _id: winner.user._id.toString(),
+            }
+          : undefined,
+        deck: winner.deck
+          ? {
+              ...winner.deck,
+              _id: winner.deck._id.toString(),
+            }
+          : undefined,
+      })),
+    };
+
+    return NextResponse.json(serializedCompetition);
   } catch (error) {
     console.error("Error getting competition:", error);
     return NextResponse.json(
@@ -141,37 +96,64 @@ export async function PUT(
     const resolvedParams = await params;
     const competitionId = resolvedParams.id;
 
-    const competition = mockCompetitions.find(
-      (c) =>
-        c._id.toString() === competitionId ||
-        competitionId === "1" ||
-        competitionId === "2" ||
-        competitionId === "3"
+    const updateData = await request.json();
+
+    // Validate dates if provided
+    if (
+      updateData.startDate &&
+      updateData.endDate &&
+      updateData.votingEndDate
+    ) {
+      const startDate = new Date(updateData.startDate);
+      const endDate = new Date(updateData.endDate);
+      const votingEndDate = new Date(updateData.votingEndDate);
+
+      if (startDate >= endDate || endDate >= votingEndDate) {
+        return NextResponse.json(
+          { error: "Invalid date sequence: start < end < voting end" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Update competition in database
+    const updatedCompetition = await competitionDbService.updateCompetition(
+      competitionId,
+      updateData
     );
 
-    if (!competition) {
+    if (!updatedCompetition) {
       return NextResponse.json(
         { error: "Competition not found" },
         { status: 404 }
       );
     }
 
-    const updateData = await request.json();
+    // Ensure ObjectIds are properly serialized to strings
+    const serializedCompetition = {
+      ...updatedCompetition,
+      _id: updatedCompetition._id.toString(),
+      winners: updatedCompetition.winners.map((winner) => ({
+        ...winner,
+        deckId: winner.deckId.toString(),
+        userId: winner.userId.toString(),
+        // Preserve user and deck data if they exist
+        user: winner.user
+          ? {
+              ...winner.user,
+              _id: winner.user._id.toString(),
+            }
+          : undefined,
+        deck: winner.deck
+          ? {
+              ...winner.deck,
+              _id: winner.deck._id.toString(),
+            }
+          : undefined,
+      })),
+    };
 
-    // Update allowed fields
-    if (updateData.title) competition.title = updateData.title;
-    if (updateData.description)
-      competition.description = updateData.description;
-    if (updateData.status) competition.status = updateData.status;
-    if (updateData.winners) competition.winners = updateData.winners;
-    if (updateData.submissionCount !== undefined)
-      competition.submissionCount = updateData.submissionCount;
-
-    competition.updatedAt = new Date();
-
-    // TODO: Save to database
-
-    return NextResponse.json(competition);
+    return NextResponse.json(serializedCompetition);
   } catch (error) {
     console.error("Error updating competition:", error);
     return NextResponse.json(
@@ -210,23 +192,15 @@ export async function DELETE(
     const resolvedParams = await params;
     const competitionId = resolvedParams.id;
 
-    const competitionIndex = mockCompetitions.findIndex(
-      (c) =>
-        c._id.toString() === competitionId ||
-        competitionId === "1" ||
-        competitionId === "2" ||
-        competitionId === "3"
-    );
+    // Delete competition from database
+    const deleted = await competitionDbService.deleteCompetition(competitionId);
 
-    if (competitionIndex === -1) {
+    if (!deleted) {
       return NextResponse.json(
         { error: "Competition not found" },
         { status: 404 }
       );
     }
-
-    // TODO: Remove from database
-    // mockCompetitions.splice(competitionIndex, 1);
 
     return NextResponse.json({ message: "Competition deleted successfully" });
   } catch (error) {

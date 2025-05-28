@@ -2,27 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
+import { competitionDbService } from "@/app/lib/db/services/competitionDbService";
 import { ObjectId } from "mongodb";
-
-// Mock competition entries data - using a global array to persist during session
-let mockEntries = [
-  {
-    _id: new ObjectId("674d1234567890abcdef3001"),
-    competitionId: new ObjectId("674d1234567890abcdef0001"),
-    deckId: new ObjectId("674d1234567890abcdef1001"),
-    userId: new ObjectId("674d1234567890abcdef2001"),
-    submittedAt: new Date("2024-12-02"),
-    discordMessageId: "1234567890123456789",
-  },
-  {
-    _id: new ObjectId("674d1234567890abcdef3002"),
-    competitionId: new ObjectId("674d1234567890abcdef0001"),
-    deckId: new ObjectId("674d1234567890abcdef1002"),
-    userId: new ObjectId("674d1234567890abcdef2002"),
-    submittedAt: new Date("2024-12-03"),
-    discordMessageId: "1234567890123456790",
-  },
-];
 
 /**
  * GET /api/competitions/[id]/entries
@@ -36,19 +17,9 @@ export async function GET(
     const resolvedParams = await params;
     const competitionId = resolvedParams.id;
 
-    console.log(`Getting entries for competition ${competitionId}`);
-    console.log(`Total mock entries: ${mockEntries.length}`);
-
-    // Filter entries by competition ID
-    const entries = mockEntries.filter(
-      (entry) =>
-        entry.competitionId.toString() === competitionId ||
-        (competitionId === "1" &&
-          entry.competitionId.toString() === "674d1234567890abcdef0001")
-    );
-
-    console.log(
-      `Filtered entries for competition ${competitionId}: ${entries.length}`
+    // Get entries from database
+    const entries = await competitionDbService.getCompetitionEntries(
+      competitionId
     );
 
     // Get deck details for each entry
@@ -75,11 +46,6 @@ export async function GET(
           };
         }
       })
-    );
-
-    // Sort by submission date (newest first)
-    entriesWithDecks.sort(
-      (a, b) => b.submittedAt.getTime() - a.submittedAt.getTime()
     );
 
     return NextResponse.json(entriesWithDecks);
@@ -142,41 +108,32 @@ export async function POST(
       );
     }
 
-    // Check if user has already submitted to this competition
-    const existingEntry = mockEntries.find(
-      (entry) =>
-        (entry.competitionId.toString() === competitionId ||
-          (competitionId === "1" &&
-            entry.competitionId.toString() === "674d1234567890abcdef0001")) &&
-        entry.userId.toString() === session.user.id
+    // Check if competition exists and is active
+    const competition = await competitionDbService.getCompetitionById(
+      competitionId
     );
-
-    if (existingEntry) {
+    if (!competition) {
       return NextResponse.json(
-        { error: "You have already submitted a deck to this competition" },
+        { error: "Competition not found" },
+        { status: 404 }
+      );
+    }
+
+    if (competition.status !== "active") {
+      return NextResponse.json(
+        { error: "Competition is not currently accepting submissions" },
         { status: 400 }
       );
     }
 
-    // TODO: Check if competition is active and accepting submissions
-
-    // Create new entry
-    const newEntry = {
-      _id: new ObjectId(),
-      competitionId: new ObjectId(
-        competitionId === "1" ? "674d1234567890abcdef0001" : competitionId
-      ),
+    // Create new entry using database service
+    const newEntry = await competitionDbService.createCompetitionEntry({
+      competitionId: new ObjectId(competitionId),
       deckId: new ObjectId(deckId),
       userId: new ObjectId(session.user.id),
       submittedAt: new Date(),
-      discordMessageId: null, // Will be set when posted to Discord
-    };
-
-    // Save to mock entries array (in production this would be saved to database)
-    mockEntries.push(newEntry);
-
-    console.log(`New entry added for competition ${competitionId}:`, newEntry);
-    console.log(`Total entries now: ${mockEntries.length}`);
+      discordMessageId: undefined, // Will be set when posted to Discord
+    });
 
     // Get deck details for response
     const deckDetails = await deckService.getDeckWithCards(deckId);

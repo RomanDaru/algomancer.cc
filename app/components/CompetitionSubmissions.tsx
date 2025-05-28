@@ -13,6 +13,7 @@ import {
   ClockIcon,
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+import WinnerSelectionModal from "./WinnerSelectionModal";
 
 interface CompetitionSubmission {
   _id: string;
@@ -48,6 +49,7 @@ export default function CompetitionSubmissions({
   const { data: session } = useSession();
   const [submissions, setSubmissions] = useState<CompetitionSubmission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isWinnerModalOpen, setIsWinnerModalOpen] = useState(false);
 
   useEffect(() => {
     fetchSubmissions();
@@ -212,13 +214,10 @@ export default function CompetitionSubmissions({
 
                 {isAdmin && (
                   <button
-                    onClick={() => {
-                      // TODO: Add functionality to select as winner
-                      toast.success("Winner selection coming soon!");
-                    }}
+                    onClick={() => setIsWinnerModalOpen(true)}
                     className='inline-flex items-center px-3 py-2 bg-algomancy-gold hover:bg-algomancy-gold-dark rounded-md text-black text-sm font-medium transition-colors'>
                     <TrophyIcon className='w-4 h-4 mr-1' />
-                    Select Winner
+                    Select Winners
                   </button>
                 )}
               </div>
@@ -235,11 +234,35 @@ export default function CompetitionSubmissions({
           <div className='text-sm text-gray-300'>
             • Users submit decks here and share links in Discord
             <br />• Count Discord reactions/votes manually for each deck
-            <br />• Use "Select Winner" to choose winners based on vote counts
+            <br />• Use "Select Winners" to choose winners based on vote counts
             <br />• All submissions are tracked with timestamps and user info
           </div>
         </div>
       )}
+
+      {/* Winner Selection Modal */}
+      <WinnerSelectionModal
+        isOpen={isWinnerModalOpen}
+        onClose={() => setIsWinnerModalOpen(false)}
+        competitionId={competitionId}
+        submissions={submissions.map((s) => ({
+          _id: s._id,
+          deck: s.deck,
+          user: s.user
+            ? {
+                _id: s.user._id,
+                name: s.user.name,
+                username: null, // We don't have username in the current interface
+              }
+            : null,
+          submittedAt: new Date(s.submittedAt),
+        }))}
+        onWinnersSelected={() => {
+          setIsWinnerModalOpen(false);
+          // Refresh the page to show updated competition status and winners
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

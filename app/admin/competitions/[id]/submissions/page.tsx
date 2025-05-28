@@ -17,7 +17,11 @@ interface Competition {
   submissionCount: number;
 }
 
-export default function AdminCompetitionSubmissionsPage({ params }: { params: { id: string } }) {
+export default function AdminCompetitionSubmissionsPage({
+  params,
+}: {
+  params: { id: string };
+}) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [competition, setCompetition] = useState<Competition | null>(null);
@@ -53,7 +57,7 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
     try {
       setIsLoading(true);
       const response = await fetch(`/api/competitions/${params.id}`);
-      
+
       if (response.ok) {
         const data = await response.json();
         setCompetition(data);
@@ -82,7 +86,9 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
     return (
       <div className='container mx-auto px-4 py-8'>
         <div className='max-w-2xl mx-auto text-center'>
-          <h1 className='text-2xl font-bold text-white mb-4'>Competition Not Found</h1>
+          <h1 className='text-2xl font-bold text-white mb-4'>
+            Competition Not Found
+          </h1>
           <Link
             href='/admin/competitions'
             className='text-algomancy-blue hover:text-algomancy-blue-light'>
@@ -110,10 +116,12 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
           <div className='flex items-center space-x-4'>
             <h2 className='text-xl text-gray-300'>{competition.title}</h2>
             <span className='px-2 py-1 text-xs rounded-full bg-algomancy-purple/20 text-algomancy-purple border border-algomancy-purple/30'>
-              {competition.type.charAt(0).toUpperCase() + competition.type.slice(1)}
+              {competition.type.charAt(0).toUpperCase() +
+                competition.type.slice(1)}
             </span>
             <span className='px-2 py-1 text-xs rounded-full bg-gray-700 text-gray-300'>
-              {competition.status.charAt(0).toUpperCase() + competition.status.slice(1)}
+              {competition.status.charAt(0).toUpperCase() +
+                competition.status.slice(1)}
             </span>
           </div>
         </div>
@@ -123,7 +131,8 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
           <p className='text-gray-300 mb-4'>{competition.description}</p>
           <div className='flex items-center space-x-6 text-sm text-gray-400'>
             <div>
-              <span className='font-medium'>Total Submissions:</span> {competition.submissionCount}
+              <span className='font-medium'>Total Submissions:</span>{" "}
+              {competition.submissionCount}
             </div>
             <div>
               <span className='font-medium'>Status:</span> {competition.status}
@@ -132,14 +141,16 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
         </div>
 
         {/* Submissions List */}
-        <CompetitionSubmissions 
-          competitionId={competition._id} 
+        <CompetitionSubmissions
+          competitionId={competition._id}
           isAdmin={true}
         />
 
         {/* Admin Actions */}
         <div className='mt-8 bg-algomancy-darker border border-algomancy-gold/30 rounded-lg p-6'>
-          <h3 className='text-lg font-semibold text-algomancy-gold mb-4'>Admin Actions</h3>
+          <h3 className='text-lg font-semibold text-algomancy-gold mb-4'>
+            Admin Actions
+          </h3>
           <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
             <Link
               href={`/admin/competitions/${competition._id}/edit`}
@@ -153,7 +164,10 @@ export default function AdminCompetitionSubmissionsPage({ params }: { params: { 
             </Link>
             <button
               onClick={() => {
-                toast.success("Winner selection feature coming soon!");
+                // The CompetitionSubmissions component now handles winner selection
+                toast.info(
+                  "Use the 'Select Winners' button in the submissions list below"
+                );
               }}
               className='inline-flex items-center justify-center px-4 py-2 bg-algomancy-gold hover:bg-algomancy-gold-dark rounded-md text-black font-medium transition-colors'>
               Select Winners

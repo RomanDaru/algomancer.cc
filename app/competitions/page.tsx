@@ -1,4 +1,6 @@
-import { Metadata } from "next";
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   TrophyIcon,
@@ -6,104 +8,78 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 import CompetitionCard from "@/app/components/CompetitionCard";
-
-export const metadata: Metadata = {
-  title: "Deck Building Competitions - Algomancer.cc",
-  description:
-    "Join exciting Algomancy deck building competitions! Compete in Constructed and Draft formats, showcase your skills, and win recognition in the community.",
-  keywords: [
-    "algomancy competitions",
-    "deck building contest",
-    "algomancy tournament",
-    "constructed format",
-    "draft format",
-    "deck building challenge",
-    "algomancy community",
-    "competitive deck building",
-  ],
-  openGraph: {
-    title: "Deck Building Competitions - Algomancer.cc",
-    description:
-      "Join exciting Algomancy deck building competitions! Compete in Constructed and Draft formats.",
-    url: "https://algomancer.cc/competitions",
-  },
-};
-
-// Mock data for now - will be replaced with API calls
-const mockCompetitions = [
-  {
-    _id: "1",
-    title: "Winter Constructed Championship",
-    description:
-      "Show off your best constructed deck in this seasonal championship! Build your most powerful deck and compete for the title.",
-    type: "constructed" as const,
-    status: "active" as const,
-    startDate: new Date("2024-12-01"),
-    endDate: new Date("2024-12-15"),
-    votingEndDate: new Date("2024-12-20"),
-    submissionCount: 23,
-    winners: [],
-  },
-  {
-    _id: "2",
-    title: "Draft Masters Tournament",
-    description:
-      "Test your drafting skills in this live draft competition! Create the best deck from limited card pools.",
-    type: "draft" as const,
-    status: "voting" as const,
-    startDate: new Date("2024-11-15"),
-    endDate: new Date("2024-11-30"),
-    votingEndDate: new Date("2024-12-05"),
-    submissionCount: 18,
-    winners: [],
-  },
-  {
-    _id: "3",
-    title: "Autumn Constructed Classic",
-    description:
-      "Our previous constructed tournament featuring amazing deck innovations and creative strategies.",
-    type: "constructed" as const,
-    status: "completed" as const,
-    startDate: new Date("2024-10-01"),
-    endDate: new Date("2024-10-15"),
-    votingEndDate: new Date("2024-10-20"),
-    submissionCount: 31,
-    winners: [
-      {
-        place: 1 as const,
-        deckId: "deck1" as any,
-        userId: "user1" as any,
-        votes: 45,
-      },
-      {
-        place: 2 as const,
-        deckId: "deck2" as any,
-        userId: "user2" as any,
-        votes: 38,
-      },
-      {
-        place: 3 as const,
-        deckId: "deck3" as any,
-        userId: "user3" as any,
-        votes: 32,
-      },
-    ],
-  },
-];
+import { Competition } from "@/app/lib/types/user";
 
 export default function CompetitionsPage() {
-  const activeCompetitions = mockCompetitions.filter(
+  const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCompetitions = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/competitions");
+        if (!response.ok) {
+          throw new Error("Failed to fetch competitions");
+        }
+        const data = await response.json();
+
+        // Convert date strings to Date objects
+        const competitionsWithDates = data.map((competition: any) => ({
+          ...competition,
+          startDate: new Date(competition.startDate),
+          endDate: new Date(competition.endDate),
+          votingEndDate: new Date(competition.votingEndDate),
+          createdAt: new Date(competition.createdAt),
+          updatedAt: new Date(competition.updatedAt),
+        }));
+
+        setCompetitions(competitionsWithDates);
+      } catch (err) {
+        console.error("Error fetching competitions:", err);
+        setError("Failed to load competitions");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCompetitions();
+  }, []);
+
+  const activeCompetitions = competitions.filter(
     (c) => c.status === "active" || c.status === "voting"
   );
-  const completedCompetitions = mockCompetitions.filter(
+  const completedCompetitions = competitions.filter(
     (c) => c.status === "completed"
   );
-  const upcomingCompetitions = mockCompetitions.filter(
+  const upcomingCompetitions = competitions.filter(
     (c) => c.status === "upcoming"
   );
 
+  if (loading) {
+    return (
+      <div className='container mx-auto px-4 pt-16 pb-8 max-w-6xl'>
+        <div className='flex justify-center items-center min-h-[400px]'>
+          <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className='container mx-auto px-4 pt-16 pb-8 max-w-6xl'>
+        <div className='text-center'>
+          <h1 className='text-2xl font-bold text-red-400 mb-4'>Error</h1>
+          <p className='text-gray-300'>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className='container mx-auto px-4 py-8 max-w-6xl'>
+    <div className='container mx-auto px-4 pt-16 pb-8 max-w-6xl'>
       {/* Header */}
       <div className='text-center mb-12'>
         <h1 className='text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
@@ -116,77 +92,8 @@ export default function CompetitionsPage() {
         </p>
       </div>
 
-      {/* Competition Types Info */}
-      <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-12'>
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6'>
-          <div className='flex items-center mb-4'>
-            <span className='text-2xl mr-3'>🏗️</span>
-            <h3 className='text-xl font-semibold text-algomancy-gold'>
-              Constructed Decks
-            </h3>
-          </div>
-          <p className='text-gray-300'>
-            Build your ultimate deck using any cards from your collection. Show
-            off your strategic thinking and deck building mastery with unlimited
-            card access.
-          </p>
-        </div>
-
-        <div className='bg-algomancy-darker border border-algomancy-blue/30 rounded-lg p-6'>
-          <div className='flex items-center mb-4'>
-            <span className='text-2xl mr-3'>🎲</span>
-            <h3 className='text-xl font-semibold text-algomancy-blue'>
-              Live Draft Decks
-            </h3>
-          </div>
-          <p className='text-gray-300'>
-            Test your adaptability and quick thinking! Build decks from limited
-            card pools in real-time draft sessions. Pure skill, no collection
-            advantage.
-          </p>
-        </div>
-      </div>
-
-      {/* Active/Voting Competitions */}
-      {activeCompetitions.length > 0 && (
-        <section className='mb-12'>
-          <h2 className='text-2xl font-bold mb-6 text-white flex items-center'>
-            <TrophyIcon className='w-6 h-6 mr-2 text-algomancy-gold' />
-            Active Competitions
-          </h2>
-          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
-            {activeCompetitions.map((competition) => (
-              <CompetitionCard
-                key={competition._id}
-                competition={competition}
-                variant='active'
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Completed Competitions */}
-      {completedCompetitions.length > 0 && (
-        <section>
-          <h2 className='text-2xl font-bold mb-6 text-white flex items-center'>
-            <TrophyIcon className='w-6 h-6 mr-2 text-gray-400' />
-            Past Champions
-          </h2>
-          <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
-            {completedCompetitions.map((competition) => (
-              <CompetitionCard
-                key={competition._id}
-                competition={competition}
-                variant='completed'
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
       {/* How it Works */}
-      <section className='mt-16 bg-algomancy-darker border border-algomancy-purple/20 rounded-lg p-8'>
+      <section className='mb-12 bg-algomancy-darker border border-algomancy-purple/20 rounded-lg p-8'>
         <h2 className='text-2xl font-bold mb-6 text-white text-center'>
           How Competitions Work
         </h2>
@@ -228,6 +135,109 @@ export default function CompetitionsPage() {
           </div>
         </div>
       </section>
+
+      {/* Competition Types Info */}
+      <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mb-12'>
+        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-6'>
+          <div className='mb-4'>
+            <h3 className='text-xl font-semibold text-algomancy-gold'>
+              Constructed Decks
+            </h3>
+          </div>
+          <p className='text-gray-300'>
+            Build your ultimate deck using any cards from your collection. Show
+            off your strategic thinking and deck building mastery with unlimited
+            card access.
+          </p>
+        </div>
+
+        <div className='bg-algomancy-darker border border-algomancy-blue/30 rounded-lg p-6'>
+          <div className='mb-4'>
+            <h3 className='text-xl font-semibold text-algomancy-blue'>
+              Live Draft Decks
+            </h3>
+          </div>
+          <p className='text-gray-300'>
+            Test your adaptability and quick thinking! Build decks from limited
+            card pools in real-time draft sessions. Pure skill, no collection
+            advantage.
+          </p>
+        </div>
+      </div>
+
+      {/* Active/Voting Competitions */}
+      {activeCompetitions.length > 0 ? (
+        <section className='mb-12'>
+          <h2 className='text-2xl font-bold mb-6 text-white flex items-center'>
+            <TrophyIcon className='w-6 h-6 mr-2 text-algomancy-gold' />
+            Active Competitions
+          </h2>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            {activeCompetitions.map((competition) => (
+              <CompetitionCard
+                key={competition._id}
+                competition={competition}
+                variant='active'
+              />
+            ))}
+          </div>
+        </section>
+      ) : competitions.length === 0 ? (
+        <section className='mb-12'>
+          <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-8 text-center'>
+            <TrophyIcon className='w-16 h-16 text-gray-400 mx-auto mb-4' />
+            <h3 className='text-xl font-semibold text-white mb-2'>
+              No Competitions Yet
+            </h3>
+            <p className='text-gray-300 mb-4'>
+              Competitions will appear here when they are created. Check back
+              soon for exciting deck building challenges!
+            </p>
+            <div className='text-sm text-gray-400'>
+              Want to organize a competition? Contact the community
+              administrators.
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* Upcoming Competitions */}
+      {upcomingCompetitions.length > 0 && (
+        <section className='mb-12'>
+          <h2 className='text-2xl font-bold mb-6 text-white flex items-center'>
+            <CalendarIcon className='w-6 h-6 mr-2 text-yellow-400' />
+            Upcoming Competitions
+          </h2>
+          <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
+            {upcomingCompetitions.map((competition) => (
+              <CompetitionCard
+                key={competition._id}
+                competition={competition}
+                variant='active'
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Completed Competitions */}
+      {completedCompetitions.length > 0 && (
+        <section>
+          <h2 className='text-2xl font-bold mb-6 text-white flex items-center'>
+            <TrophyIcon className='w-6 h-6 mr-2 text-gray-400' />
+            Past Champions
+          </h2>
+          <div className='grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6'>
+            {completedCompetitions.map((competition) => (
+              <CompetitionCard
+                key={competition._id}
+                competition={competition}
+                variant='completed'
+              />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

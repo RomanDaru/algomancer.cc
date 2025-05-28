@@ -1,6 +1,5 @@
 "use client";
 
-import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -16,71 +15,7 @@ import WinnersPodium from "@/app/components/WinnersPodium";
 import CompetitionSubmission from "@/app/components/CompetitionSubmission";
 import CompetitionSubmissions from "@/app/components/CompetitionSubmissions";
 import { useSession } from "next-auth/react";
-
-// Mock data for now - will be replaced with API calls
-const mockCompetitions = [
-  {
-    _id: "1",
-    title: "Winter Constructed Championship",
-    description:
-      "Show off your best constructed deck in this seasonal championship! Build your most powerful deck and compete for the title. This competition focuses on strategic deck building and innovative card combinations.",
-    type: "constructed" as const,
-    status: "active" as const,
-    startDate: new Date("2024-12-01"),
-    endDate: new Date("2024-12-15"),
-    votingEndDate: new Date("2024-12-20"),
-    submissionCount: 23,
-    winners: [],
-    discordChannelId: "winter-constructed-2024",
-  },
-  {
-    _id: "2",
-    title: "Draft Masters Tournament",
-    description:
-      "Test your drafting skills in this live draft competition! Create the best deck from limited card pools and show your adaptability.",
-    type: "draft" as const,
-    status: "voting" as const,
-    startDate: new Date("2024-11-15"),
-    endDate: new Date("2024-11-30"),
-    votingEndDate: new Date("2024-12-05"),
-    submissionCount: 18,
-    winners: [],
-    discordChannelId: "draft-masters-2024",
-  },
-  {
-    _id: "3",
-    title: "Autumn Constructed Classic",
-    description:
-      "Our previous constructed tournament featuring amazing deck innovations and creative strategies from the community.",
-    type: "constructed" as const,
-    status: "completed" as const,
-    startDate: new Date("2024-10-01"),
-    endDate: new Date("2024-10-15"),
-    votingEndDate: new Date("2024-10-20"),
-    submissionCount: 31,
-    winners: [
-      {
-        place: 1 as const,
-        deckId: "deck1" as any,
-        userId: "user1" as any,
-        votes: 45,
-      },
-      {
-        place: 2 as const,
-        deckId: "deck2" as any,
-        userId: "user2" as any,
-        votes: 38,
-      },
-      {
-        place: 3 as const,
-        deckId: "deck3" as any,
-        userId: "user3" as any,
-        votes: 32,
-      },
-    ],
-    discordChannelId: "autumn-constructed-2024",
-  },
-];
+import { Competition } from "@/app/lib/types/user";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -113,10 +48,8 @@ function getStatusIcon(status: string) {
 }
 
 function getTypeIcon(type: string) {
-  if (type === "constructed") {
-    return "🏗️";
-  }
-  return "🎲";
+  // Return empty string to remove icons
+  return "";
 }
 
 // Client component wrapper for submissions
@@ -141,24 +74,67 @@ export default function CompetitionPage({
   params: Promise<{ id: string }>;
 }) {
   const [competitionId, setCompetitionId] = useState<string>("");
-  const [competition, setCompetition] = useState<any>(null);
+  const [competition, setCompetition] = useState<Competition | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const resolveParams = async () => {
-      const resolvedParams = await params;
-      setCompetitionId(resolvedParams.id);
-      const foundCompetition = mockCompetitions.find(
-        (c) => c._id === resolvedParams.id
-      );
-      setCompetition(foundCompetition);
+    const fetchCompetition = async () => {
+      try {
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setCompetitionId(id);
+
+        const response = await fetch(`/api/competitions/${id}`);
+        if (!response.ok) {
+          if (response.status === 404) {
+            setError("Competition not found");
+          } else {
+            throw new Error("Failed to fetch competition");
+          }
+          return;
+        }
+
+        const data = await response.json();
+        // Convert date strings back to Date objects
+        data.startDate = new Date(data.startDate);
+        data.endDate = new Date(data.endDate);
+        data.votingEndDate = new Date(data.votingEndDate);
+        data.createdAt = new Date(data.createdAt);
+        data.updatedAt = new Date(data.updatedAt);
+
+        setCompetition(data);
+      } catch (err) {
+        console.error("Error fetching competition:", err);
+        setError("Failed to load competition");
+      } finally {
+        setLoading(false);
+      }
     };
-    resolveParams();
+
+    fetchCompetition();
   }, [params]);
 
-  if (!competition) {
+  if (loading) {
     return (
       <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
         <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
+      </div>
+    );
+  }
+
+  if (error || !competition) {
+    return (
+      <div className='container mx-auto px-4 py-8 max-w-4xl'>
+        <div className='text-center'>
+          <h1 className='text-2xl font-bold text-red-400 mb-4'>Error</h1>
+          <p className='text-gray-300'>{error || "Competition not found"}</p>
+          <Link
+            href='/competitions'
+            className='inline-flex items-center mt-4 text-algomancy-blue hover:text-algomancy-blue-light transition-colors'>
+            ← Back to Competitions
+          </Link>
+        </div>
       </div>
     );
   }
@@ -195,9 +171,6 @@ export default function CompetitionPage({
       <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-8 mb-8'>
         <div className='flex items-start justify-between mb-6'>
           <div className='flex items-center'>
-            <span className='text-3xl mr-4'>
-              {getTypeIcon(competition.type)}
-            </span>
             <div>
               <h1 className='text-3xl md:text-4xl font-bold text-white mb-2'>
                 {competition.title}
@@ -267,27 +240,8 @@ export default function CompetitionPage({
         </div>
       </div>
 
-      {/* Winners Section (for completed competitions) */}
-      {isCompleted && competition.winners.length > 0 && (
-        <div className='mb-8'>
-          <WinnersPodium winners={competition.winners} />
-        </div>
-      )}
-
-      {/* Deck Submission Section (for active competitions) */}
-      {(isActive || isVoting) && (
-        <div className='mb-8'>
-          <CompetitionSubmission competition={competition} />
-        </div>
-      )}
-
-      {/* Submissions View - Client Component */}
-      {competitionId && (
-        <ClientSubmissionsWrapper competitionId={competitionId} />
-      )}
-
       {/* How to Participate */}
-      <div className='bg-algomancy-darker border border-algomancy-purple/20 rounded-lg p-8'>
+      <div className='bg-algomancy-darker border border-algomancy-purple/20 rounded-lg p-8 mb-8'>
         <h2 className='text-2xl font-bold text-white mb-6'>
           How to Participate
         </h2>
@@ -365,6 +319,28 @@ export default function CompetitionPage({
           </div>
         )}
       </div>
+
+      {/* Winners Section (for completed competitions) */}
+      {isCompleted && competition.winners.length > 0 && (
+        <div className='mb-8'>
+          <WinnersPodium
+            winners={competition.winners}
+            competition={competition}
+          />
+        </div>
+      )}
+
+      {/* Deck Submission Section (for active competitions) */}
+      {(isActive || isVoting) && (
+        <div className='mb-8'>
+          <CompetitionSubmission competition={competition} />
+        </div>
+      )}
+
+      {/* Submissions View - Client Component */}
+      {competitionId && (
+        <ClientSubmissionsWrapper competitionId={competitionId} />
+      )}
     </div>
   );
 }

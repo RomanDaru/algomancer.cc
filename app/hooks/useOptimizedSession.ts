@@ -13,7 +13,7 @@ export function useOptimizedSession() {
   // Memoize session data to prevent unnecessary re-renders
   const memoizedSession = useMemo(() => {
     if (!session) return null;
-    
+
     return {
       user: {
         id: session.user?.id,
@@ -46,10 +46,13 @@ export function useOptimizedSession() {
  */
 export function useAuthStatus() {
   const { status } = useSession();
-  
-  return useMemo(() => ({
-    isAuthenticated: status === "authenticated",
-    isLoading: status === "loading",
-    isUnauthenticated: status === "unauthenticated",
-  }), [status]);
+
+  return useMemo(
+    () => ({
+      isAuthenticated: status === "authenticated",
+      isLoading: status === "loading",
+      isUnauthenticated: status === "unauthenticated",
+    }),
+    [status]
+  );
 }

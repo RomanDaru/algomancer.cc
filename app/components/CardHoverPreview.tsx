@@ -86,17 +86,27 @@ export default function CardHoverPreview({
     setShowPreview(false);
   };
 
-  // Update position on window resize or scroll
+  // Update position on window resize or scroll with throttling
   useEffect(() => {
-    if (showPreview) {
-      window.addEventListener("resize", calculatePosition);
-      window.addEventListener("scroll", calculatePosition, true); // true for capture phase to catch all scroll events
+    if (!showPreview) return;
 
-      return () => {
-        window.removeEventListener("resize", calculatePosition);
-        window.removeEventListener("scroll", calculatePosition, true);
-      };
-    }
+    let timeoutId: NodeJS.Timeout;
+
+    const throttledCalculatePosition = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(calculatePosition, 16); // ~60fps throttling
+    };
+
+    window.addEventListener("resize", throttledCalculatePosition);
+    window.addEventListener("scroll", throttledCalculatePosition, {
+      passive: true,
+    });
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", throttledCalculatePosition);
+      window.removeEventListener("scroll", throttledCalculatePosition);
+    };
   }, [showPreview]);
 
   return (

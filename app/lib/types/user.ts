@@ -7,6 +7,7 @@ export interface User {
   email: string;
   hashedPassword?: string;
   image?: string;
+  isAdmin?: boolean; // Admin role for competition management
   createdAt: Date;
   updatedAt: Date;
   resetToken?: string; // Password reset token
@@ -32,4 +33,36 @@ export interface Deck {
 export interface DeckCard {
   cardId: string;
   quantity: number;
+}
+
+export interface Competition {
+  _id: ObjectId;
+  title: string;
+  description: string;
+  type: "constructed" | "draft";
+  status: "upcoming" | "active" | "voting" | "completed";
+  startDate: Date;
+  endDate: Date;
+  votingEndDate: Date;
+  discordChannelId?: string;
+  submissionCount: number;
+  winners: CompetitionWinner[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CompetitionWinner {
+  place: 1 | 2 | 3;
+  deckId: ObjectId;
+  userId: ObjectId;
+  votes?: number;
+}
+
+export interface CompetitionEntry {
+  _id: ObjectId;
+  competitionId: ObjectId;
+  deckId: ObjectId;
+  userId: ObjectId;
+  submittedAt: Date;
+  discordMessageId?: string;
 }

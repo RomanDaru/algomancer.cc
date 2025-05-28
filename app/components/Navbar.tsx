@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
@@ -157,6 +157,20 @@ export default function Navbar() {
                   Decks
                 </Link>
               </li>
+              <li role='none'>
+                <Link
+                  href='/competitions'
+                  className='px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block'
+                  role='menuitem'
+                  aria-current={
+                    typeof window !== "undefined" &&
+                    window.location.pathname === "/competitions"
+                      ? "page"
+                      : undefined
+                  }>
+                  Competitions
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -267,6 +281,16 @@ export default function Navbar() {
                           tabIndex={0}>
                           My Decks
                         </Link>
+                        {session?.user?.isAdmin && (
+                          <Link
+                            href='/admin/competitions'
+                            className='block px-4 py-2 text-sm text-algomancy-gold hover:bg-algomancy-gold/10'
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            role='menuitem'
+                            tabIndex={0}>
+                            Admin Panel
+                          </Link>
+                        )}
                         <button
                           onClick={() => {
                             signOut({ callbackUrl: "/" });
@@ -411,6 +435,21 @@ export default function Navbar() {
                   Decks
                 </Link>
               </li>
+              <li role='none'>
+                <Link
+                  href='/competitions'
+                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                  role='menuitem'
+                  aria-current={
+                    typeof window !== "undefined" &&
+                    window.location.pathname === "/competitions"
+                      ? "page"
+                      : undefined
+                  }>
+                  Competitions
+                </Link>
+              </li>
             </ul>
 
             {status === "authenticated" && (
@@ -455,6 +494,15 @@ export default function Navbar() {
                 >
                   My Decks
                 </Link>
+                {session?.user?.isAdmin && (
+                  <Link
+                    href='/admin/competitions'
+                    className='block px-3 py-2 rounded-md text-algomancy-gold hover:bg-algomancy-gold/10'
+                    onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                  >
+                    Admin Panel
+                  </Link>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

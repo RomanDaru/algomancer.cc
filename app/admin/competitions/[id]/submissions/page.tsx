@@ -7,15 +7,7 @@ import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 import CompetitionSubmissions from "@/app/components/CompetitionSubmissions";
-
-interface Competition {
-  _id: string;
-  title: string;
-  description: string;
-  type: "constructed" | "draft";
-  status: "upcoming" | "active" | "voting" | "completed";
-  submissionCount: number;
-}
+import { Competition } from "@/app/lib/types/user";
 
 export default function AdminCompetitionSubmissionsPage({
   params,

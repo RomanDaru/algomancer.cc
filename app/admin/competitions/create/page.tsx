@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
+import { COMPETITION_TYPE, COMPETITION_STATUS } from "@/app/lib/constants";
 
 export default function CreateCompetitionPage() {
   const { data: session, status } = useSession();
@@ -14,7 +15,7 @@ export default function CreateCompetitionPage() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "constructed" as "constructed" | "draft",
+    type: COMPETITION_TYPE.CONSTRUCTED,
     startDate: "",
     endDate: "",
     votingEndDate: "",
@@ -176,8 +177,10 @@ export default function CreateCompetitionPage() {
                 onChange={handleInputChange}
                 required
                 className='w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50'>
-                <option value='constructed'>Constructed</option>
-                <option value='draft'>Draft</option>
+                <option value={COMPETITION_TYPE.CONSTRUCTED}>
+                  Constructed
+                </option>
+                <option value={COMPETITION_TYPE.DRAFT}>Draft</option>
               </select>
             </div>
 

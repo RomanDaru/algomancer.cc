@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import { CompetitionStatus, CompetitionType, WinnerPlace } from "../constants";
 
 export interface User {
   _id: ObjectId;
@@ -39,8 +40,8 @@ export interface Competition {
   _id: ObjectId;
   title: string;
   description: string;
-  type: "constructed" | "draft";
-  status: "upcoming" | "active" | "voting" | "completed";
+  type: CompetitionType;
+  status: CompetitionStatus;
   startDate: Date;
   endDate: Date;
   votingEndDate: Date;
@@ -52,7 +53,7 @@ export interface Competition {
 }
 
 export interface CompetitionWinner {
-  place: 1 | 2 | 3;
+  place: WinnerPlace;
   deckId: ObjectId;
   userId: ObjectId;
   votes?: number;

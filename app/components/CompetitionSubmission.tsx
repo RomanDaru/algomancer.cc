@@ -12,6 +12,7 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 interface CompetitionSubmissionProps {
   competition: Competition;
@@ -36,7 +37,7 @@ export default function CompetitionSubmission({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  const isActive = competition.status === "active";
+  const isActive = competition.status === COMPETITION_STATUS.ACTIVE;
   const canSubmit = isActive && session && !hasSubmitted;
 
   // Fetch user's decks

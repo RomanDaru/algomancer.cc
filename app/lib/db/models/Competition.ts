@@ -1,16 +1,27 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Competition as CompetitionType, CompetitionWinner } from "../../types/user";
+import {
+  Competition as CompetitionType,
+  CompetitionWinner,
+} from "../../types/user";
 import { ObjectId } from "mongodb";
+import {
+  COMPETITION_STATUS_VALUES,
+  COMPETITION_TYPE_VALUES,
+  WINNER_PLACE_VALUES,
+  COMPETITION_STATUS,
+} from "../../constants";
 
 // Interface for the MongoDB document
-export interface CompetitionDocument extends Document, Omit<CompetitionType, "_id"> {
+export interface CompetitionDocument
+  extends Document,
+    Omit<CompetitionType, "_id"> {
   // MongoDB adds _id automatically
 }
 
 // Schema for the CompetitionWinner subdocument
 const CompetitionWinnerSchema = new Schema(
   {
-    place: { type: Number, required: true, enum: [1, 2, 3] },
+    place: { type: Number, required: true, enum: WINNER_PLACE_VALUES },
     deckId: { type: Schema.Types.ObjectId, required: true, ref: "Deck" },
     userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     votes: { type: Number, min: 0 },
@@ -23,16 +34,16 @@ const CompetitionSchema = new Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: true },
-    type: { 
-      type: String, 
-      required: true, 
-      enum: ["constructed", "draft"] 
+    type: {
+      type: String,
+      required: true,
+      enum: COMPETITION_TYPE_VALUES,
     },
-    status: { 
-      type: String, 
-      required: true, 
-      enum: ["upcoming", "active", "voting", "completed"],
-      default: "upcoming"
+    status: {
+      type: String,
+      required: true,
+      enum: COMPETITION_STATUS_VALUES,
+      default: COMPETITION_STATUS.UPCOMING,
     },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
@@ -48,10 +59,13 @@ const CompetitionSchema = new Schema(
 
 // Create and export the model
 export const CompetitionModel =
-  mongoose.models.Competition || mongoose.model<CompetitionDocument>("Competition", CompetitionSchema);
+  mongoose.models.Competition ||
+  mongoose.model<CompetitionDocument>("Competition", CompetitionSchema);
 
 // Helper function to convert between MongoDB document and our Competition type
-export function convertDocumentToCompetition(doc: CompetitionDocument): CompetitionType {
+export function convertDocumentToCompetition(
+  doc: CompetitionDocument
+): CompetitionType {
   const competition = doc.toObject();
   return {
     _id: competition._id,

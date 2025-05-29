@@ -16,6 +16,7 @@ import CompetitionSubmission from "@/app/components/CompetitionSubmission";
 import CompetitionSubmissions from "@/app/components/CompetitionSubmissions";
 import { useSession } from "next-auth/react";
 import { Competition } from "@/app/lib/types/user";
+import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -34,13 +35,13 @@ function getStatusColor(status: string) {
 
 function getStatusIcon(status: string) {
   switch (status) {
-    case "active":
+    case COMPETITION_STATUS.ACTIVE:
       return <ClockIcon className='w-5 h-5' />;
-    case "voting":
+    case COMPETITION_STATUS.VOTING:
       return <ExclamationTriangleIcon className='w-5 h-5' />;
-    case "completed":
+    case COMPETITION_STATUS.COMPLETED:
       return <CheckCircleIcon className='w-5 h-5' />;
-    case "upcoming":
+    case COMPETITION_STATUS.UPCOMING:
       return <CalendarIcon className='w-5 h-5' />;
     default:
       return <CalendarIcon className='w-5 h-5' />;

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { Competition } from "@/app/lib/types/user";
+import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 interface CompetitionCardProps {
   competition: Competition;
@@ -9,13 +10,13 @@ interface CompetitionCardProps {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "active":
+    case COMPETITION_STATUS.ACTIVE:
       return "text-green-400 bg-green-400/10 border-green-400/20";
-    case "voting":
+    case COMPETITION_STATUS.VOTING:
       return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-    case "completed":
+    case COMPETITION_STATUS.COMPLETED:
       return "text-gray-400 bg-gray-400/10 border-gray-400/20";
-    case "upcoming":
+    case COMPETITION_STATUS.UPCOMING:
       return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
     default:
       return "text-gray-400 bg-gray-400/10 border-gray-400/20";

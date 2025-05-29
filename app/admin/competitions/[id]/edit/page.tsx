@@ -6,25 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
-
-interface Competition {
-  _id: string;
-  title: string;
-  description: string;
-  type: "constructed" | "draft";
-  status: "upcoming" | "active" | "voting" | "completed";
-  startDate: string;
-  endDate: string;
-  votingEndDate: string;
-  discordChannelId?: string;
-  submissionCount: number;
-  winners: Array<{
-    place: 1 | 2 | 3;
-    deckId: string;
-    userId: string;
-    votes?: number;
-  }>;
-}
+import { Competition } from "@/app/lib/types/user";
+import { COMPETITION_TYPE, COMPETITION_STATUS } from "@/app/lib/constants";
 
 export default function EditCompetitionPage({
   params,
@@ -39,8 +22,8 @@ export default function EditCompetitionPage({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    type: "constructed" as "constructed" | "draft",
-    status: "upcoming" as "upcoming" | "active" | "voting" | "completed",
+    type: COMPETITION_TYPE.CONSTRUCTED,
+    status: COMPETITION_STATUS.UPCOMING,
     startDate: "",
     endDate: "",
     votingEndDate: "",

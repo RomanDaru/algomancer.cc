@@ -8,6 +8,7 @@ import {
   updateCompetitionsStatus,
 } from "@/app/lib/utils/competitionStatus";
 import { ObjectId } from "mongodb";
+import { COMPETITION_TYPE_VALUES } from "@/app/lib/constants";
 
 /**
  * GET /api/competitions
@@ -87,9 +88,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate type
-    if (!["constructed", "draft"].includes(competitionData.type)) {
+    if (!COMPETITION_TYPE_VALUES.includes(competitionData.type)) {
       return NextResponse.json(
-        { error: "Type must be 'constructed' or 'draft'" },
+        { error: `Type must be one of: ${COMPETITION_TYPE_VALUES.join(", ")}` },
         { status: 400 }
       );
     }

@@ -13,24 +13,7 @@ import {
   CalendarIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
-
-interface Competition {
-  _id: string;
-  title: string;
-  description: string;
-  type: "constructed" | "draft";
-  status: "upcoming" | "active" | "voting" | "completed";
-  startDate: string;
-  endDate: string;
-  votingEndDate: string;
-  submissionCount: number;
-  winners: Array<{
-    place: 1 | 2 | 3;
-    deckId: string;
-    userId: string;
-    votes?: number;
-  }>;
-}
+import { Competition } from "@/app/lib/types/user";
 
 function getStatusColor(status: string) {
   switch (status) {

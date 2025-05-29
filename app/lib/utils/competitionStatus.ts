@@ -1,4 +1,5 @@
 import { Competition } from "../types/user";
+import { COMPETITION_STATUS } from "../constants";
 
 /**
  * Determine the correct status for a competition based on current date
@@ -11,13 +12,13 @@ export function getCompetitionStatus(
   const now = new Date();
 
   if (now < startDate) {
-    return "upcoming";
+    return COMPETITION_STATUS.UPCOMING;
   } else if (now >= startDate && now < endDate) {
-    return "active";
+    return COMPETITION_STATUS.ACTIVE;
   } else if (now >= endDate && now < votingEndDate) {
-    return "voting";
+    return COMPETITION_STATUS.VOTING;
   } else {
-    return "completed";
+    return COMPETITION_STATUS.COMPLETED;
   }
 }
 
@@ -27,7 +28,7 @@ export function getCompetitionStatus(
  */
 export function updateCompetitionStatus(competition: Competition): Competition {
   // If competition is already completed (winners selected), don't change status
-  if (competition.status === "completed") {
+  if (competition.status === COMPETITION_STATUS.COMPLETED) {
     return competition;
   }
 

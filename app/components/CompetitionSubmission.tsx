@@ -16,6 +16,7 @@ import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 interface CompetitionSubmissionProps {
   competition: Competition;
+  onSubmissionChange?: () => void; // Callback to refresh submissions list
 }
 
 interface UserDeck {
@@ -29,6 +30,7 @@ interface UserDeck {
 
 export default function CompetitionSubmission({
   competition,
+  onSubmissionChange,
 }: CompetitionSubmissionProps) {
   const { data: session, status } = useOptimizedSession();
   const [userDecks, setUserDecks] = useState<UserDeck[]>([]);
@@ -36,17 +38,20 @@ export default function CompetitionSubmission({
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
 
-  const isActive = competition.status === COMPETITION_STATUS.ACTIVE;
-  const canSubmit = isActive && session && !hasSubmitted;
+  const isAcceptingSubmissions =
+    competition.status === COMPETITION_STATUS.UPCOMING ||
+    competition.status === COMPETITION_STATUS.ACTIVE;
+  const canSubmit = isAcceptingSubmissions && session && !hasSubmitted;
 
   // Fetch user's decks
   useEffect(() => {
-    if (session?.user?.id && isActive) {
+    if (session?.user?.id && isAcceptingSubmissions) {
       fetchUserDecks();
       checkExistingSubmission();
     }
-  }, [session, competition._id, isActive]);
+  }, [session, competition._id, isAcceptingSubmissions]);
 
   const fetchUserDecks = async () => {
     try {
@@ -108,6 +113,8 @@ export default function CompetitionSubmission({
         toast.success("Deck submitted successfully!");
         setHasSubmitted(true);
         setSelectedDeckId("");
+        // Refresh submissions list
+        onSubmissionChange?.();
       } else {
         toast.error(data.error || "Failed to submit deck");
       }
@@ -116,6 +123,42 @@ export default function CompetitionSubmission({
       toast.error("Failed to submit deck");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!session?.user?.id) return;
+
+    setIsWithdrawing(true);
+    try {
+      const response = await fetch(
+        `/api/competitions/${competition._id}/withdraw`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Submission withdrawn successfully!");
+        setHasSubmitted(false);
+        // Refresh submissions list
+        onSubmissionChange?.();
+      } else {
+        toast.error(data.error || "Failed to withdraw submission");
+      }
+    } catch (error) {
+      console.error("Error withdrawing submission:", error);
+      toast.error("Failed to withdraw submission");
+    } finally {
+      setIsWithdrawing(false);
     }
   };
 
@@ -149,7 +192,7 @@ export default function CompetitionSubmission({
     );
   }
 
-  if (!isActive) {
+  if (!isAcceptingSubmissions) {
     return (
       <div className='bg-algomancy-darker border border-gray-600/20 rounded-lg p-6'>
         <div className='flex items-center mb-4'>
@@ -160,22 +203,51 @@ export default function CompetitionSubmission({
         </div>
         <p className='text-gray-400'>
           This competition is no longer accepting submissions.
+          {competition.status === COMPETITION_STATUS.VOTING &&
+            " Voting is in progress."}
+          {competition.status === COMPETITION_STATUS.COMPLETED &&
+            " Competition has ended."}
         </p>
       </div>
     );
   }
 
   if (hasSubmitted) {
+    const canWithdraw = competition.status === COMPETITION_STATUS.UPCOMING;
+
     return (
       <div className='bg-algomancy-darker border border-green-500/20 rounded-lg p-6'>
         <div className='flex items-center mb-4'>
           <CheckCircleIcon className='w-5 h-5 text-green-400 mr-2' />
           <h3 className='text-lg font-semibold text-white'>Deck Submitted!</h3>
         </div>
-        <p className='text-gray-300'>
+        <p className='text-gray-300 mb-4'>
           You have successfully submitted your deck to this competition. Good
           luck!
         </p>
+
+        {canWithdraw && (
+          <div className='flex items-center space-x-3'>
+            <button
+              onClick={handleWithdraw}
+              disabled={isWithdrawing}
+              className='inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-md text-white font-medium transition-colors'>
+              {isWithdrawing ? "Withdrawing..." : "Withdraw Submission"}
+            </button>
+            <p className='text-xs text-gray-400'>
+              You can withdraw your submission until the competition starts.
+            </p>
+          </div>
+        )}
+
+        {!canWithdraw && (
+          <div className='mt-4 p-3 bg-blue-900/20 border border-blue-500/20 rounded-md'>
+            <p className='text-sm text-blue-300'>
+              <strong>Note:</strong> Your submission is now locked in.
+              Withdrawals are only allowed during the "upcoming" phase.
+            </p>
+          </div>
+        )}
       </div>
     );
   }

@@ -75,10 +75,13 @@ export interface CompetitionWinner {
 export interface CompetitionEntry {
   _id: ObjectId;
   competitionId: ObjectId;
-  deckId: ObjectId;
+  deckId?: ObjectId; // Made optional to support onDelete: set null behavior
   userId: ObjectId;
   submittedAt: Date;
   discordMessageId?: string;
+  // Fields for handling deleted decks
+  deckDeletedAt?: Date; // When the deck was deleted
+  originalDeckName?: string; // Original deck name for display
 }
 
 export interface Badge {

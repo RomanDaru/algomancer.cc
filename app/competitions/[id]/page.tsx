@@ -20,13 +20,13 @@ import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "active":
+    case COMPETITION_STATUS.ACTIVE:
       return "text-green-400 bg-green-400/10 border-green-400/20";
-    case "voting":
+    case COMPETITION_STATUS.VOTING:
       return "text-blue-400 bg-blue-400/10 border-blue-400/20";
-    case "completed":
+    case COMPETITION_STATUS.COMPLETED:
       return "text-gray-400 bg-gray-400/10 border-gray-400/20";
-    case "upcoming":
+    case COMPETITION_STATUS.UPCOMING:
       return "text-yellow-400 bg-yellow-400/10 border-yellow-400/20";
     default:
       return "text-gray-400 bg-gray-400/10 border-gray-400/20";
@@ -56,15 +56,21 @@ function getTypeIcon(type: string) {
 // Client component wrapper for submissions
 function ClientSubmissionsWrapper({
   competitionId,
+  refreshTrigger,
 }: {
   competitionId: string;
+  refreshTrigger: number;
 }) {
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
 
   return (
     <div className='mb-8'>
-      <CompetitionSubmissions competitionId={competitionId} isAdmin={isAdmin} />
+      <CompetitionSubmissions
+        competitionId={competitionId}
+        isAdmin={isAdmin}
+        key={refreshTrigger} // Force re-render when refreshTrigger changes
+      />
     </div>
   );
 }
@@ -78,6 +84,12 @@ export default function CompetitionPage({
   const [competition, setCompetition] = useState<Competition | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Function to refresh submissions list
+  const refreshSubmissions = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   useEffect(() => {
     const fetchCompetition = async () => {
@@ -140,10 +152,10 @@ export default function CompetitionPage({
     );
   }
 
-  const isActive = competition.status === "active";
-  const isVoting = competition.status === "voting";
-  const isCompleted = competition.status === "completed";
-  const isUpcoming = competition.status === "upcoming";
+  const isActive = competition.status === COMPETITION_STATUS.ACTIVE;
+  const isVoting = competition.status === COMPETITION_STATUS.VOTING;
+  const isCompleted = competition.status === COMPETITION_STATUS.COMPLETED;
+  const isUpcoming = competition.status === COMPETITION_STATUS.UPCOMING;
 
   return (
     <div className='container mx-auto px-4 py-8 max-w-4xl'>
@@ -331,16 +343,22 @@ export default function CompetitionPage({
         </div>
       )}
 
-      {/* Deck Submission Section (for active competitions) */}
-      {(isActive || isVoting) && (
+      {/* Deck Submission Section (for upcoming and active competitions) */}
+      {(isUpcoming || isActive || isVoting) && (
         <div className='mb-8'>
-          <CompetitionSubmission competition={competition} />
+          <CompetitionSubmission
+            competition={competition}
+            onSubmissionChange={refreshSubmissions}
+          />
         </div>
       )}
 
       {/* Submissions View - Client Component */}
       {competitionId && (
-        <ClientSubmissionsWrapper competitionId={competitionId} />
+        <ClientSubmissionsWrapper
+          competitionId={competitionId}
+          refreshTrigger={refreshTrigger}
+        />
       )}
     </div>
   );

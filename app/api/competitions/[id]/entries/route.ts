@@ -4,6 +4,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
 import { competitionDbService } from "@/app/lib/db/services/competitionDbService";
 import { ObjectId } from "mongodb";
+import { COMPETITION_STATUS } from "@/app/lib/constants";
 
 /**
  * GET /api/competitions/[id]/entries
@@ -119,9 +120,15 @@ export async function POST(
       );
     }
 
-    if (competition.status !== "active") {
+    // Allow submissions during UPCOMING and ACTIVE phases
+    if (
+      competition.status !== COMPETITION_STATUS.UPCOMING &&
+      competition.status !== COMPETITION_STATUS.ACTIVE
+    ) {
       return NextResponse.json(
-        { error: "Competition is not currently accepting submissions" },
+        {
+          error: `Competition is not currently accepting submissions. Status: ${competition.status}. Submissions are only allowed during "upcoming" and "active" phases.`,
+        },
         { status: 400 }
       );
     }

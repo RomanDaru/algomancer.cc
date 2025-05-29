@@ -142,8 +142,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(serializedCompetition, { status: 201 });
   } catch (error) {
     console.error("Error creating competition:", error);
+
+    // Provide more detailed error information
+    let errorMessage = "Failed to create competition";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name,
+      });
+    }
+
     return NextResponse.json(
-      { error: "Failed to create competition" },
+      {
+        error: errorMessage,
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

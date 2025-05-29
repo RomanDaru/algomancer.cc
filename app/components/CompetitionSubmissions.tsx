@@ -40,11 +40,13 @@ interface CompetitionSubmission {
 interface CompetitionSubmissionsProps {
   competitionId: string;
   isAdmin?: boolean;
+  onRefreshRequest?: () => void; // Callback to trigger refresh from parent
 }
 
 export default function CompetitionSubmissions({
   competitionId,
   isAdmin = false,
+  onRefreshRequest,
 }: CompetitionSubmissionsProps) {
   const { data: session } = useSession();
   const [submissions, setSubmissions] = useState<CompetitionSubmission[]>([]);

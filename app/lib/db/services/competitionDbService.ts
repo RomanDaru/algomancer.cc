@@ -245,6 +245,8 @@ export const competitionDbService = {
         userId: doc.userId,
         submittedAt: doc.submittedAt,
         discordMessageId: doc.discordMessageId,
+        deckDeletedAt: doc.deckDeletedAt,
+        originalDeckName: doc.originalDeckName,
       }));
     } catch (error) {
       console.error(
@@ -289,6 +291,8 @@ export const competitionDbService = {
         userId: entryDoc.userId,
         submittedAt: entryDoc.submittedAt,
         discordMessageId: entryDoc.discordMessageId,
+        deckDeletedAt: entryDoc.deckDeletedAt,
+        originalDeckName: entryDoc.originalDeckName,
       };
     } catch (error) {
       console.error("Error creating competition entry:", error);
@@ -319,6 +323,63 @@ export const competitionDbService = {
     } catch (error) {
       console.error(
         `Error deleting competition entry with ID ${entryId}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
+   * Withdraw user's submission from a competition
+   * Only allows withdrawal during UPCOMING phase
+   */
+  async withdrawSubmission(
+    competitionId: string,
+    userId: string
+  ): Promise<boolean> {
+    try {
+      await connectToDatabase();
+
+      // Import constants here to avoid circular dependencies
+      const { COMPETITION_STATUS } = await import("../../constants");
+
+      // Check competition status first
+      const competition = await CompetitionModel.findById(
+        new ObjectId(competitionId)
+      );
+      if (!competition) {
+        throw new Error("Competition not found");
+      }
+
+      if (competition.status !== COMPETITION_STATUS.UPCOMING) {
+        throw new Error(
+          `Cannot withdraw submission: Competition is ${competition.status}. ` +
+            `Withdrawals are only allowed during the "upcoming" phase.`
+        );
+      }
+
+      // Find the user's entry in this competition
+      const entry = await CompetitionEntryModel.findOne({
+        competitionId: new ObjectId(competitionId),
+        userId: new ObjectId(userId),
+      });
+
+      if (!entry) {
+        return false;
+      }
+
+      // Delete the entry
+      await CompetitionEntryModel.findByIdAndDelete(entry._id);
+
+      // Update submission count
+      await CompetitionModel.findByIdAndUpdate(new ObjectId(competitionId), {
+        $inc: { submissionCount: -1 },
+      });
+
+      return true;
+    } catch (error) {
+      console.error(
+        `Error withdrawing submission for user ${userId} from competition ${competitionId}:`,
         error
       );
       throw error;

@@ -6,8 +6,23 @@ import {
   convertDocumentToCard,
 } from "../models/Card";
 
+// Single database connection instance
+let dbConnection: any = null;
+
+/**
+ * Ensure database connection is established
+ * Reuses existing connection if available
+ */
+async function ensureDbConnection() {
+  if (!dbConnection) {
+    dbConnection = await connectToDatabase();
+  }
+  return dbConnection;
+}
+
 /**
  * Service for interacting with the card database
+ * Optimized to use a single database connection
  */
 export const cardDbService = {
   /**
@@ -15,7 +30,7 @@ export const cardDbService = {
    */
   async getAllCards(): Promise<Card[]> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const cardDocs = await CardModel.find().sort({ currentIndex: 1 });
       return cardDocs.map(convertDocumentToCard);
     } catch (error) {
@@ -29,7 +44,7 @@ export const cardDbService = {
    */
   async getCardById(id: string): Promise<Card | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const cardDoc = await CardModel.findOne({ originalId: id });
       return cardDoc ? convertDocumentToCard(cardDoc) : null;
     } catch (error) {
@@ -43,7 +58,7 @@ export const cardDbService = {
    */
   async createCard(card: Card): Promise<Card> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const cardDoc = new CardModel(convertCardToDocument(card));
       await cardDoc.save();
       return convertDocumentToCard(cardDoc);
@@ -58,7 +73,7 @@ export const cardDbService = {
    */
   async updateCard(card: Card): Promise<Card | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const cardDoc = await CardModel.findOneAndUpdate(
         { originalId: card.id },
         convertCardToDocument(card),
@@ -96,7 +111,7 @@ export const cardDbService = {
         console.log(`Deleting card: ${JSON.stringify(card)}`);
 
         // Proceed with deletion
-        await connectToDatabase();
+        await ensureDbConnection();
         const result = await CardModel.deleteOne({ originalId: id });
         return result.deletedCount === 1;
       } else {
@@ -113,7 +128,7 @@ export const cardDbService = {
    */
   async saveCard(card: Card): Promise<Card> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const existingCard = await CardModel.findOne({ originalId: card.id });
 
       if (existingCard) {
@@ -141,7 +156,7 @@ export const cardDbService = {
    */
   async getHighestIndex(): Promise<number> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const highestCard = await CardModel.findOne().sort({ currentIndex: -1 });
       return highestCard?.currentIndex || 0;
     } catch (error) {
@@ -155,7 +170,7 @@ export const cardDbService = {
    */
   async importCards(cards: Card[]): Promise<number> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
       // Convert cards to documents
       const cardDocuments = cards.map(convertCardToDocument);

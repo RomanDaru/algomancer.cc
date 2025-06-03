@@ -78,13 +78,19 @@ export const deckDbService = {
    * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
    * @param limit Optional limit for pagination
    * @param skip Optional skip for pagination
+   * @param currentUserId Optional current user ID to include like status for each deck
    */
   async getPublicDecksWithUserInfo(
     sortBy: "popular" | "newest" | "liked" = "newest",
     limit?: number,
-    skip?: number
+    skip?: number,
+    currentUserId?: string
   ): Promise<
-    Array<{ deck: Deck; user: { name: string; username: string | null } }>
+    Array<{
+      deck: Deck;
+      user: { name: string; username: string | null };
+      isLikedByCurrentUser: boolean;
+    }>
   > {
     try {
       await ensureDbConnection();
@@ -132,6 +138,15 @@ export const deckDbService = {
                 { name: "Unknown User", username: null },
               ],
             },
+            // Add like status for current user if provided
+            isLikedByCurrentUser: currentUserId
+              ? {
+                  $in: [
+                    new ObjectId(currentUserId),
+                    { $ifNull: ["$likedBy", []] },
+                  ],
+                }
+              : false,
           },
         },
         { $sort: sortOptions },
@@ -157,6 +172,7 @@ export const deckDbService = {
       return results.map((result) => ({
         deck: convertAggregationToDeck(result),
         user: result.user,
+        isLikedByCurrentUser: result.isLikedByCurrentUser || false,
       }));
     } catch (error) {
       console.error("Error getting public decks with user info:", error);

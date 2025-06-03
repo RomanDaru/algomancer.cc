@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deckService } from "@/app/lib/services/deckService";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * GET /api/decks/public
  * Get all public decks with user information
  * Supports pagination with limit and skip parameters
+ * Includes like status for authenticated users
  */
 export async function GET(request: NextRequest) {
   try {
+    // Get current user session
+    const session = await getServerSession(authOptions);
+    const currentUserId = session?.user?.id;
+
     // Get parameters from the URL query
     const { searchParams } = new URL(request.url);
     const sortBy = searchParams.get("sort") as
@@ -31,7 +38,8 @@ export async function GET(request: NextRequest) {
     const decksWithUserInfo = await deckService.getPublicDecksWithUserInfo(
       validSortBy,
       limit,
-      skip
+      skip,
+      currentUserId
     );
     return NextResponse.json(decksWithUserInfo);
   } catch (error) {

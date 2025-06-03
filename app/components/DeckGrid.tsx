@@ -6,7 +6,8 @@ import DeckCard from "./DeckCard";
 import Link from "next/link";
 
 interface DeckGridProps {
-  decks: Deck[];
+  // Option 1: Traditional format (backward compatibility)
+  decks?: Deck[];
   cards?: Card[];
   users?: {
     [key: string]: {
@@ -18,6 +19,14 @@ interface DeckGridProps {
     name: string;
     username: string | null;
   };
+
+  // Option 2: Optimized format with like status
+  decksWithUserInfo?: Array<{
+    deck: Deck;
+    user: { name: string; username: string | null };
+    isLikedByCurrentUser: boolean;
+  }>;
+
   emptyMessage?: string;
   emptyAction?: {
     text: string;
@@ -42,6 +51,7 @@ export default function DeckGrid({
   cards,
   users,
   user,
+  decksWithUserInfo, // 🎯 NEW: Optimized format
   emptyMessage = "No decks found",
   emptyAction,
   createDeckLink,
@@ -57,9 +67,15 @@ export default function DeckGrid({
   },
   className = "",
 }: DeckGridProps) {
-  // If maxDisplay is set, limit the number of decks shown
-  const displayDecks = maxDisplay ? decks.slice(0, maxDisplay) : decks;
-  const hasMore = maxDisplay && decks.length > maxDisplay;
+  // 🎯 NEW: Handle both formats - prioritize optimized format
+  const useOptimizedFormat = decksWithUserInfo && decksWithUserInfo.length > 0;
+  const dataSource = useOptimizedFormat ? decksWithUserInfo : decks || [];
+
+  // If maxDisplay is set, limit the number of items shown
+  const displayItems = maxDisplay
+    ? dataSource.slice(0, maxDisplay)
+    : dataSource;
+  const hasMore = maxDisplay && dataSource.length > maxDisplay;
 
   // Generate column classes based on the columns prop
   const columnClasses = [
@@ -72,7 +88,7 @@ export default function DeckGrid({
     .filter(Boolean)
     .join(" ");
 
-  if (decks.length === 0) {
+  if (dataSource.length === 0) {
     return (
       <div className='text-center py-8 text-gray-400'>
         <p>{emptyMessage}</p>
@@ -101,23 +117,48 @@ export default function DeckGrid({
   return (
     <div className={className}>
       <div className={`grid ${columnClasses} gap-8`}>
-        {displayDecks.map((deck) => {
-          // Determine which user to use for this deck
-          let deckUser = user;
+        {displayItems.map((item) => {
+          if (useOptimizedFormat) {
+            // 🎯 NEW: Optimized format with like status
+            const {
+              deck,
+              user: itemUser,
+              isLikedByCurrentUser,
+            } = item as {
+              deck: Deck;
+              user: { name: string; username: string | null };
+              isLikedByCurrentUser: boolean;
+            };
 
-          // If we have a users map and this deck's user is in it, use that
-          if (users && deck.userId && users[deck.userId]) {
-            deckUser = users[deck.userId];
+            return (
+              <DeckCard
+                key={deck._id.toString()}
+                deck={deck}
+                user={itemUser}
+                cards={cards}
+                isLikedByCurrentUser={isLikedByCurrentUser} // 🎯 Pass optimized like status
+              />
+            );
+          } else {
+            // Traditional format (backward compatibility)
+            const deck = item as Deck;
+            let deckUser = user;
+
+            // If we have a users map and this deck's user is in it, use that
+            if (users && deck.userId && users[deck.userId]) {
+              deckUser = users[deck.userId];
+            }
+
+            return (
+              <DeckCard
+                key={deck._id.toString()}
+                deck={deck}
+                user={deckUser || { name: "Unknown", username: null }}
+                cards={cards}
+                // isLikedByCurrentUser is undefined, so LikeButton will fetch it
+              />
+            );
           }
-
-          return (
-            <DeckCard
-              key={deck._id.toString()}
-              deck={deck}
-              user={deckUser || { name: "Unknown", username: null }}
-              cards={cards}
-            />
-          );
         })}
       </div>
 
@@ -126,7 +167,7 @@ export default function DeckGrid({
           <Link
             href={viewAllLink}
             className='text-sm text-algomancy-purple hover:text-algomancy-gold'>
-            {viewAllText || `View all ${decks.length} decks`}
+            {viewAllText || `View all ${dataSource.length} decks`}
           </Link>
         </div>
       )}

@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/update-competition-status",
-      "schedule": "0 * * * *"
+      "schedule": "0 12 * * *"
     }
   ]
 }

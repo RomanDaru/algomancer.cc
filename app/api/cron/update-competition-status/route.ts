@@ -27,8 +27,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    await errorLogger.logInfo("Starting competition status update job", {
+    await errorLogger.logInfo("Starting daily competition status update job", {
       endpoint: "cron/update-competition-status",
+      schedule: "daily at 12:00 UTC",
+      vercelPlan: "hobby",
     });
 
     // Get all competitions that are not completed

@@ -17,6 +17,7 @@ import CompetitionSubmissions from "@/app/components/CompetitionSubmissions";
 import { useSession } from "next-auth/react";
 import { Competition } from "@/app/lib/types/user";
 import { COMPETITION_STATUS } from "@/app/lib/constants";
+import { updateCompetitionStatusClient } from "@/app/lib/utils/clientCompetitionStatus";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -124,7 +125,12 @@ export default function CompetitionPage({
         data.createdAt = new Date(data.createdAt);
         data.updatedAt = new Date(data.updatedAt);
 
-        setCompetition(data);
+        // Update status on client side for real-time accuracy
+        // (since cron job only runs once per day on Vercel Hobby plan)
+        const competitionWithUpdatedStatus =
+          updateCompetitionStatusClient(data);
+
+        setCompetition(competitionWithUpdatedStatus);
       } catch (err) {
         console.error("Error fetching competition:", err);
         setError("Failed to load competition");

@@ -10,6 +10,7 @@ import {
 import CompetitionCard from "@/app/components/CompetitionCard";
 import { Competition } from "@/app/lib/types/user";
 import { CompetitionListSkeleton } from "@/app/components/skeletons/CompetitionSkeleton";
+import { updateCompetitionsStatusClient } from "@/app/lib/utils/clientCompetitionStatus";
 
 export default function CompetitionsPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
@@ -47,7 +48,13 @@ export default function CompetitionsPage() {
           updatedAt: new Date(competition.updatedAt),
         }));
 
-        setCompetitions(competitionsWithDates);
+        // Update statuses on client side for real-time accuracy
+        // (since cron job only runs once per day on Vercel Hobby plan)
+        const competitionsWithUpdatedStatus = updateCompetitionsStatusClient(
+          competitionsWithDates
+        );
+
+        setCompetitions(competitionsWithUpdatedStatus);
       } catch (err) {
         console.error("Error fetching competitions:", err);
         setError(

@@ -16,7 +16,7 @@ import { ObjectId } from "mongodb";
  */
 export const competitionDbService = {
   /**
-   * Get all competitions
+   * Get all competitions with optimized query
    */
   async getAllCompetitions(status?: string): Promise<Competition[]> {
     try {
@@ -27,9 +27,14 @@ export const competitionDbService = {
         query = { status };
       }
 
-      const competitionDocs = await CompetitionModel.find(query).sort({
-        createdAt: -1,
-      });
+      // Optimize: Use lean() for better performance and limit fields
+      const competitionDocs = await CompetitionModel.find(query)
+        .select(
+          "title description type status startDate endDate votingEndDate discordChannelId submissionCount winners createdAt updatedAt"
+        )
+        .sort({ createdAt: -1 })
+        .lean(); // Use lean() for better performance
+
       return competitionDocs.map(convertDocumentToCompetition);
     } catch (error) {
       console.error("Error getting all competitions:", error);

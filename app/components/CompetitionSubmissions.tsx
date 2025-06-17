@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
@@ -57,11 +57,15 @@ export default function CompetitionSubmissions({
     fetchSubmissions();
   }, [competitionId]);
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/competitions/${competitionId}/entries`
+        `/api/competitions/${competitionId}/entries`,
+        {
+          // Add caching for better performance
+          next: { revalidate: 30 }, // Cache for 30 seconds
+        }
       );
 
       if (response.ok) {
@@ -76,7 +80,7 @@ export default function CompetitionSubmissions({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [competitionId]);
 
   if (isLoading) {
     return (
@@ -149,7 +153,7 @@ export default function CompetitionSubmissions({
                       </p>
                     )}
                     <div className='text-sm text-gray-400'>
-                      {submission.deck?.cards.reduce(
+                      {submission.deck?.cards?.reduce(
                         (sum, card) => sum + card.quantity,
                         0
                       ) || 0}{" "}
@@ -186,21 +190,29 @@ export default function CompetitionSubmissions({
                   </div>
                 </div>
 
-                {/* Submission Info */}
-                <div className='flex items-center text-sm text-gray-400 space-x-4'>
-                  <div className='flex items-center'>
+                {/* Submission Info - Only show detailed info to admins */}
+                {isAdmin ? (
+                  <div className='flex items-center text-sm text-gray-400 space-x-4'>
+                    <div className='flex items-center'>
+                      <CalendarIcon className='w-4 h-4 mr-1' />
+                      Submitted{" "}
+                      {new Date(submission.submittedAt).toLocaleDateString()}
+                    </div>
+                    <div className='flex items-center'>
+                      <ClockIcon className='w-4 h-4 mr-1' />
+                      {new Date(submission.submittedAt).toLocaleTimeString()}
+                    </div>
+                    <div className='text-gray-500 text-xs'>
+                      ID: {submission._id.slice(-8)}
+                    </div>
+                  </div>
+                ) : (
+                  <div className='flex items-center text-sm text-gray-400'>
                     <CalendarIcon className='w-4 h-4 mr-1' />
                     Submitted{" "}
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </div>
-                  <div className='flex items-center'>
-                    <ClockIcon className='w-4 h-4 mr-1' />
-                    {new Date(submission.submittedAt).toLocaleTimeString()}
-                  </div>
-                  <div className='text-gray-500 text-xs'>
-                    ID: {submission._id.slice(-8)}
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Actions */}

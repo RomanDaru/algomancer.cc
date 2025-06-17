@@ -5,6 +5,76 @@ import { deckService } from "@/app/lib/services/deckService";
 import { competitionDbService } from "@/app/lib/db/services/competitionDbService";
 import { ObjectId } from "mongodb";
 import { COMPETITION_STATUS } from "@/app/lib/constants";
+import { connectToDatabase } from "@/app/lib/db/mongodb";
+
+// Batch fetch functions to avoid N+1 queries
+async function getBatchDecks(deckIds: ObjectId[]): Promise<Map<string, any>> {
+  if (deckIds.length === 0) return new Map();
+
+  const { db } = await connectToDatabase();
+  const decks = await db
+    .collection("decks")
+    .find(
+      { _id: { $in: deckIds } },
+      {
+        projection: {
+          name: 1,
+          description: 1,
+          userId: 1,
+          isPublic: 1,
+          cards: 1, // Include cards for submission display
+          elements: 1,
+          totalCards: 1,
+          createdAt: 1,
+          updatedAt: 1,
+        },
+      }
+    )
+    .toArray();
+
+  const deckMap = new Map();
+  decks.forEach((deck) => {
+    deckMap.set(deck._id.toString(), {
+      _id: deck._id.toString(),
+      name: deck.name,
+      description: deck.description,
+      userId: deck.userId,
+      isPublic: deck.isPublic,
+      cards: deck.cards || [], // Ensure cards array exists
+      elements: deck.elements || [],
+      totalCards: deck.totalCards || 0,
+      createdAt: deck.createdAt,
+      updatedAt: deck.updatedAt,
+    });
+  });
+
+  return deckMap;
+}
+
+async function getBatchUsers(userIds: ObjectId[]): Promise<Map<string, any>> {
+  if (userIds.length === 0) return new Map();
+
+  const { db } = await connectToDatabase();
+  const users = await db
+    .collection("users")
+    .find(
+      { _id: { $in: userIds } },
+      { projection: { name: 1, email: 1, username: 1 } }
+    )
+    .toArray();
+
+  const userMap = new Map();
+  users.forEach((user) => {
+    userMap.set(user._id.toString(), {
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      username: user.username,
+    });
+  });
+
+  return userMap;
+}
 
 /**
  * GET /api/competitions/[id]/entries
@@ -23,31 +93,22 @@ export async function GET(
       competitionId
     );
 
-    // Get deck details for each entry
-    const entriesWithDecks = await Promise.all(
-      entries.map(async (entry) => {
-        try {
-          const deckDetails = await deckService.getDeckWithCards(
-            entry.deckId.toString()
-          );
-          return {
-            ...entry,
-            deck: deckDetails.deck,
-            user: deckDetails.user,
-          };
-        } catch (error) {
-          console.error(
-            `Error getting deck details for entry ${entry._id}:`,
-            error
-          );
-          return {
-            ...entry,
-            deck: null,
-            user: null,
-          };
-        }
-      })
-    );
+    // Optimize: Batch fetch all deck and user data to avoid N+1 queries
+    const deckIds = entries.map((entry) => entry.deckId);
+    const userIds = entries.map((entry) => entry.userId);
+
+    // Batch fetch decks and users
+    const [decksMap, usersMap] = await Promise.all([
+      getBatchDecks(deckIds),
+      getBatchUsers(userIds),
+    ]);
+
+    // Combine data efficiently
+    const entriesWithDecks = entries.map((entry) => ({
+      ...entry,
+      deck: decksMap.get(entry.deckId.toString()) || null,
+      user: usersMap.get(entry.userId.toString()) || null,
+    }));
 
     return NextResponse.json(entriesWithDecks);
   } catch (error) {

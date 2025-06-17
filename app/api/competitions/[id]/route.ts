@@ -4,6 +4,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { competitionDbService } from "@/app/lib/db/services/competitionDbService";
 import { updateCompetitionStatus } from "@/app/lib/utils/competitionStatus";
 import { ObjectId } from "mongodb";
+import {
+  withErrorHandling,
+  createApiResponse,
+} from "@/app/lib/utils/apiErrorHandler";
+import { errorLogger } from "@/app/lib/utils/errorLogger";
 
 /**
  * GET /api/competitions/[id]
@@ -29,9 +34,8 @@ export async function GET(
       );
     }
 
-    // For now, use competition as-is without automatic status updates
-    // TODO: Re-enable automatic status updates once import issues are resolved
-    const updatedCompetition = competition;
+    // Update competition status based on current date
+    const updatedCompetition = updateCompetitionStatus(competition);
 
     // Ensure ObjectIds are properly serialized to strings
     const serializedCompetition = {
@@ -57,11 +61,11 @@ export async function GET(
       })),
     };
 
-    return NextResponse.json(serializedCompetition);
+    return NextResponse.json(createApiResponse(serializedCompetition));
   } catch (error) {
     console.error("Error getting competition:", error);
     return NextResponse.json(
-      { error: "Failed to get competition" },
+      createApiResponse(undefined, "Failed to get competition"),
       { status: 500 }
     );
   }

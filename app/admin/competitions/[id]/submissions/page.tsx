@@ -51,8 +51,15 @@ export default function AdminCompetitionSubmissionsPage({
       const response = await fetch(`/api/competitions/${params.id}`);
 
       if (response.ok) {
-        const data = await response.json();
-        setCompetition(data);
+        const apiResponse = await response.json();
+
+        // Handle new API response format
+        if (apiResponse.success && apiResponse.data) {
+          setCompetition(apiResponse.data);
+        } else {
+          toast.error(apiResponse.error || "Competition not found");
+          router.push("/admin/competitions");
+        }
       } else {
         toast.error("Competition not found");
         router.push("/admin/competitions");

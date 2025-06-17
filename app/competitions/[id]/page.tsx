@@ -108,7 +108,15 @@ export default function CompetitionPage({
           return;
         }
 
-        const data = await response.json();
+        const apiResponse = await response.json();
+
+        // Handle new API response format
+        if (!apiResponse.success) {
+          setError(apiResponse.error || "Failed to fetch competition");
+          return;
+        }
+
+        const data = apiResponse.data;
         // Convert date strings back to Date objects
         data.startDate = new Date(data.startDate);
         data.endDate = new Date(data.endDate);
@@ -321,13 +329,13 @@ export default function CompetitionPage({
               <span className='text-algomancy-purple font-medium'>
                 {isActive
                   ? "Competition is currently active!"
-                  : "Competition starts soon!"}
+                  : "Submissions are open! Competition starts soon!"}
               </span>
             </div>
             <p className='text-gray-300 text-sm mt-1'>
               {isActive
-                ? `Submissions close on ${competition.endDate.toLocaleDateString()}`
-                : `Submissions open on ${competition.startDate.toLocaleDateString()}`}
+                ? `Submissions close on ${competition.endDate.toLocaleDateString()}. Withdrawals no longer allowed.`
+                : `Submissions are open now! Competition starts ${competition.startDate.toLocaleDateString()}. You can withdraw until then.`}
             </p>
           </div>
         )}

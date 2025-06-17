@@ -42,9 +42,9 @@ function PublicDecksContent() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch all cards for element display (with cache control)
+        // Fetch all cards for element display (with aggressive caching)
         const cardsResponse = await fetch("/api/cards", {
-          next: { revalidate: 300 }, // Cache for 5 minutes
+          next: { revalidate: 600 }, // Cache for 10 minutes (cards don't change often)
         });
         if (!cardsResponse.ok) {
           throw new Error("Failed to fetch cards");

@@ -9,25 +9,50 @@ import {
 } from "@/app/lib/utils/competitionStatus";
 import { ObjectId } from "mongodb";
 import { COMPETITION_TYPE_VALUES } from "@/app/lib/constants";
+import {
+  withErrorHandling,
+  validateRequestData,
+  sanitizeInput,
+  checkRateLimit,
+  createApiResponse,
+} from "@/app/lib/utils/apiErrorHandler";
+import { validateCompetitionData } from "@/app/lib/utils/competitionValidation";
+import { errorLogger } from "@/app/lib/utils/errorLogger";
 
 /**
  * GET /api/competitions
  * Get all competitions
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withErrorHandling(
+  async (request: NextRequest) => {
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+
+    // Validate status parameter
+    if (
+      status &&
+      !["upcoming", "active", "voting", "completed"].includes(status)
+    ) {
+      await errorLogger.logApiError(
+        `Invalid status parameter: ${status}`,
+        "GET /api/competitions",
+        request
+      );
+
+      return NextResponse.json(
+        createApiResponse(undefined, "Invalid status parameter"),
+        { status: 400 }
+      );
+    }
 
     // Get competitions from database
     const competitions = await competitionDbService.getAllCompetitions(
       status || undefined
     );
 
-    // For now, use competitions as-is without automatic status updates
-    // TODO: Re-enable automatic status updates once import issues are resolved
-    const updatedCompetitions = competitions;
+    // Update competition statuses based on current date
+    const updatedCompetitions = updateCompetitionsStatus(competitions);
 
     // Ensure ObjectIds are properly serialized to strings
     const serializedCompetitions = updatedCompetitions.map((competition) => ({
@@ -40,78 +65,102 @@ export async function GET(request: NextRequest) {
       })),
     }));
 
-    return NextResponse.json(serializedCompetitions);
-  } catch (error) {
-    console.error("Error getting competitions:", error);
-    return NextResponse.json(
-      { error: "Failed to get competitions" },
-      { status: 500 }
+    const response = NextResponse.json(
+      createApiResponse(serializedCompetitions)
     );
-  }
-}
+
+    // Add caching headers for better performance
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=60, stale-while-revalidate=300"
+    );
+
+    return response;
+  },
+  { endpoint: "GET /api/competitions" }
+);
 
 /**
  * POST /api/competitions
  * Create a new competition (admin only)
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withErrorHandling(
+  async (request: NextRequest) => {
+    // Rate limiting for competition creation
     const session = await getServerSession(authOptions);
+    const userId = session?.user?.id;
 
-    if (!session?.user?.id) {
+    if (userId && !checkRateLimit(`competition-create-${userId}`, 5, 60000)) {
+      await errorLogger.logApiError(
+        `Rate limit exceeded for user ${userId}`,
+        "POST /api/competitions",
+        request,
+        userId
+      );
+
       return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
+        createApiResponse(
+          undefined,
+          "Too many requests. Please try again later."
+        ),
+        { status: 429 }
       );
     }
 
-    // Check if user is admin (only roman.daru.ml@gmail.com)
-    if (!session.user.isAdmin) {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+    // Parse and sanitize input data
+    const rawData = await request.json();
+    const competitionData = sanitizeInput(rawData);
+
+    // Comprehensive validation
+    const validationResult = validateCompetitionData(competitionData);
+    const validationError = validateRequestData(
+      validationResult,
+      "POST /api/competitions",
+      competitionData,
+      userId
+    );
+
+    if (validationError) {
+      return validationError;
     }
 
-    const competitionData = await request.json();
-
-    // Validate required fields
-    if (
-      !competitionData.title ||
-      !competitionData.description ||
-      !competitionData.type
-    ) {
-      return NextResponse.json(
-        { error: "Title, description, and type are required" },
-        { status: 400 }
-      );
-    }
-
-    // Validate type
+    // Additional business logic validation
     if (!COMPETITION_TYPE_VALUES.includes(competitionData.type)) {
+      await errorLogger.logValidationError(
+        [`Invalid competition type: ${competitionData.type}`],
+        "POST /api/competitions",
+        competitionData,
+        userId
+      );
+
       return NextResponse.json(
-        { error: `Type must be one of: ${COMPETITION_TYPE_VALUES.join(", ")}` },
+        createApiResponse(undefined, "Invalid competition type", {
+          validTypes: COMPETITION_TYPE_VALUES,
+        }),
         { status: 400 }
       );
     }
 
-    // Validate dates
+    // Parse dates
     const startDate = new Date(competitionData.startDate);
     const endDate = new Date(competitionData.endDate);
     const votingEndDate = new Date(competitionData.votingEndDate);
-
-    if (startDate >= endDate || endDate >= votingEndDate) {
-      return NextResponse.json(
-        { error: "Invalid date sequence: start < end < voting end" },
-        { status: 400 }
-      );
-    }
 
     // Determine the correct initial status based on dates
     const initialStatus = getCompetitionStatus(
       startDate,
       endDate,
       votingEndDate
+    );
+
+    // Log competition creation attempt
+    await errorLogger.logInfo(
+      `Admin ${userId} creating competition: ${competitionData.title}`,
+      {
+        competitionId: "pending",
+        userId,
+        endpoint: "POST /api/competitions",
+      }
     );
 
     // Create new competition
@@ -128,6 +177,16 @@ export async function POST(request: NextRequest) {
       winners: [],
     });
 
+    // Log successful creation
+    await errorLogger.logInfo(
+      `Competition created successfully: ${newCompetition._id}`,
+      {
+        competitionId: newCompetition._id.toString(),
+        userId,
+        endpoint: "POST /api/competitions",
+      }
+    );
+
     // Ensure ObjectIds are properly serialized to strings
     const serializedCompetition = {
       ...newCompetition,
@@ -139,27 +198,13 @@ export async function POST(request: NextRequest) {
       })),
     };
 
-    return NextResponse.json(serializedCompetition, { status: 201 });
-  } catch (error) {
-    console.error("Error creating competition:", error);
-
-    // Provide more detailed error information
-    let errorMessage = "Failed to create competition";
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-      });
-    }
-
-    return NextResponse.json(
-      {
-        error: errorMessage,
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json(createApiResponse(serializedCompetition), {
+      status: 201,
+    });
+  },
+  {
+    requireAuth: true,
+    requireAdmin: true,
+    endpoint: "POST /api/competitions",
   }
-}
+);

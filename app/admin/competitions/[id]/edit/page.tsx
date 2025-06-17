@@ -63,22 +63,30 @@ export default function EditCompetitionPage({
       const response = await fetch(`/api/competitions/${resolvedParams.id}`);
 
       if (response.ok) {
-        const data = await response.json();
-        setCompetition(data);
+        const apiResponse = await response.json();
 
-        // Populate form data
-        setFormData({
-          title: data.title,
-          description: data.description,
-          type: data.type,
-          status: data.status,
-          startDate: new Date(data.startDate).toISOString().split("T")[0],
-          endDate: new Date(data.endDate).toISOString().split("T")[0],
-          votingEndDate: new Date(data.votingEndDate)
-            .toISOString()
-            .split("T")[0],
-          discordChannelId: data.discordChannelId || "",
-        });
+        // Handle new API response format
+        if (apiResponse.success && apiResponse.data) {
+          const data = apiResponse.data;
+          setCompetition(data);
+
+          // Populate form data
+          setFormData({
+            title: data.title,
+            description: data.description,
+            type: data.type,
+            status: data.status,
+            startDate: new Date(data.startDate).toISOString().split("T")[0],
+            endDate: new Date(data.endDate).toISOString().split("T")[0],
+            votingEndDate: new Date(data.votingEndDate)
+              .toISOString()
+              .split("T")[0],
+            discordChannelId: data.discordChannelId || "",
+          });
+        } else {
+          toast.error(apiResponse.error || "Competition not found");
+          router.push("/admin/competitions");
+        }
       } else {
         toast.error("Competition not found");
         router.push("/admin/competitions");

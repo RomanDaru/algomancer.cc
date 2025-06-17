@@ -42,8 +42,14 @@ export default function AdminCompetitionsPage() {
       setIsLoading(true);
       const response = await fetch("/api/competitions");
       if (response.ok) {
-        const data = await response.json();
-        setCompetitions(data);
+        const apiResponse = await response.json();
+
+        // Handle new API response format
+        if (apiResponse.success && Array.isArray(apiResponse.data)) {
+          setCompetitions(apiResponse.data);
+        } else {
+          toast.error(apiResponse.error || "Failed to load competitions");
+        }
       } else {
         toast.error("Failed to load competitions");
       }

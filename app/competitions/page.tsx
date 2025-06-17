@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   TrophyIcon,
@@ -9,11 +9,13 @@ import {
 } from "@heroicons/react/24/outline";
 import CompetitionCard from "@/app/components/CompetitionCard";
 import { Competition } from "@/app/lib/types/user";
+import { CompetitionListSkeleton } from "@/app/components/skeletons/CompetitionSkeleton";
 
 export default function CompetitionsPage() {
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   useEffect(() => {
     const fetchCompetitions = async () => {
@@ -23,7 +25,17 @@ export default function CompetitionsPage() {
         if (!response.ok) {
           throw new Error("Failed to fetch competitions");
         }
-        const data = await response.json();
+        const apiResponse = await response.json();
+
+        // Handle new API response format
+        if (!apiResponse.success) {
+          throw new Error(apiResponse.error || "Failed to fetch competitions");
+        }
+
+        const data = apiResponse.data;
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
 
         // Convert date strings to Date objects
         const competitionsWithDates = data.map((competition: any) => ({
@@ -38,30 +50,62 @@ export default function CompetitionsPage() {
         setCompetitions(competitionsWithDates);
       } catch (err) {
         console.error("Error fetching competitions:", err);
-        setError("Failed to load competitions");
+        setError(
+          err instanceof Error ? err.message : "Failed to load competitions"
+        );
       } finally {
         setLoading(false);
+        setInitialLoad(false);
       }
     };
 
     fetchCompetitions();
   }, []);
 
-  const activeCompetitions = competitions.filter(
-    (c) => c.status === "active" || c.status === "voting"
-  );
-  const completedCompetitions = competitions.filter(
-    (c) => c.status === "completed"
-  );
-  const upcomingCompetitions = competitions.filter(
-    (c) => c.status === "upcoming"
-  );
+  // Memoize filtered competitions for better performance
+  const { activeCompetitions, completedCompetitions, upcomingCompetitions } =
+    useMemo(() => {
+      return {
+        activeCompetitions: competitions.filter(
+          (c) => c.status === "active" || c.status === "voting"
+        ),
+        completedCompetitions: competitions.filter(
+          (c) => c.status === "completed"
+        ),
+        upcomingCompetitions: competitions.filter(
+          (c) => c.status === "upcoming"
+        ),
+      };
+    }, [competitions]);
 
-  if (loading) {
+  if (initialLoad && loading) {
     return (
       <div className='container mx-auto px-4 pt-16 pb-8 max-w-6xl'>
-        <div className='flex justify-center items-center min-h-[400px]'>
-          <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
+        {/* Header */}
+        <div className='text-center mb-12'>
+          <h1 className='text-4xl font-bold text-white mb-4'>
+            Deck Building Competitions
+          </h1>
+          <p className='text-xl text-gray-300 max-w-3xl mx-auto'>
+            Join exciting deck building competitions and showcase your strategic
+            skills
+          </p>
+        </div>
+
+        {/* Skeleton Loading */}
+        <div className='space-y-12'>
+          <div>
+            <h2 className='text-2xl font-bold text-white mb-6'>
+              Active Competitions
+            </h2>
+            <CompetitionListSkeleton />
+          </div>
+          <div>
+            <h2 className='text-2xl font-bold text-white mb-6'>
+              Upcoming Competitions
+            </h2>
+            <CompetitionListSkeleton />
+          </div>
         </div>
       </div>
     );

@@ -57,6 +57,12 @@ const CompetitionSchema = new Schema(
   }
 );
 
+// Add indexes for performance
+CompetitionSchema.index({ status: 1, startDate: 1 }); // For filtering by status and sorting by date
+CompetitionSchema.index({ endDate: 1 }); // For status updates
+CompetitionSchema.index({ votingEndDate: 1 }); // For status updates
+CompetitionSchema.index({ createdAt: -1 }); // For sorting by creation date
+
 // Create and export the model
 export const CompetitionModel =
   mongoose.models.Competition ||
@@ -64,9 +70,10 @@ export const CompetitionModel =
 
 // Helper function to convert between MongoDB document and our Competition type
 export function convertDocumentToCompetition(
-  doc: CompetitionDocument
+  doc: CompetitionDocument | any
 ): CompetitionType {
-  const competition = doc.toObject();
+  // Handle both Mongoose documents and lean objects
+  const competition = doc.toObject ? doc.toObject() : doc;
   return {
     _id: competition._id,
     title: competition.title,

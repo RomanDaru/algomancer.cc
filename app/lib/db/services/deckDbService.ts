@@ -265,6 +265,7 @@ export const deckDbService = {
    */
   async deleteDeck(id: string): Promise<boolean> {
     try {
+      // Use the newer, preferred database connection method
       await ensureDbConnection();
 
       // Import here to avoid circular dependencies

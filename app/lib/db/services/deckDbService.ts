@@ -1,15 +1,30 @@
 import { Deck, DeckCard } from "../../types/user";
 import { connectToDatabase } from "../mongodb";
-import mongoose from "../mongodb";
 import {
   DeckModel,
   convertDeckToDocument,
   convertDocumentToDeck,
+  convertAggregationToDeck,
 } from "../models/Deck";
 import { ObjectId } from "mongodb";
 
+// Single database connection instance
+let dbConnection: any = null;
+
+/**
+ * Ensure database connection is established
+ * Reuses existing connection if available
+ */
+async function ensureDbConnection() {
+  if (!dbConnection) {
+    dbConnection = await connectToDatabase();
+  }
+  return dbConnection;
+}
+
 /**
  * Service for interacting with the deck database
+ * Optimized to use a single database connection
  */
 export const deckDbService = {
   /**
@@ -17,7 +32,7 @@ export const deckDbService = {
    */
   async getUserDecks(userId: string): Promise<Deck[]> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const deckDocs = await DeckModel.find({
         userId: new ObjectId(userId),
       }).sort({ createdAt: -1 });
@@ -36,10 +51,10 @@ export const deckDbService = {
     sortBy: "popular" | "newest" | "liked" = "newest"
   ): Promise<Deck[]> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
-      // Sort by the specified field
-      let sortOptions;
+      // Sort by the specified field - Mongoose expects numeric values for sort order
+      let sortOptions: Record<string, 1 | -1>;
       if (sortBy === "popular") {
         sortOptions = { views: -1 }; // Sort by views (descending)
       } else if (sortBy === "liked") {
@@ -59,13 +74,120 @@ export const deckDbService = {
   },
 
   /**
+   * Get public decks with user information using aggregation for better performance
+   * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
+   * @param limit Optional limit for pagination
+   * @param skip Optional skip for pagination
+   * @param currentUserId Optional current user ID to include like status for each deck
+   */
+  async getPublicDecksWithUserInfo(
+    sortBy: "popular" | "newest" | "liked" = "newest",
+    limit?: number,
+    skip?: number,
+    currentUserId?: string
+  ): Promise<
+    Array<{
+      deck: Deck;
+      user: { name: string; username: string | null };
+      isLikedByCurrentUser: boolean;
+    }>
+  > {
+    try {
+      await ensureDbConnection();
+
+      // Sort by the specified field
+      let sortOptions: Record<string, 1 | -1>;
+      if (sortBy === "popular") {
+        sortOptions = { views: -1 };
+      } else if (sortBy === "liked") {
+        sortOptions = { likes: -1 };
+      } else {
+        sortOptions = { createdAt: -1 };
+      }
+
+      // Use aggregation to join with users collection for better performance
+      const pipeline: any[] = [
+        { $match: { isPublic: true } },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userInfo",
+          },
+        },
+        {
+          $addFields: {
+            user: {
+              $ifNull: [
+                {
+                  $arrayElemAt: [
+                    {
+                      $map: {
+                        input: "$userInfo",
+                        as: "u",
+                        in: {
+                          name: { $ifNull: ["$$u.name", "Unknown User"] },
+                          username: "$$u.username",
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+                { name: "Unknown User", username: null },
+              ],
+            },
+            // Add like status for current user if provided
+            isLikedByCurrentUser: currentUserId
+              ? {
+                  $in: [
+                    new ObjectId(currentUserId),
+                    { $ifNull: ["$likedBy", []] },
+                  ],
+                }
+              : false,
+          },
+        },
+        { $sort: sortOptions },
+      ];
+
+      // Add pagination if specified
+      if (skip !== undefined) {
+        pipeline.push({ $skip: skip });
+      }
+      if (limit !== undefined) {
+        pipeline.push({ $limit: limit });
+      }
+
+      // Remove the userInfo field as we've processed it
+      pipeline.push({
+        $project: {
+          userInfo: 0,
+        },
+      });
+
+      const results = await DeckModel.aggregate(pipeline);
+
+      return results.map((result) => ({
+        deck: convertAggregationToDeck(result),
+        user: result.user,
+        isLikedByCurrentUser: result.isLikedByCurrentUser || false,
+      }));
+    } catch (error) {
+      console.error("Error getting public decks with user info:", error);
+      throw error;
+    }
+  },
+
+  /**
    * Get user information for a deck
    */
   async getDeckUserInfo(
     userId: string
   ): Promise<{ name: string; username: string | null }> {
     try {
-      const connection = await connectToDatabase();
+      const connection = await ensureDbConnection();
       if (!connection || !connection.db) {
         console.error("Failed to get database connection");
         return { name: "Unknown User", username: null };
@@ -95,7 +217,7 @@ export const deckDbService = {
    */
   async getDeckById(id: string): Promise<Deck | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const deckDoc = await DeckModel.findById(new ObjectId(id));
       return deckDoc ? convertDocumentToDeck(deckDoc) : null;
     } catch (error) {
@@ -109,7 +231,7 @@ export const deckDbService = {
    */
   async createDeck(deck: Partial<Deck>): Promise<Deck> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const deckDoc = new DeckModel(convertDeckToDocument(deck));
       await deckDoc.save();
       return convertDocumentToDeck(deckDoc);
@@ -124,7 +246,7 @@ export const deckDbService = {
    */
   async updateDeck(id: string, deck: Partial<Deck>): Promise<Deck | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(id),
         { $set: convertDeckToDocument(deck) },
@@ -136,79 +258,79 @@ export const deckDbService = {
       throw error;
     }
   },
+/**
+ * Delete a deck
+ * Checks for active competition usage before deletion
+ */
+async deleteDeck(id: string): Promise<boolean> {
+  try {
+    // Use the newer, preferred database connection method
+    await ensureDbConnection();
 
-  /**
-   * Delete a deck
-   * Checks for active competition usage before deletion
-   */
-  async deleteDeck(id: string): Promise<boolean> {
-    try {
-      await connectToDatabase();
+    // Import here to avoid circular dependencies
+    const { CompetitionEntryModel } = await import(
+      "../models/CompetitionEntry"
+    );
+    const { CompetitionModel } = await import("../models/Competition");
+    const { COMPETITION_STATUS } = await import("../../constants");
 
-      // Import here to avoid circular dependencies
-      const { CompetitionEntryModel } = await import(
-        "../models/CompetitionEntry"
+    // Check if deck is used in any active competitions
+    const competitionEntries = await CompetitionEntryModel.find({
+      deckId: new ObjectId(id),
+    }).populate("competitionId");
+
+    // Filter for competitions that prevent deck deletion
+    // Allow deletion only if competitions are UPCOMING or COMPLETED
+    const blockingCompetitionEntries = competitionEntries.filter((entry) => {
+      const competition = entry.competitionId as any;
+      return (
+        competition &&
+        competition.status !== COMPETITION_STATUS.UPCOMING &&
+        competition.status !== COMPETITION_STATUS.COMPLETED
       );
-      const { CompetitionModel } = await import("../models/Competition");
-      const { COMPETITION_STATUS } = await import("../../constants");
+    });
 
-      // Check if deck is used in any active competitions
-      const competitionEntries = await CompetitionEntryModel.find({
-        deckId: new ObjectId(id),
-      }).populate("competitionId");
+    if (blockingCompetitionEntries.length > 0) {
+      const competitionTitles = blockingCompetitionEntries
+        .map((entry) => (entry.competitionId as any)?.title)
+        .filter(Boolean)
+        .join(", ");
 
-      // Filter for competitions that prevent deck deletion
-      // Allow deletion only if competitions are UPCOMING or COMPLETED
-      const blockingCompetitionEntries = competitionEntries.filter((entry) => {
-        const competition = entry.competitionId as any;
-        return (
-          competition &&
-          competition.status !== COMPETITION_STATUS.UPCOMING &&
-          competition.status !== COMPETITION_STATUS.COMPLETED
-        );
-      });
+      const competitionStatuses = blockingCompetitionEntries
+        .map((entry) => (entry.competitionId as any)?.status)
+        .filter(Boolean);
 
-      if (blockingCompetitionEntries.length > 0) {
-        const competitionTitles = blockingCompetitionEntries
-          .map((entry) => (entry.competitionId as any)?.title)
-          .filter(Boolean)
-          .join(", ");
-
-        const competitionStatuses = blockingCompetitionEntries
-          .map((entry) => (entry.competitionId as any)?.status)
-          .filter(Boolean);
-
-        throw new Error(
-          `Cannot delete deck: it's currently used in competition(s): ${competitionTitles} ` +
-            `(Status: ${competitionStatuses.join(", ")}). ` +
-            `Deck deletion is only allowed when competitions are "upcoming" or "completed".`
-        );
-      }
-
-      // If deck is only used in completed competitions, allow deletion
-      // but update those entries to mark deck as deleted
-      if (competitionEntries.length > 0) {
-        const deck = await DeckModel.findById(new ObjectId(id));
-        await CompetitionEntryModel.updateMany(
-          { deckId: new ObjectId(id) },
-          {
-            $set: {
-              deckId: null,
-              deckDeletedAt: new Date(),
-              originalDeckName: deck?.name || "Deleted Deck",
-            },
-          }
-        );
-      }
-
-      // Proceed with deck deletion
-      const result = await DeckModel.findByIdAndDelete(new ObjectId(id));
-      return !!result;
-    } catch (error) {
-      console.error(`Error deleting deck with ID ${id}:`, error);
-      throw error;
+      throw new Error(
+        `Cannot delete deck: it's currently used in competition(s): ${competitionTitles} ` +
+        `(Status: ${competitionStatuses.join(", ")}). ` +
+        `Deck deletion is only allowed when competitions are "upcoming" or "completed".`
+      );
     }
-  },
+
+    // If deck is only used in completed competitions, allow deletion
+    // but update those entries to mark deck as deleted
+    if (competitionEntries.length > 0) {
+      const deck = await DeckModel.findById(new ObjectId(id));
+      await CompetitionEntryModel.updateMany(
+        { deckId: new ObjectId(id) },
+        {
+          $set: {
+            deckId: null,
+            deckDeletedAt: new Date(),
+            originalDeckName: deck?.name || "Deleted Deck",
+          },
+        }
+      );
+    }
+
+    // Proceed with deck deletion
+    const result = await DeckModel.findByIdAndDelete(new ObjectId(id));
+    return !!result;
+  } catch (error) {
+    console.error(`Error deleting deck with ID ${id}:`, error);
+    throw error;
+  }
+},
 
   /**
    * Add a card to a deck
@@ -219,7 +341,7 @@ export const deckDbService = {
     quantity: number = 1
   ): Promise<Deck | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
       // Find the deck
       const deck = await DeckModel.findById(new ObjectId(deckId));
@@ -229,7 +351,7 @@ export const deckDbService = {
 
       // Check if the card already exists in the deck
       const existingCardIndex = deck.cards.findIndex(
-        (c) => c.cardId === cardId
+        (c: DeckCard) => c.cardId === cardId
       );
 
       if (existingCardIndex >= 0) {
@@ -259,7 +381,7 @@ export const deckDbService = {
     quantity: number = 1
   ): Promise<Deck | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
       // Find the deck
       const deck = await DeckModel.findById(new ObjectId(deckId));
@@ -269,7 +391,7 @@ export const deckDbService = {
 
       // Find the card in the deck
       const existingCardIndex = deck.cards.findIndex(
-        (c) => c.cardId === cardId
+        (c: DeckCard) => c.cardId === cardId
       );
 
       if (existingCardIndex >= 0) {
@@ -303,7 +425,7 @@ export const deckDbService = {
     cards: DeckCard[]
   ): Promise<Deck | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(deckId),
@@ -326,7 +448,7 @@ export const deckDbService = {
     limit?: number
   ): Promise<Deck[]> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
       // Find decks that contain the card and are public
       let query = DeckModel.find({
@@ -348,81 +470,77 @@ export const deckDbService = {
   },
 
   /**
-   * Get user information for a deck
-   */
-  async getDeckUserInfo(
-    userId: string
-  ): Promise<{ name: string; username: string | null }> {
-    try {
-      await connectToDatabase();
-      const db = mongoose.connection.db;
-      const user = await db
-        .collection("users")
-        .findOne({ _id: new ObjectId(userId) });
-
-      if (!user) {
-        return { name: "Unknown User", username: null };
-      }
-
-      return {
-        name: user.name || "Unknown User",
-        username: user.username || null,
-      };
-    } catch (error) {
-      console.error(`Error getting user info for user ${userId}:`, error);
-      return { name: "Unknown User", username: null };
-    }
-  },
-
-  /**
    * Toggle like status for a deck
+   * Uses atomic operations and database as source of truth for like count
+   * Optimized to minimize database calls and handle race conditions
    */
   async toggleDeckLike(
     deckId: string,
     userId: ObjectId
   ): Promise<{ liked: boolean; likes: number } | null> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
 
-      // First, check if the deck exists
+      // First, try to remove the like (unlike operation)
+      const unlikeResult = await DeckModel.findOneAndUpdate(
+        {
+          _id: new ObjectId(deckId),
+          likedBy: userId, // Only update if user has already liked
+        },
+        {
+          $pull: { likedBy: userId },
+          $inc: { likes: -1 },
+        },
+        { new: true }
+      );
+
+      if (unlikeResult) {
+        // User was already liked, so we unliked it
+        return {
+          liked: false,
+          likes: Math.max(0, unlikeResult.likes || 0),
+        };
+      }
+
+      // If unlike didn't work, try to add the like (like operation)
+      const likeResult = await DeckModel.findOneAndUpdate(
+        {
+          _id: new ObjectId(deckId),
+          likedBy: { $ne: userId }, // Only update if user hasn't liked yet
+        },
+        {
+          $addToSet: { likedBy: userId },
+          $inc: { likes: 1 },
+        },
+        { new: true }
+      );
+
+      if (likeResult) {
+        // User wasn't liked before, so we liked it
+        return {
+          liked: true,
+          likes: likeResult.likes || 1,
+        };
+      }
+
+      // If neither operation worked, the deck might not exist
+      // Check if deck exists
       const deck = await DeckModel.findById(new ObjectId(deckId));
       if (!deck) {
         return null;
       }
 
-      // Check if user has already liked the deck
+      // Edge case: deck exists but neither operation worked
+      // This could happen if there's a race condition
+      // Return current state
       const userIdString = userId.toString();
-      const alreadyLiked = deck.likedBy.some(
-        (id) => id.toString() === userIdString
+      const isLiked = deck.likedBy.some(
+        (id: ObjectId) => id.toString() === userIdString
       );
 
-      let updateOperation;
-      let newLikeCount;
-
-      if (alreadyLiked) {
-        // Unlike: remove user from likedBy array and decrement likes
-        updateOperation = {
-          $pull: { likedBy: userId },
-          $inc: { likes: -1 },
-        };
-        newLikeCount = Math.max(0, (deck.likes || 0) - 1);
-      } else {
-        // Like: add user to likedBy array and increment likes
-        updateOperation = {
-          $addToSet: { likedBy: userId },
-          $inc: { likes: 1 },
-        };
-        newLikeCount = (deck.likes || 0) + 1;
-      }
-
-      // Update the deck
-      await DeckModel.findByIdAndUpdate(new ObjectId(deckId), updateOperation, {
-        new: true,
-      });
-
       return {
-        liked: !alreadyLiked,
-        likes: newLikeCount,
+        liked: isLiked,
+        likes: Math.max(0, deck.likes || 0),
       };
     } catch (error) {
       console.error(`Error toggling like for deck ${deckId}:`, error);
@@ -435,7 +553,7 @@ export const deckDbService = {
    */
   async getUserLikedDecks(userId: string): Promise<Deck[]> {
     try {
-      await connectToDatabase();
+      await ensureDbConnection();
       const deckDocs = await DeckModel.find({
         likedBy: new ObjectId(userId),
         isPublic: true, // Only return public decks
@@ -450,81 +568,37 @@ export const deckDbService = {
   /**
    * Increment the view count for a deck
    * Uses the viewerId to prevent duplicate views from the same user/session
+   * Optimized to use a single atomic operation
    */
   async incrementDeckViews(
     deckId: string,
     viewerId: string
   ): Promise<Deck | null> {
     try {
-      // Connect to the database and get the db instance
-      const { db } = await connectToDatabase();
+      await ensureDbConnection();
 
-      // First, check if the deck exists and get its current state
-      const currentDeck = await db
-        .collection("decks")
-        .findOne({ _id: new ObjectId(deckId) });
+      // Use findOneAndUpdate with atomic operations for better performance
+      // Only increment if the viewer hasn't already viewed the deck
+      const updatedDeck = await DeckModel.findOneAndUpdate(
+        {
+          _id: new ObjectId(deckId),
+          viewedBy: { $ne: viewerId }, // Only update if viewerId is not in viewedBy array
+        },
+        {
+          $inc: { views: 1 },
+          $push: { viewedBy: viewerId },
+        },
+        { new: true }
+      );
 
-      if (!currentDeck) {
-        return null;
-      }
-
-      // Check if this viewer has already viewed the deck
-      const alreadyViewed =
-        currentDeck.viewedBy && currentDeck.viewedBy.includes(viewerId);
-
-      if (!alreadyViewed) {
-        // Check if the views field exists
-        if (currentDeck.views === undefined) {
-          // If views doesn't exist, set it to 1
-          await db.collection("decks").updateOne(
-            { _id: new ObjectId(deckId) },
-            {
-              $set: { views: 1 },
-              $push: { viewedBy: viewerId },
-              // Preserve the original updatedAt timestamp
-              $setOnInsert: { updatedAt: currentDeck.updatedAt },
-            },
-            { timestamps: false } // Prevent automatic updatedAt update
-          );
-        } else {
-          // If views exists, increment it
-          await db.collection("decks").updateOne(
-            { _id: new ObjectId(deckId) },
-            {
-              $inc: { views: 1 },
-              $push: { viewedBy: viewerId },
-              // Preserve the original updatedAt timestamp
-              $setOnInsert: { updatedAt: currentDeck.updatedAt },
-            },
-            { timestamps: false } // Prevent automatic updatedAt update
-          );
-        }
-      }
-
-      // Fetch the updated deck
-      const updatedDeck = await db
-        .collection("decks")
-        .findOne({ _id: new ObjectId(deckId) });
-
+      // If no document was updated, the deck either doesn't exist or was already viewed
+      // Check if the deck exists
       if (!updatedDeck) {
-        return null;
+        const existingDeck = await DeckModel.findById(new ObjectId(deckId));
+        return existingDeck ? convertDocumentToDeck(existingDeck) : null;
       }
 
-      // Convert the MongoDB document to our Deck type
-      return {
-        _id: updatedDeck._id,
-        name: updatedDeck.name,
-        description: updatedDeck.description,
-        userId: updatedDeck.userId,
-        cards: updatedDeck.cards || [],
-        createdAt: updatedDeck.createdAt,
-        updatedAt: updatedDeck.updatedAt,
-        isPublic: updatedDeck.isPublic,
-        views: updatedDeck.views || 0,
-        viewedBy: updatedDeck.viewedBy || [],
-        likes: updatedDeck.likes || 0,
-        likedBy: updatedDeck.likedBy || [],
-      };
+      return convertDocumentToDeck(updatedDeck);
     } catch (error) {
       console.error(`Error incrementing view count for deck ${deckId}:`, error);
       throw error;

@@ -31,9 +31,16 @@ export default function LikeButton({
   const [loading, setLoading] = useState(false);
 
   // Fetch initial like status when component mounts
+  // Only fetch if initialLiked is not provided (undefined)
   useEffect(() => {
     async function fetchLikeStatus() {
       if (!session?.user?.id) return;
+
+      // 🎯 KEY FIX: Only fetch if we don't have initial data
+      if (initialLiked !== undefined) {
+        // We already have the like status from the parent component
+        return;
+      }
 
       try {
         const response = await fetch(`/api/decks/${deckId}/like`);
@@ -48,7 +55,7 @@ export default function LikeButton({
     }
 
     fetchLikeStatus();
-  }, [deckId, session?.user?.id]);
+  }, [deckId, session?.user?.id, initialLiked]);
 
   const handleLike = async () => {
     if (!session?.user?.id) {
@@ -68,7 +75,7 @@ export default function LikeButton({
         const data = await response.json();
         setLiked(data.liked);
         setLikes(data.likes);
-        
+
         // Call the callback if provided
         onLikeChange?.(data.liked, data.likes);
 
@@ -133,8 +140,7 @@ export default function LikeButton({
           : liked
           ? "Unlike this deck"
           : "Like this deck"
-      }
-    >
+      }>
       {liked ? (
         <HeartIconSolid className={`${config.icon} text-red-500`} />
       ) : (

@@ -260,14 +260,8 @@ function PublicDecksContent() {
 
           return (
             <DeckGrid
-              decks={sortedDecks.map((item) => item.deck)}
+              decksWithUserInfo={sortedDecks} // 🎯 NEW: Use optimized format directly
               cards={cards}
-              users={sortedDecks.reduce((acc, { deck, user }) => {
-                if (deck.userId) {
-                  acc[deck.userId.toString()] = user;
-                }
-                return acc;
-              }, {} as Record<string, { name: string; username: string | null }>)}
               emptyMessage={
                 filteredCard
                   ? `No decks found containing ${filteredCard.name}`

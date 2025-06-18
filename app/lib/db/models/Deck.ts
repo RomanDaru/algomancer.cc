@@ -59,6 +59,47 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
   };
 }
 
+// Helper function to convert aggregation result (plain object) to our Deck type
+export function convertAggregationToDeck(obj: any): DeckType {
+  return {
+    _id: obj._id,
+    name: obj.name,
+    description: obj.description,
+    youtubeUrl: obj.youtubeUrl,
+    userId: obj.userId,
+    cards: obj.cards || [],
+    createdAt: obj.createdAt,
+    updatedAt: obj.updatedAt,
+    isPublic: obj.isPublic,
+    views: obj.views || 0,
+    viewedBy: obj.viewedBy || [],
+    likes: obj.likes || 0,
+    likedBy: obj.likedBy || [],
+  };
+}
+
+// Universal helper function that can handle both Mongoose documents and plain objects
+export function convertToDeck(input: DeckDocument | any): DeckType {
+  // Check if it's a Mongoose document (has toObject method)
+  const obj = typeof input.toObject === "function" ? input.toObject() : input;
+
+  return {
+    _id: obj._id,
+    name: obj.name,
+    description: obj.description,
+    youtubeUrl: obj.youtubeUrl,
+    userId: obj.userId,
+    cards: obj.cards || [],
+    createdAt: obj.createdAt,
+    updatedAt: obj.updatedAt,
+    isPublic: obj.isPublic,
+    views: obj.views || 0,
+    viewedBy: obj.viewedBy || [],
+    likes: obj.likes || 0,
+    likedBy: obj.likedBy || [],
+  };
+}
+
 // Helper function to convert our Deck type to a MongoDB document
 export function convertDeckToDocument(
   deck: Partial<DeckType>

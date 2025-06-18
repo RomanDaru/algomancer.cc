@@ -161,26 +161,30 @@ export const deckService = {
   /**
    * Get public decks with user information
    * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
+   * @param limit Optional limit for pagination
+   * @param skip Optional skip for pagination
+   * @param currentUserId Optional current user ID to include like status for each deck
    */
   async getPublicDecksWithUserInfo(
-    sortBy: "popular" | "newest" | "liked" = "newest"
+    sortBy: "popular" | "newest" | "liked" = "newest",
+    limit?: number,
+    skip?: number,
+    currentUserId?: string
   ): Promise<
-    { deck: Deck; user: { name: string; username: string | null } }[]
+    {
+      deck: Deck;
+      user: { name: string; username: string | null };
+      isLikedByCurrentUser: boolean;
+    }[]
   > {
     try {
-      const decks = await deckDbService.getPublicDecks(sortBy);
-
-      // Get user information for each deck
-      const decksWithUserInfo = await Promise.all(
-        decks.map(async (deck) => {
-          const user = await deckDbService.getDeckUserInfo(
-            deck.userId.toString()
-          );
-          return { deck, user };
-        })
+      // Use the optimized aggregation method from deckDbService
+      return await deckDbService.getPublicDecksWithUserInfo(
+        sortBy,
+        limit,
+        skip,
+        currentUserId
       );
-
-      return decksWithUserInfo;
     } catch (error) {
       console.error("Error getting public decks with user info:", error);
       throw error;

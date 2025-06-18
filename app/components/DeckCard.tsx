@@ -21,6 +21,7 @@ interface DeckCardProps {
   };
   cards?: Card[];
   className?: string;
+  isLikedByCurrentUser?: boolean; // 🎯 NEW: Like status from optimized API
 }
 
 export default function DeckCard({
@@ -28,6 +29,7 @@ export default function DeckCard({
   user,
   cards,
   className = "",
+  isLikedByCurrentUser, // 🎯 NEW: Receive like status
 }: DeckCardProps) {
   // Calculate total cards
   const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
@@ -171,6 +173,7 @@ export default function DeckCard({
                   <LikeButton
                     deckId={deck._id.toString()}
                     initialLikes={deck.likes || 0}
+                    initialLiked={isLikedByCurrentUser} // 🎯 NEW: Pass optimized like status
                     size='sm'
                     showCount={true}
                   />

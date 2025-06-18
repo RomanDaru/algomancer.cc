@@ -17,29 +17,29 @@ export interface LoggedError {
   id: string;
   message: string;
   stack?: string;
-  level: 'error' | 'warn' | 'info';
+  level: "error" | "warn" | "info";
   context: ErrorContext;
   timestamp: Date;
 }
 
 class ErrorLogger {
-  private isDevelopment = process.env.NODE_ENV === 'development';
-  private isProduction = process.env.NODE_ENV === 'production';
+  private isDevelopment = process.env.NODE_ENV === "development";
+  private isProduction = process.env.NODE_ENV === "production";
 
   /**
    * Log an error with context information
    */
   async logError(
     error: Error | string,
-    level: 'error' | 'warn' | 'info' = 'error',
+    level: "error" | "warn" | "info" = "error",
     context: ErrorContext = {}
   ): Promise<void> {
     const errorId = this.generateErrorId();
     const timestamp = new Date();
-    
+
     const loggedError: LoggedError = {
       id: errorId,
-      message: typeof error === 'string' ? error : error.message,
+      message: typeof error === "string" ? error : error.message,
       stack: error instanceof Error ? error.stack : undefined,
       level,
       context: {
@@ -58,7 +58,7 @@ class ErrorLogger {
     }
 
     // Store critical errors in database for admin review
-    if (level === 'error') {
+    if (level === "error") {
       await this.logToDatabase(loggedError);
     }
   }
@@ -72,10 +72,10 @@ class ErrorLogger {
     userId?: string,
     additionalContext?: Record<string, any>
   ): Promise<void> {
-    await this.logError(error, 'error', {
+    await this.logError(error, "error", {
       competitionId,
       userId,
-      endpoint: 'competition',
+      endpoint: "competition",
       additionalData: additionalContext,
     });
   }
@@ -92,14 +92,14 @@ class ErrorLogger {
     const context: ErrorContext = {
       endpoint,
       userId,
-      userAgent: request?.headers.get('user-agent') || undefined,
+      userAgent: request?.headers.get("user-agent") || undefined,
       additionalData: {
         method: request?.method,
         url: request?.url,
       },
     };
 
-    await this.logError(error, 'error', context);
+    await this.logError(error, "error", context);
   }
 
   /**
@@ -111,8 +111,8 @@ class ErrorLogger {
     collection?: string,
     documentId?: string
   ): Promise<void> {
-    await this.logError(error, 'error', {
-      endpoint: 'database',
+    await this.logError(error, "error", {
+      endpoint: "database",
       additionalData: {
         operation,
         collection,
@@ -130,18 +130,14 @@ class ErrorLogger {
     data: any,
     userId?: string
   ): Promise<void> {
-    await this.logError(
-      `Validation failed: ${errors.join(', ')}`,
-      'warn',
-      {
-        endpoint,
-        userId,
-        additionalData: {
-          validationErrors: errors,
-          submittedData: this.sanitizeData(data),
-        },
-      }
-    );
+    await this.logError(`Validation failed: ${errors.join(", ")}`, "warn", {
+      endpoint,
+      userId,
+      additionalData: {
+        validationErrors: errors,
+        submittedData: this.sanitizeData(data),
+      },
+    });
   }
 
   /**
@@ -152,8 +148,8 @@ class ErrorLogger {
     jobName: string,
     additionalContext?: Record<string, any>
   ): Promise<void> {
-    await this.logError(error, 'error', {
-      endpoint: 'cron',
+    await this.logError(error, "error", {
+      endpoint: "cron",
       additionalData: {
         jobName,
         ...additionalContext,
@@ -161,21 +157,38 @@ class ErrorLogger {
     });
   }
 
+  /**
+   * Log informational messages
+   */
+  async logInfo(message: string, context: ErrorContext = {}): Promise<void> {
+    await this.logError(message, "info", context);
+  }
+
+  /**
+   * Log warning messages
+   */
+  async logWarning(message: string, context: ErrorContext = {}): Promise<void> {
+    await this.logError(message, "warn", context);
+  }
+
   private logToConsole(loggedError: LoggedError): void {
     const { level, message, stack, context, timestamp } = loggedError;
-    
+
     const logMessage = `[${timestamp.toISOString()}] ${level.toUpperCase()}: ${message}`;
-    const contextInfo = Object.keys(context).length > 0 ? `\nContext: ${JSON.stringify(context, null, 2)}` : '';
-    const stackInfo = stack ? `\nStack: ${stack}` : '';
+    const contextInfo =
+      Object.keys(context).length > 0
+        ? `\nContext: ${JSON.stringify(context, null, 2)}`
+        : "";
+    const stackInfo = stack ? `\nStack: ${stack}` : "";
 
     switch (level) {
-      case 'error':
+      case "error":
         console.error(`🚨 ${logMessage}${contextInfo}${stackInfo}`);
         break;
-      case 'warn':
+      case "warn":
         console.warn(`⚠️ ${logMessage}${contextInfo}`);
         break;
-      case 'info':
+      case "info":
         console.info(`ℹ️ ${logMessage}${contextInfo}`);
         break;
     }
@@ -185,18 +198,18 @@ class ErrorLogger {
     try {
       // In production, integrate with services like Sentry, LogRocket, etc.
       // For now, we'll use a simple webhook or API call
-      
+
       if (process.env.ERROR_WEBHOOK_URL) {
         await fetch(process.env.ERROR_WEBHOOK_URL, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(loggedError),
         });
       }
     } catch (error) {
-      console.error('Failed to log to external service:', error);
+      console.error("Failed to log to external service:", error);
     }
   }
 
@@ -205,9 +218,9 @@ class ErrorLogger {
       // Store critical errors in MongoDB for admin review
       // This would require a separate ErrorLog collection
       // For now, we'll skip this to avoid circular dependencies
-      console.info('📝 Error logged for database storage:', loggedError.id);
+      console.info("📝 Error logged for database storage:", loggedError.id);
     } catch (error) {
-      console.error('Failed to log to database:', error);
+      console.error("Failed to log to database:", error);
     }
   }
 
@@ -217,17 +230,17 @@ class ErrorLogger {
 
   private sanitizeData(data: any): any {
     // Remove sensitive information from logged data
-    const sensitiveFields = ['password', 'token', 'secret', 'key'];
-    
-    if (typeof data !== 'object' || data === null) {
+    const sensitiveFields = ["password", "token", "secret", "key"];
+
+    if (typeof data !== "object" || data === null) {
       return data;
     }
 
     const sanitized = { ...data };
-    
+
     for (const field of sensitiveFields) {
       if (field in sanitized) {
-        sanitized[field] = '[REDACTED]';
+        sanitized[field] = "[REDACTED]";
       }
     }
 
@@ -240,10 +253,10 @@ export const errorLogger = new ErrorLogger();
 
 // Convenience functions for common use cases
 export const logError = (error: Error | string, context?: ErrorContext) =>
-  errorLogger.logError(error, 'error', context);
+  errorLogger.logError(error, "error", context);
 
 export const logWarning = (message: string, context?: ErrorContext) =>
-  errorLogger.logError(message, 'warn', context);
+  errorLogger.logError(message, "warn", context);
 
 export const logInfo = (message: string, context?: ErrorContext) =>
-  errorLogger.logError(message, 'info', context);
+  errorLogger.logError(message, "info", context);

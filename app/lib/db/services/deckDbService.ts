@@ -261,10 +261,69 @@ export const deckDbService = {
 
   /**
    * Delete a deck
+   * Checks for active competition usage before deletion
    */
   async deleteDeck(id: string): Promise<boolean> {
     try {
       await ensureDbConnection();
+
+      // Import here to avoid circular dependencies
+      const { CompetitionEntryModel } = await import(
+        "../models/CompetitionEntry"
+      );
+      const { CompetitionModel } = await import("../models/Competition");
+      const { COMPETITION_STATUS } = await import("../../constants");
+
+      // Check if deck is used in any active competitions
+      const competitionEntries = await CompetitionEntryModel.find({
+        deckId: new ObjectId(id),
+      }).populate("competitionId");
+
+      // Filter for competitions that prevent deck deletion
+      // Allow deletion only if competitions are UPCOMING or COMPLETED
+      const blockingCompetitionEntries = competitionEntries.filter((entry) => {
+        const competition = entry.competitionId as any;
+        return (
+          competition &&
+          competition.status !== COMPETITION_STATUS.UPCOMING &&
+          competition.status !== COMPETITION_STATUS.COMPLETED
+        );
+      });
+
+      if (blockingCompetitionEntries.length > 0) {
+        const competitionTitles = blockingCompetitionEntries
+          .map((entry) => (entry.competitionId as any)?.title)
+          .filter(Boolean)
+          .join(", ");
+
+        const competitionStatuses = blockingCompetitionEntries
+          .map((entry) => (entry.competitionId as any)?.status)
+          .filter(Boolean);
+
+        throw new Error(
+          `Cannot delete deck: it's currently used in competition(s): ${competitionTitles} ` +
+            `(Status: ${competitionStatuses.join(", ")}). ` +
+            `Deck deletion is only allowed when competitions are "upcoming" or "completed".`
+        );
+      }
+
+      // If deck is only used in completed competitions, allow deletion
+      // but update those entries to mark deck as deleted
+      if (competitionEntries.length > 0) {
+        const deck = await DeckModel.findById(new ObjectId(id));
+        await CompetitionEntryModel.updateMany(
+          { deckId: new ObjectId(id) },
+          {
+            $set: {
+              deckId: null,
+              deckDeletedAt: new Date(),
+              originalDeckName: deck?.name || "Deleted Deck",
+            },
+          }
+        );
+      }
+
+      // Proceed with deck deletion
       const result = await DeckModel.findByIdAndDelete(new ObjectId(id));
       return !!result;
     } catch (error) {

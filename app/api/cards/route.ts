@@ -19,7 +19,17 @@ export async function GET(request: NextRequest) {
     }
 
     const cards = await cardService.getAllCards();
-    return NextResponse.json(cards);
+
+    const response = NextResponse.json(cards);
+
+    // Add aggressive caching for cards (they rarely change)
+    response.headers.set(
+      "Cache-Control",
+      "public, s-maxage=600, stale-while-revalidate=1800"
+    );
+    response.headers.set("Content-Type", "application/json; charset=utf-8");
+
+    return response;
   } catch (error) {
     console.error("Error getting cards:", error);
     return NextResponse.json({ error: "Failed to get cards" }, { status: 500 });

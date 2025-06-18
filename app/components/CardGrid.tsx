@@ -81,23 +81,31 @@ export default function CardGrid({ cards }: CardGridProps) {
     setFilteredCards(cards);
   }, [cards]);
 
-  // Set appropriate default view mode based on screen size
+  // Set appropriate default view mode based on screen size with throttling
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const handleResize = () => {
-      const isMobile = window.innerWidth < 768; // md breakpoint
-      if (isMobile && viewMode === "large") {
-        setViewMode("compact");
-      } else if (!isMobile && viewMode === "list") {
-        setViewMode("large");
-      }
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        const isMobile = window.innerWidth < 768; // md breakpoint
+        if (isMobile && viewMode === "large") {
+          setViewMode("compact");
+        } else if (!isMobile && viewMode === "list") {
+          setViewMode("large");
+        }
+      }, 250); // Throttle resize events
     };
 
     // Set initial view mode
     handleResize();
 
-    // Listen for resize events
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    // Listen for resize events with passive option
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
+    };
   }, [viewMode]);
 
   return (

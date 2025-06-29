@@ -26,7 +26,6 @@ function PublicDecksContent() {
 
   const [decksWithUsers, setDecksWithUsers] = useState<DeckWithUser[]>([]);
   const [cards, setCards] = useState<Card[]>([]);
-  const [cardsLoaded, setCardsLoaded] = useState(false);
   const [filteredCard, setFilteredCard] = useState<Card | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,31 +35,22 @@ function PublicDecksContent() {
   const [sortTransition, setSortTransition] = useState(false);
   const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
 
-  // Load cards only when needed for element filtering
-  const loadCardsIfNeeded = async () => {
-    if (cardsLoaded) return;
-
-    try {
-      const cardsResponse = await fetch("/api/cards", {
-        next: { revalidate: 600 }, // Cache for 10 minutes
-      });
-      if (!cardsResponse.ok) {
-        throw new Error("Failed to fetch cards");
-      }
-      const cardsData = await cardsResponse.json();
-      setCards(cardsData);
-      setCardsLoaded(true);
-    } catch (error) {
-      console.error("Error loading cards for filtering:", error);
-    }
-  };
-
-  // Fetch public decks (cards loaded only when needed for filtering)
+  // Fetch public decks and cards
   useEffect(() => {
     async function fetchData() {
       try {
         setIsLoading(true);
         setError(null);
+
+        // Fetch all cards for element display (with aggressive caching)
+        const cardsResponse = await fetch("/api/cards", {
+          next: { revalidate: 600 }, // Cache for 10 minutes (cards don't change often)
+        });
+        if (!cardsResponse.ok) {
+          throw new Error("Failed to fetch cards");
+        }
+        const cardsData = await cardsResponse.json();
+        setCards(cardsData);
 
         // If we have a card ID, fetch the specific card and decks containing it
         if (cardId) {
@@ -98,13 +88,6 @@ function PublicDecksContent() {
 
     fetchData();
   }, [cardId]); // Only refetch when cardId changes, not sortBy
-
-  // Load cards when element filtering is first used
-  useEffect(() => {
-    if (selectedElements.length > 0 && !cardsLoaded) {
-      loadCardsIfNeeded();
-    }
-  }, [selectedElements, cardsLoaded]);
 
   // Handle smooth sorting transitions
   const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
@@ -229,37 +212,33 @@ function PublicDecksContent() {
           let filteredDecks = decksWithUsers;
 
           if (selectedElements.length > 0) {
-            // Only filter if cards are loaded, otherwise show all decks
-            if (cardsLoaded && cards.length > 0) {
-              filteredDecks = decksWithUsers.filter(({ deck }) => {
-                // Get deck elements
-                const cardsWithQuantities = deck.cards
-                  .map((deckCard) => {
-                    const card = cards.find((c) => c.id === deckCard.cardId);
-                    return {
-                      card,
-                      quantity: deckCard.quantity,
-                    };
-                  })
-                  .filter((item) => item.card !== undefined) as {
-                  card: Card;
-                  quantity: number;
-                }[];
+            filteredDecks = decksWithUsers.filter(({ deck }) => {
+              // Get deck elements
+              const cardsWithQuantities = deck.cards
+                .map((deckCard) => {
+                  const card = cards.find((c) => c.id === deckCard.cardId);
+                  return {
+                    card,
+                    quantity: deckCard.quantity,
+                  };
+                })
+                .filter((item) => item.card !== undefined) as {
+                card: Card;
+                quantity: number;
+              }[];
 
-                if (cardsWithQuantities.length === 0) return false;
+              if (cardsWithQuantities.length === 0) return false;
 
-                // Get ALL elements used in the deck, not just dominant ones
-                const deckElements = getAllDeckElements(cardsWithQuantities);
+              // Get ALL elements used in the deck, not just dominant ones
+              const deckElements = getAllDeckElements(cardsWithQuantities);
 
-                // Filtering logic:
-                // Show decks that contain ALL selected elements (inclusive filtering)
-                // Deck can have additional elements beyond the selected ones
-                return selectedElements.every((element) =>
-                  deckElements.includes(element)
-                );
-              });
-            }
-            // If cards aren't loaded yet, show all decks (filtering will apply once cards load)
+              // Filtering logic:
+              // Show decks that contain ALL selected elements (inclusive filtering)
+              // Deck can have additional elements beyond the selected ones
+              return selectedElements.every((element) =>
+                deckElements.includes(element)
+              );
+            });
           }
 
           // Create a sorted copy of the filtered decks
@@ -282,7 +261,7 @@ function PublicDecksContent() {
           return (
             <DeckGrid
               decksWithUserInfo={sortedDecks} // 🎯 NEW: Use optimized format directly
-              cards={cardsLoaded ? cards : undefined} // Only pass cards when loaded
+              cards={cards}
               emptyMessage={
                 filteredCard
                   ? `No decks found containing ${filteredCard.name}`

@@ -5,12 +5,32 @@ import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcrypt";
 import { ObjectId } from "mongodb";
 import mongoose from "@/app/lib/db/mongodb";
+import { connectToDatabase } from "@/app/lib/db/mongodb";
+
+// Create a MongoDB client promise for the adapter using our unified connection
+// Note: MongoDBAdapter requires a MongoClient, but we're using Mongoose
+// We'll create a compatible client promise
 import { MongoClient } from "mongodb";
 
-// Create a MongoDB client promise for the adapter
 const uri = process.env.MONGODB_URI || "";
-const client = new MongoClient(uri);
-const clientPromise = client.connect();
+let clientPromise: Promise<MongoClient>;
+
+if (process.env.NODE_ENV === "development") {
+  // In development mode, use a global variable to preserve across HMR
+  let globalWithMongo = global as typeof globalThis & {
+    _mongoClientPromise?: Promise<MongoClient>;
+  };
+
+  if (!globalWithMongo._mongoClientPromise) {
+    const client = new MongoClient(uri);
+    globalWithMongo._mongoClientPromise = client.connect();
+  }
+  clientPromise = globalWithMongo._mongoClientPromise;
+} else {
+  // In production mode, create a new client
+  const client = new MongoClient(uri);
+  clientPromise = client.connect();
+}
 
 const authOptions = {
   // Configure one or more authentication providers
@@ -45,13 +65,9 @@ const authOptions = {
         }
 
         try {
-          // Connect to the database if not already connected
-          if (mongoose.connection.readyState !== 1) {
-            await mongoose.connect(process.env.MONGODB_URI || "");
-          }
-
-          // Get the users collection
-          const db = mongoose.connection.db;
+          // Use unified database connection
+          const connection = await connectToDatabase();
+          const db = connection.db;
           const user = await db.collection("users").findOne({
             email: credentials.email,
           });
@@ -116,12 +132,9 @@ const authOptions = {
         user.email === "roman.daru.ml@gmail.com"
       ) {
         try {
-          // Connect to the database if not already connected
-          if (mongoose.connection.readyState !== 1) {
-            await mongoose.connect(process.env.MONGODB_URI || "");
-          }
-
-          const db = mongoose.connection.db;
+          // Use unified database connection
+          const connection = await connectToDatabase();
+          const db = connection.db;
 
           // Update admin status in database
           await db.collection("users").updateOne(
@@ -175,12 +188,9 @@ const authOptions = {
       // Always check admin status for roman.daru.ml@gmail.com
       if (token.email === "roman.daru.ml@gmail.com") {
         try {
-          // Connect to the database if not already connected
-          if (mongoose.connection.readyState !== 1) {
-            await mongoose.connect(process.env.MONGODB_URI || "");
-          }
-
-          const db = mongoose.connection.db;
+          // Use unified database connection
+          const connection = await connectToDatabase();
+          const db = connection.db;
           if (db) {
             const dbUser = await db.collection("users").findOne({
               email: token.email,

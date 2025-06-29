@@ -10,11 +10,13 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap", // Improve font loading performance
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap", // Improve font loading performance
 });
 
 export const metadata: Metadata = {
@@ -97,6 +99,43 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en'>
+      <head>
+        {/* Resource hints for performance optimization */}
+        <link rel='preconnect' href='https://fonts.googleapis.com' />
+        <link
+          rel='preconnect'
+          href='https://fonts.gstatic.com'
+          crossOrigin='anonymous'
+        />
+        <link rel='preconnect' href='https://res.cloudinary.com' />
+        <link rel='dns-prefetch' href='https://vercel.live' />
+        <link rel='dns-prefetch' href='https://vitals.vercel-analytics.com' />
+
+        {/* Critical CSS for above-the-fold content */}
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+            /* Critical styles for immediate rendering */
+            body {
+              background-color: #0a0a0a;
+              color: #ededed;
+              margin: 0;
+              font-family: var(--font-geist-sans), system-ui, sans-serif;
+            }
+            .min-h-screen { min-height: 100vh; }
+            .flex { display: flex; }
+            .flex-col { flex-direction: column; }
+            .items-center { align-items: center; }
+            .justify-center { justify-content: center; }
+            .text-center { text-align: center; }
+            .font-bold { font-weight: 700; }
+            .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
+            .from-algomancy-dark { --tw-gradient-from: #0a0a0a; --tw-gradient-to: rgb(10 10 10 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+            .to-black { --tw-gradient-to: #000; }
+          `,
+          }}
+        />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
         <AuthProvider>

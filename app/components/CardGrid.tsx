@@ -7,6 +7,7 @@ import CardDetails from "./CardDetails";
 import CardSearch from "./CardSearch";
 import InfiniteScrollTrigger from "./InfiniteScrollTrigger";
 import { useInfiniteScroll } from "@/app/hooks/useInfiniteScroll";
+// Tree-shaking optimized imports
 import {
   ViewColumnsIcon,
   Squares2X2Icon,
@@ -206,7 +207,7 @@ export default function CardGrid({ cards }: CardGridProps) {
                   card={card}
                   onClick={() => setSelectedCard(card)}
                   viewMode={viewMode}
-                  priority={index < 12} // Prioritize first 12 cards
+                  priority={index < 6} // Prioritize first 6 cards (above-the-fold)
                 />
               </div>
             ))}

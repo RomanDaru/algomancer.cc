@@ -2,15 +2,21 @@
 
 import { Card, BASIC_ELEMENTS } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { ElementType, ELEMENTS } from "@/app/lib/utils/elements";
 import ElementIcon from "./ElementIcon";
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
-import { Pie } from "react-chartjs-2";
 import { AffinityRequirements } from "@/app/lib/utils/affinityUtils";
+import dynamic from "next/dynamic";
 
-// Register Chart.js components
-ChartJS.register(ArcElement, Tooltip, Legend);
+// Dynamically import Chart.js components for better performance
+const LazyPieChart = dynamic(() => import("./LazyPieChart"), {
+  ssr: false,
+  loading: () => (
+    <div className='w-full max-w-lg mx-auto h-64 flex items-center justify-center'>
+      <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-algomancy-purple'></div>
+    </div>
+  ),
+});
 
 interface ColorBarProps {
   elementCounts: Record<string, number>;
@@ -599,7 +605,7 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
             <div className='flex justify-center items-center'>
               {/* Pie Chart */}
               <div className='w-full max-w-lg mx-auto'>
-                <Pie
+                <LazyPieChart
                   data={{
                     // Create custom labels with counts included
                     labels: Object.entries(stats.typeDistribution).map(

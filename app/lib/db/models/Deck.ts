@@ -35,6 +35,16 @@ const DeckSchema = new Schema(
   }
 );
 
+// Create indexes for efficient queries
+DeckSchema.index({ isPublic: 1 }); // For public deck queries
+DeckSchema.index({ userId: 1 }); // For user deck queries
+DeckSchema.index({ "cards.cardId": 1 }); // For finding decks containing specific cards
+DeckSchema.index({ isPublic: 1, createdAt: -1 }); // For public decks sorted by date
+DeckSchema.index({ isPublic: 1, views: -1 }); // For popular decks
+DeckSchema.index({ isPublic: 1, likes: -1 }); // For most liked decks
+DeckSchema.index({ userId: 1, createdAt: -1 }); // For user decks sorted by date
+DeckSchema.index({ "cards.cardId": 1, isPublic: 1, createdAt: -1 }); // Compound index for card-specific deck queries
+
 // Create and export the model
 export const DeckModel =
   mongoose.models.Deck || mongoose.model<DeckDocument>("Deck", DeckSchema);

@@ -54,6 +54,25 @@ export const cardDbService = {
   },
 
   /**
+   * Get multiple cards by IDs (batch loading)
+   */
+  async getCardsByIds(ids: string[]): Promise<Card[]> {
+    try {
+      if (ids.length === 0) return [];
+
+      await ensureDbConnection();
+      const cardDocs = await CardModel.find({
+        originalId: { $in: ids },
+      }).sort({ currentIndex: 1 });
+
+      return cardDocs.map(convertDocumentToCard);
+    } catch (error) {
+      console.error(`Error getting cards by IDs ${ids.join(", ")}:`, error);
+      throw error;
+    }
+  },
+
+  /**
    * Create a new card
    */
   async createCard(card: Card): Promise<Card> {

@@ -54,6 +54,24 @@ export const cardService = {
     }
   },
 
+  // Get multiple cards by IDs (batch loading)
+  getCardsByIds: async (ids: string[]): Promise<Card[]> => {
+    try {
+      if (ids.length === 0) return [];
+
+      // Use cached cards for batch loading (more efficient than individual DB calls)
+      const cards = await getActiveCards();
+      const foundCards = ids
+        .map((id) => cards.find((card) => card.id === id))
+        .filter((card) => card !== undefined) as Card[];
+
+      return foundCards;
+    } catch (error) {
+      console.error(`Error getting cards by IDs ${ids.join(", ")}:`, error);
+      return [];
+    }
+  },
+
   // Search cards by name
   searchCardsByName: async (query: string): Promise<Card[]> => {
     const lowercaseQuery = query.toLowerCase();

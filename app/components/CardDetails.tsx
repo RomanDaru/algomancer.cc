@@ -37,6 +37,18 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
   const [deckError, setDeckError] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Detect screen size
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 768);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   // Fetch decks containing this card
   useEffect(() => {
@@ -66,7 +78,12 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
     fetchDecksWithCard();
   }, [card.id]);
   return (
-    <div className='flex flex-col md:flex-row gap-6'>
+    <div
+      className='gap-6'
+      style={{
+        display: "flex",
+        flexDirection: isDesktop ? "row" : "column",
+      }}>
       {/* Close button */}
       {onClose && (
         <button
@@ -239,7 +256,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                       };
                     })
                     .filter((item) => item.card !== undefined) as {
-                    card: Card;
+                    card: CardType;
                     quantity: number;
                   }[];
 

@@ -245,7 +245,7 @@ export default function DeckPage({ params }: DeckPageProps) {
           {/* Element gradient background with consistent opacity */}
           <div className='absolute inset-0 opacity-30' style={gradientStyle} />
 
-          <div className='relative p-6 flex flex-col md:flex-row justify-between items-start md:items-center'>
+          <div className='relative p-6 flex flex-col md:flex-row justify-between items-start md:items-start'>
             <div>
               {/* Top row: Element icons + Deck name + Creator name */}
               <div className='flex items-center flex-wrap gap-3'>

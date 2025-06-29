@@ -15,14 +15,16 @@ export default function Footer() {
     <footer className='bg-algomancy-darker border-t border-algomancy-purple/30 text-white mt-auto'>
       <div className='container mx-auto px-4 py-6'>
         <div className='flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0'>
-          {/* Left side - Site info */}
-          <div className='flex flex-col items-center md:items-start space-y-2'>
+          {/* Left side - Site title */}
+          <div className='flex flex-col items-center md:items-start'>
             <div className='text-algomancy-gold font-semibold'>
               Algomancer.cc
             </div>
-            <div className='text-sm text-gray-400'>
-              Your ultimate companion for the Algomancy card game
-            </div>
+          </div>
+
+          {/* Center - Description */}
+          <div className='text-sm text-gray-400 text-center'>
+            Your ultimate companion for the Algomancy card game
           </div>
 
           {/* Right side - Support section */}

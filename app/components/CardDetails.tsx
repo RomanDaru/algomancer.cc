@@ -26,7 +26,7 @@ interface DeckWithUserAndCards {
     name: string;
     username: string | null;
   };
-  cards: Card[];
+  cards: CardType[];
 }
 
 export default function CardDetails({ card, onClose }: CardDetailsProps) {

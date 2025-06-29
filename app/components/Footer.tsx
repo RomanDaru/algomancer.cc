@@ -14,22 +14,21 @@ export default function Footer() {
   return (
     <footer className='bg-algomancy-darker border-t border-algomancy-purple/30 text-white mt-auto'>
       <div className='container mx-auto px-4 py-6'>
-        <div className='flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0'>
+        <div className='md:flex items-center justify-between space-y-4 md:space-y-0'>
           {/* Left side - Site title */}
-          <div className='flex flex-col items-center md:items-start'>
+          <div className='flex-shrink-0 text-center md:text-left'>
             <div className='text-algomancy-gold font-semibold'>
               Algomancer.cc
             </div>
-          </div>
-
-          {/* Center - Description */}
-          <div className='text-sm text-gray-400 text-center'>
-            Your ultimate companion for the Algomancy card game
+            {/* Center - Description */}
+            <div className='text-sm text-gray-400 text-center flex-grow px-4'>
+              Your ultimate companion for the Algomancy card game
+            </div>
           </div>
 
           {/* Right side - Support section */}
-          <div className='flex flex-col md:flex-row items-center md:items-center space-y-3 md:space-y-0 md:space-x-4'>
-            <div className='text-center md:text-right'>
+          <div className='flex items-center justify-center md:justify-end md:space-x-4'>
+            <div className='text-right'>
               <p className='text-sm text-gray-300 mb-1'>
                 Supporting Algomancer.cc
               </p>

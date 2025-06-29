@@ -471,6 +471,127 @@ export const deckDbService = {
   },
 
   /**
+   * Get decks containing a specific card with user information and card data
+   * Optimized version using aggregation pipeline to eliminate N+1 queries
+   */
+  async getDecksContainingCardWithUserInfoOptimized(
+    cardId: string,
+    limit?: number
+  ): Promise<
+    Array<{
+      deck: Deck;
+      user: { name: string; username: string | null };
+      cards: Card[];
+    }>
+  > {
+    try {
+      await ensureDbConnection();
+
+      // Build aggregation pipeline for optimized query
+      const pipeline: any[] = [
+        // Match decks containing the specific card
+        {
+          $match: {
+            "cards.cardId": cardId,
+            isPublic: true,
+          },
+        },
+        // Sort by creation date (newest first)
+        { $sort: { createdAt: -1 } },
+        // Apply limit if specified
+        ...(limit ? [{ $limit: limit }] : []),
+        // Join with users collection
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userInfo",
+          },
+        },
+        // Join with cards collection for all cards in deck
+        {
+          $lookup: {
+            from: "cards",
+            localField: "cards.cardId",
+            foreignField: "id",
+            as: "cardDetails",
+          },
+        },
+        // Process the results
+        {
+          $addFields: {
+            user: {
+              $ifNull: [
+                {
+                  $arrayElemAt: [
+                    {
+                      $map: {
+                        input: "$userInfo",
+                        as: "u",
+                        in: {
+                          name: { $ifNull: ["$$u.name", "Unknown User"] },
+                          username: "$$u.username",
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+                { name: "Unknown User", username: null },
+              ],
+            },
+            // Map card details to maintain order and quantities
+            cards: {
+              $map: {
+                input: "$cards",
+                as: "deckCard",
+                in: {
+                  $mergeObjects: [
+                    {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$cardDetails",
+                            cond: { $eq: ["$$this.id", "$$deckCard.cardId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                    { quantity: "$$deckCard.quantity" },
+                  ],
+                },
+              },
+            },
+          },
+        },
+        // Remove temporary fields
+        {
+          $project: {
+            userInfo: 0,
+            cardDetails: 0,
+          },
+        },
+      ];
+
+      const results = await DeckModel.aggregate(pipeline);
+
+      return results.map((result) => ({
+        deck: convertAggregationToDeck(result),
+        user: result.user,
+        cards: result.cards.filter((card: any) => card && card.id), // Filter out null cards
+      }));
+    } catch (error) {
+      console.error(
+        `Error getting decks containing card ${cardId} with optimized query:`,
+        error
+      );
+      throw error;
+    }
+  },
+
+  /**
    * Toggle like status for a deck
    * Uses atomic operations and database as source of truth for like count
    * Optimized to minimize database calls and handle race conditions

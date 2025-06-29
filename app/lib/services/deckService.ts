@@ -272,6 +272,7 @@ export const deckService = {
 
   /**
    * Get decks containing a specific card with user information and card data
+   * Optimized version using batch queries to eliminate N+1 problem
    */
   async getDecksContainingCardWithUserInfo(
     cardId: string,
@@ -284,31 +285,11 @@ export const deckService = {
     }[]
   > {
     try {
-      const decks = await deckDbService.getDecksContainingCard(cardId, limit);
-
-      // Get user information and card data for each deck
-      const decksWithUserInfoAndCards = await Promise.all(
-        decks.map(async (deck) => {
-          // Get user information
-          const user = await deckDbService.getDeckUserInfo(
-            deck.userId.toString()
-          );
-
-          // Get all cards in the deck
-          const cardPromises = deck.cards.map((deckCard) =>
-            cardService.getCardById(deckCard.cardId)
-          );
-
-          const cardResults = await Promise.all(cardPromises);
-          const cards = cardResults.filter(
-            (card) => card !== undefined
-          ) as Card[];
-
-          return { deck, user, cards };
-        })
+      // Use the optimized aggregation method from deckDbService
+      return await deckDbService.getDecksContainingCardWithUserInfoOptimized(
+        cardId,
+        limit
       );
-
-      return decksWithUserInfoAndCards;
     } catch (error) {
       console.error(`Error getting decks containing card ${cardId}:`, error);
       throw error;

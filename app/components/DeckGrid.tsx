@@ -25,6 +25,7 @@ interface DeckGridProps {
     deck: Deck;
     user: { name: string; username: string | null };
     isLikedByCurrentUser: boolean;
+    deckElements?: string[];
   }>;
 
   emptyMessage?: string;
@@ -124,10 +125,12 @@ export default function DeckGrid({
               deck,
               user: itemUser,
               isLikedByCurrentUser,
+              deckElements,
             } = item as {
               deck: Deck;
               user: { name: string; username: string | null };
               isLikedByCurrentUser: boolean;
+              deckElements?: string[];
             };
 
             return (
@@ -136,6 +139,7 @@ export default function DeckGrid({
                 deck={deck}
                 user={itemUser}
                 cards={cards}
+                deckElements={deckElements}
                 isLikedByCurrentUser={isLikedByCurrentUser} // 🎯 Pass optimized like status
               />
             );

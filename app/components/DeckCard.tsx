@@ -20,6 +20,7 @@ interface DeckCardProps {
     username: string | null;
   };
   cards?: Card[];
+  deckElements?: string[]; // 🎯 NEW: Server-provided deck elements
   className?: string;
   isLikedByCurrentUser?: boolean; // 🎯 NEW: Like status from optimized API
 }
@@ -28,17 +29,22 @@ export default function DeckCard({
   deck,
   user,
   cards,
+  deckElements: serverDeckElements, // 🎯 NEW: Server-provided elements
   className = "",
   isLikedByCurrentUser, // 🎯 NEW: Receive like status
 }: DeckCardProps) {
   // Calculate total cards
   const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
 
-  // Determine deck elements (placeholder until we have actual card data)
+  // Determine deck elements - prioritize server-provided elements
   let deckElements: ElementType[] = ["Colorless"];
 
-  // Determine deck elements based on the cards in the deck
-  if (cards && cards.length > 0 && deck.cards.length > 0) {
+  // Use server-provided elements if available
+  if (serverDeckElements && serverDeckElements.length > 0) {
+    deckElements = serverDeckElements as ElementType[];
+  }
+  // Fallback: Calculate from cards if available
+  else if (cards && cards.length > 0 && deck.cards.length > 0) {
     // Create an array of card objects with quantities for element calculation
     const cardsWithQuantities = deck.cards
       .map((deckCard) => {

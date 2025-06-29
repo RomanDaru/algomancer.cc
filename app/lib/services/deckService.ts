@@ -175,6 +175,7 @@ export const deckService = {
       deck: Deck;
       user: { name: string; username: string | null };
       isLikedByCurrentUser: boolean;
+      deckElements: string[];
     }[]
   > {
     try {

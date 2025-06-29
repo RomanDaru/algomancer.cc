@@ -90,6 +90,7 @@ export const deckDbService = {
       deck: Deck;
       user: { name: string; username: string | null };
       isLikedByCurrentUser: boolean;
+      deckElements: string[];
     }>
   > {
     try {
@@ -116,6 +117,15 @@ export const deckDbService = {
             as: "userInfo",
           },
         },
+        // Join with cards collection to get element information
+        {
+          $lookup: {
+            from: "cards",
+            localField: "cards.cardId",
+            foreignField: "id",
+            as: "deckCardDetails",
+          },
+        },
         {
           $addFields: {
             user: {
@@ -137,6 +147,25 @@ export const deckDbService = {
                 },
                 { name: "Unknown User", username: null },
               ],
+            },
+            // Calculate deck elements from card data
+            deckElements: {
+              $reduce: {
+                input: "$deckCardDetails",
+                initialValue: [],
+                in: {
+                  $setUnion: [
+                    "$$value",
+                    {
+                      $cond: {
+                        if: { $ne: ["$$this.elements.primary", null] },
+                        then: ["$$this.elements.primary"],
+                        else: [],
+                      },
+                    },
+                  ],
+                },
+              },
             },
             // Add like status for current user if provided
             isLikedByCurrentUser: currentUserId
@@ -160,10 +189,11 @@ export const deckDbService = {
         pipeline.push({ $limit: limit });
       }
 
-      // Remove the userInfo field as we've processed it
+      // Remove temporary fields as we've processed them
       pipeline.push({
         $project: {
           userInfo: 0,
+          deckCardDetails: 0,
         },
       });
 
@@ -173,6 +203,7 @@ export const deckDbService = {
         deck: convertAggregationToDeck(result),
         user: result.user,
         isLikedByCurrentUser: result.isLikedByCurrentUser || false,
+        deckElements: result.deckElements || [],
       }));
     } catch (error) {
       console.error("Error getting public decks with user info:", error);

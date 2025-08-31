@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Card as CardType } from "@/app/lib/types/card";
 import Card from "./Card";
@@ -82,32 +82,7 @@ export default function CardGrid({ cards }: CardGridProps) {
     setFilteredCards(cards);
   }, [cards]);
 
-  // Set appropriate default view mode based on screen size with throttling
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-
-    const handleResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        const isMobile = window.innerWidth < 768; // md breakpoint
-        if (isMobile && viewMode === "large") {
-          setViewMode("compact");
-        } else if (!isMobile && viewMode === "list") {
-          setViewMode("large");
-        }
-      }, 250); // Throttle resize events
-    };
-
-    // Set initial view mode
-    handleResize();
-
-    // Listen for resize events with passive option
-    window.addEventListener("resize", handleResize, { passive: true });
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [viewMode]);
+  // Keep user-selected view mode stable; no auto-coercion on resize
 
   return (
     <div className='w-full'>
@@ -197,7 +172,7 @@ export default function CardGrid({ cards }: CardGridProps) {
                 ? "space-y-2"
                 : `grid gap-2 sm:gap-4 ${
                     viewMode === "large"
-                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"
+                      ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 2xl:grid-cols-6"
                       : "grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 2xl:grid-cols-12"
                   }`
             }`}>
@@ -245,3 +220,6 @@ export default function CardGrid({ cards }: CardGridProps) {
     </div>
   );
 }
+
+
+

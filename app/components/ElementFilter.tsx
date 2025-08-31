@@ -39,7 +39,7 @@ export default function ElementFilter({
   };
 
   return (
-    <div className={`flex items-center space-x-3 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-2 ${className}`}>
       <span className='text-gray-400 text-sm'>Filter:</span>
 
       {basicElements.map((element) => {
@@ -50,11 +50,11 @@ export default function ElementFilter({
           <button
             key={element}
             onClick={() => toggleElement(element)}
-            className={`relative p-1.5 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer ${
+            className={`relative p-1.5 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer shrink-0 ${
               isSelected
                 ? "bg-algomancy-purple/40 border border-algomancy-purple"
                 : "hover:bg-algomancy-purple/20"
-            }`}
+              }`}
             title={`${isSelected ? "Remove" : "Add"} ${element} filter`}>
             <ElementIcon element={element} size={28} showTooltip={false} />
 

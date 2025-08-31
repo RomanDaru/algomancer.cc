@@ -102,7 +102,7 @@ export default function PublicDecksClient({
                 <ElementFilter onElementsChange={setSelectedElements} />
               </div>
             </div>
-            <div className='flex items-center justify-end'>
+            <div className='flex items-center justify-start'>
               <div className='flex items-center space-x-2'>
                 <span className='text-gray-400 text-sm'>Sort:</span>
                 <button
@@ -111,7 +111,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("newest")}> 
+                  onClick={() => handleSortChange("newest")}>
                   Newest
                 </button>
                 <button
@@ -120,7 +120,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("popular")}> 
+                  onClick={() => handleSortChange("popular")}>
                   Popular
                 </button>
                 <button
@@ -129,7 +129,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("liked")}> 
+                  onClick={() => handleSortChange("liked")}>
                   Most Liked
                 </button>
               </div>
@@ -153,7 +153,8 @@ export default function PublicDecksClient({
                 {filteredCard.name}
               </h2>
               <p className='text-sm text-gray-300'>
-                {filteredCard.element.type} {filteredCard.typeAndAttributes.mainType}
+                {filteredCard.element.type}{" "}
+                {filteredCard.typeAndAttributes.mainType}
               </p>
             </div>
           </div>
@@ -192,4 +193,3 @@ export default function PublicDecksClient({
     </div>
   );
 }
-

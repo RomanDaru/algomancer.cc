@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightIcon } from "@heroicons/react/24/outline";
+import { ArrowRightIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
 import StructuredData from "./components/StructuredData";
 import { Metadata } from "next";
 
@@ -182,6 +182,38 @@ export default function Home() {
               <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
             </span>
           </Link>
+        </div>
+
+        {/* Promote the official Algomancy game */}
+        <div className='w-full max-w-6xl mt-8'>
+          <div className='group relative overflow-hidden rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-gold/30 hover:border-algomancy-gold/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-gold/20 p-5 md:p-6'>
+            <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+              <div className='flex items-center'>
+                <div className='w-12 h-12 md:w-14 md:h-14 mr-3 md:mr-4 rounded-full bg-algomancy-gold/20 flex items-center justify-center'>
+                  <GlobeAltIcon
+                    className='w-7 h-7 md:w-8 md:h-8 text-algomancy-gold'
+                    aria-hidden='true'
+                  />
+                </div>
+                <div>
+                  <h2 className='text-lg md:text-xl font-bold text-white'>
+                    Play Algomancy
+                  </h2>
+                  <p className='text-gray-300 text-sm md:text-base'>
+                    Get your physical copy of Algomancy and support the creator!
+                  </p>
+                </div>
+              </div>
+              <a
+                href='https://algomancy.io/'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='inline-flex items-center px-4 py-2 rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark text-white font-medium transition-colors cursor-pointer'>
+                Visit algomancy.io
+                <ArrowRightIcon className='w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform' />
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </>

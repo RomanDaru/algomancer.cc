@@ -103,63 +103,44 @@ export default function CardGrid({ cards }: CardGridProps) {
           )}
         </div>
 
-        {/* View Toggle */}
+        {/* View Toggle: List, Compact, Large (consistent across breakpoints) */}
         <div className='flex space-x-2'>
-          {/* Mobile View Toggle (Compact + List) */}
-          <div className='flex space-x-2 md:hidden'>
-            <button
-              onClick={() => setViewMode("compact")}
-              className={`p-2 rounded ${
-                viewMode === "compact"
-                  ? "bg-algomancy-purple text-white"
-                  : "bg-algomancy-dark text-gray-400 hover:text-white"
-              }`}
-              title='Compact View'
-              aria-label='Compact View'
-              aria-pressed={viewMode === "compact"}>
-              <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${
-                viewMode === "list"
-                  ? "bg-algomancy-purple text-white"
-                  : "bg-algomancy-dark text-gray-400 hover:text-white"
-              }`}
-              title='List View'
-              aria-label='List View'
-              aria-pressed={viewMode === "list"}>
-              <ListBulletIcon className='w-5 h-5' aria-hidden='true' />
-            </button>
-          </div>
-
-          {/* Desktop View Toggle (Large + Compact) */}
-          <div className='hidden md:flex space-x-2'>
-            <button
-              onClick={() => setViewMode("large")}
-              className={`p-2 rounded ${
-                viewMode === "large"
-                  ? "bg-algomancy-purple text-white"
-                  : "bg-algomancy-dark text-gray-400 hover:text-white"
-              }`}
-              title='Large View'
-              aria-label='Large View'
-              aria-pressed={viewMode === "large"}>
-              <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
-            </button>
-            <button
-              onClick={() => setViewMode("compact")}
-              className={`p-2 rounded ${
-                viewMode === "compact"
-                  ? "bg-algomancy-purple text-white"
-                  : "bg-algomancy-dark text-gray-400 hover:text-white"
-              }`}
-              title='Compact View'
-              aria-label='Compact View'
-              aria-pressed={viewMode === "compact"}>
-              <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
-            </button>
-          </div>
+          <button
+            onClick={() => setViewMode("list")}
+            className={`p-2 rounded ${
+              viewMode === "list"
+                ? "bg-algomancy-purple text-white"
+                : "bg-algomancy-dark text-gray-400 hover:text-white"
+            }`}
+            title='List View'
+            aria-label='List View'
+            aria-pressed={viewMode === "list"}>
+            <ListBulletIcon className='w-5 h-5' aria-hidden='true' />
+          </button>
+          <button
+            onClick={() => setViewMode("compact")}
+            className={`p-2 rounded ${
+              viewMode === "compact"
+                ? "bg-algomancy-purple text-white"
+                : "bg-algomancy-dark text-gray-400 hover:text-white"
+            }`}
+            title='Compact View'
+            aria-label='Compact View'
+            aria-pressed={viewMode === "compact"}>
+            <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
+          </button>
+          <button
+            onClick={() => setViewMode("large")}
+            className={`p-2 rounded ${
+              viewMode === "large"
+                ? "bg-algomancy-purple text-white"
+                : "bg-algomancy-dark text-gray-400 hover:text-white"
+            }`}
+            title='Large View'
+            aria-label='Large View'
+            aria-pressed={viewMode === "large"}>
+            <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
+          </button>
         </div>
       </div>
 

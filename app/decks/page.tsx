@@ -7,10 +7,13 @@ import { cardService } from "@/app/lib/services/cardService";
 export default async function PublicDecksPage({
   searchParams,
 }: {
-  searchParams?: { [key: string]: string | string[] | undefined };
+  // In Next 15, searchParams is async; await it before use
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const session = await getServerSession(authOptions);
-  const cardId = typeof searchParams?.card === "string" ? (searchParams!.card as string) : undefined;
+  const sp = (await searchParams) || {};
+  const cardParam = sp["card"];
+  const cardId = typeof cardParam === "string" ? (cardParam as string) : undefined;
 
   let initialDecks: any[] = [];
   let filteredCard: any = null;
@@ -29,12 +32,17 @@ export default async function PublicDecksPage({
     );
   }
 
+  // Ensure we only pass plain JSON-serializable data to the client
+  const initialDecksSerializable = JSON.parse(JSON.stringify(initialDecks));
+  const filteredCardSerializable = filteredCard
+    ? JSON.parse(JSON.stringify(filteredCard))
+    : undefined;
+
   return (
     <PublicDecksClient
-      initialDecks={initialDecks}
-      filteredCard={filteredCard || undefined}
+      initialDecks={initialDecksSerializable}
+      filteredCard={filteredCardSerializable}
       isAuthenticated={Boolean(session?.user?.id)}
     />
   );
 }
-

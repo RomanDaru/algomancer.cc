@@ -6,24 +6,13 @@ import DeckGrid from "@/app/components/DeckGrid";
 import ElementFilter from "@/app/components/ElementFilter";
 import { ElementType } from "@/app/lib/utils/elements";
 import { Card } from "@/app/lib/types/card";
+import { Deck } from "@/app/lib/types/user";
 
 type DeckWithUserInfo = {
-  deck: {
-    _id: any;
-    name: string;
-    description?: string;
-    youtubeUrl?: string;
-    userId: any;
-    cards: Array<{ cardId: string; quantity: number }>;
-    createdAt: string | Date;
-    updatedAt: string | Date;
-    isPublic: boolean;
-    views: number;
-    likes: number;
-  };
+  deck: Deck;
   user: { name: string; username: string | null };
   isLikedByCurrentUser: boolean;
-  deckElements?: string[]; // basic elements strings
+  deckElements?: string[];
 };
 
 interface Props {
@@ -97,13 +86,12 @@ export default function PublicDecksClient({
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-center w-full'>
             <div className='lg:col-span-2'>
               <h1 className='text-2xl font-bold text-white'>Public Decks</h1>
+              {/* Filters on their own row above sort (all breakpoints) */}
+              <div className='mt-3'>
+                <ElementFilter onElementsChange={setSelectedElements} />
+              </div>
             </div>
-            <div className='flex items-center justify-end space-x-4'>
-              <ElementFilter
-                onElementsChange={setSelectedElements}
-                className='hidden md:flex'
-              />
-
+            <div className='flex items-center justify-start'>
               <div className='flex items-center space-x-2'>
                 <span className='text-gray-400 text-sm'>Sort:</span>
                 <button
@@ -112,7 +100,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("newest")}> 
+                  onClick={() => handleSortChange("newest")}>
                   Newest
                 </button>
                 <button
@@ -121,7 +109,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("popular")}> 
+                  onClick={() => handleSortChange("popular")}>
                   Popular
                 </button>
                 <button
@@ -130,7 +118,7 @@ export default function PublicDecksClient({
                       ? "text-algomancy-purple"
                       : "text-gray-400 hover:text-white"
                   }`}
-                  onClick={() => handleSortChange("liked")}> 
+                  onClick={() => handleSortChange("liked")}>
                   Most Liked
                 </button>
               </div>
@@ -154,7 +142,8 @@ export default function PublicDecksClient({
                 {filteredCard.name}
               </h2>
               <p className='text-sm text-gray-300'>
-                {filteredCard.element.type} {filteredCard.typeAndAttributes.mainType}
+                {filteredCard.element.type}{" "}
+                {filteredCard.typeAndAttributes.mainType}
               </p>
             </div>
           </div>
@@ -193,4 +182,3 @@ export default function PublicDecksClient({
     </div>
   );
 }
-

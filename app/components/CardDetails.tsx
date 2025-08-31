@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -39,12 +39,11 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
   const [imageError, setImageError] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
 
-  // Detect screen size
+  // Detect screen size for layout to ensure consistent row layout on desktop
   useEffect(() => {
     const checkScreenSize = () => {
       setIsDesktop(window.innerWidth >= 768);
     };
-
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -52,38 +51,46 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
 
   // Fetch decks containing this card
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchDecksWithCard() {
       setIsLoadingDecks(true);
       setDeckError(null);
 
       try {
-        const response = await fetch(`/api/decks/card/${card.id}?limit=3`);
+        const response = await fetch(`/api/decks/card/${card.id}?limit=3`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error("Failed to fetch decks containing this card");
         }
 
         const data = await response.json();
-        setDecksWithCard(data);
+        if (!controller.signal.aborted) {
+          setDecksWithCard(data);
+        }
       } catch (error) {
+        if ((error as any)?.name === "AbortError") return;
         console.error("Error fetching decks:", error);
         setDeckError(
           error instanceof Error ? error.message : "An error occurred"
         );
       } finally {
-        setIsLoadingDecks(false);
+        if (!controller.signal.aborted) {
+          setIsLoadingDecks(false);
+        }
       }
     }
 
     fetchDecksWithCard();
+    return () => controller.abort();
   }, [card.id]);
   return (
     <div
       className='gap-6'
-      style={{
-        display: "flex",
-        flexDirection: isDesktop ? "row" : "column",
-      }}>
+      style={{ display: "flex", flexDirection: isDesktop ? "row" : "column" }}
+    >
       {/* Close button */}
       {onClose && (
         <button
@@ -107,7 +114,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
       )}
 
       {/* Card Image with Loading State */}
-      <div className='relative w-full md:w-1/2 aspect-[2/3] rounded-lg overflow-hidden'>
+      <div className='relative w-full md:w-1/2 aspect-[2/3] rounded-lg overflow-hidden md:flex-none'>
         {/* Show skeleton while loading */}
         {!imageLoaded && !imageError && (
           <CardImageSkeleton className='absolute inset-0' />
@@ -117,7 +124,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
         {imageError && (
           <div className='absolute inset-0 bg-algomancy-darker flex items-center justify-center rounded-lg'>
             <div className='text-center text-gray-400'>
-              <div className='text-4xl mb-3'>🃏</div>
+              <div className='text-4xl mb-3'>?</div>
               <div className='text-sm'>Image unavailable</div>
             </div>
           </div>
@@ -132,13 +139,13 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
             imageLoaded ? "opacity-100" : "opacity-0"
           }`}
           sizes='(max-width: 768px) 100vw, 50vw'
-          onLoad={() => setImageLoaded(true)}
+          onLoadingComplete={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
         />
       </div>
 
       {/* Card Details */}
-      <div className='w-full md:w-1/2'>
+      <div className='w-full md:w-1/2 min-w-0'>
         <h2 className='text-2xl font-bold text-algomancy-gold mb-2'>
           {card.name}
         </h2>
@@ -152,7 +159,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
               {/* Display X instead of 0 for Spell cards with 0 mana cost, but not for tokens */}
               {card.manaCost === 0 &&
               card.typeAndAttributes.mainType === "Spell" &&
-              !card.typeAndAttributes.subType.toLowerCase().includes("token")
+              !(card.typeAndAttributes.subType?.toLowerCase()?.includes("token") ?? false)
                 ? "X"
                 : card.manaCost}
             </p>
@@ -189,7 +196,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
           <h3 className='font-semibold text-algomancy-blue-light'>Abilities</h3>
           <ul className='list-disc pl-5'>
             {card.abilities.map((ability, index) => (
-              <li key={index}>{ability}</li>
+              <li key={`${ability}-${index}`}>{ability}</li>
             ))}
           </ul>
         </div>
@@ -352,7 +359,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                               <span className='text-gray-400'>{user.name}</span>
                             )}
                             <span className='text-gray-500 text-xs ml-2'>
-                              •{" "}
+                              - {" "}
                               {formatDistanceToNow(new Date(deck.createdAt), {
                                 addSuffix: true,
                               })}
@@ -387,7 +394,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                                 d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
                               />
                             </svg>
-                            {typeof deck.views === "number" ? deck.views : 0}{" "}
+                            {deck.views ?? 0}{" "}
                             views
                           </div>
                         </div>
@@ -411,3 +418,5 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
     </div>
   );
 }
+
+

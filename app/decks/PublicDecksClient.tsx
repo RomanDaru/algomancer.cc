@@ -97,13 +97,12 @@ export default function PublicDecksClient({
           <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-center w-full'>
             <div className='lg:col-span-2'>
               <h1 className='text-2xl font-bold text-white'>Public Decks</h1>
+              {/* Filters on their own row above sort (all breakpoints) */}
+              <div className='mt-3'>
+                <ElementFilter onElementsChange={setSelectedElements} />
+              </div>
             </div>
-            <div className='flex items-center justify-end space-x-4'>
-              <ElementFilter
-                onElementsChange={setSelectedElements}
-                className='hidden md:flex'
-              />
-
+            <div className='flex items-center justify-end'>
               <div className='flex items-center space-x-2'>
                 <span className='text-gray-400 text-sm'>Sort:</span>
                 <button

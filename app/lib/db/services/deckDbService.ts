@@ -122,7 +122,7 @@ export const deckDbService = {
           $lookup: {
             from: "cards",
             localField: "cards.cardId",
-            foreignField: "id",
+            foreignField: "originalId",
             as: "deckCardDetails",
           },
         },
@@ -149,6 +149,7 @@ export const deckDbService = {
               ],
             },
             // Calculate deck elements from card data
+            // Derive basic element set from card element.type (supports hybrid like "Fire/Water")
             deckElements: {
               $reduce: {
                 input: "$deckCardDetails",
@@ -157,11 +158,17 @@ export const deckDbService = {
                   $setUnion: [
                     "$$value",
                     {
-                      $cond: {
-                        if: { $ne: ["$$this.elements.primary", null] },
-                        then: ["$$this.elements.primary"],
-                        else: [],
-                      },
+                      $cond: [
+                        { $ne: ["$$this.element.type", null] },
+                        {
+                          $cond: [
+                            { $gt: [{ $indexOfBytes: ["$$this.element.type", "/"] }, -1] },
+                            { $split: ["$$this.element.type", "/"] },
+                            ["$$this.element.type"],
+                          ],
+                        },
+                        [],
+                      ],
                     },
                   ],
                 },
@@ -545,7 +552,7 @@ export const deckDbService = {
           $lookup: {
             from: "cards",
             localField: "cards.cardId",
-            foreignField: "id",
+            foreignField: "originalId",
             as: "cardDetails",
           },
         },
@@ -584,7 +591,7 @@ export const deckDbService = {
                         {
                           $filter: {
                             input: "$cardDetails",
-                            cond: { $eq: ["$$this.id", "$$deckCard.cardId"] },
+                            cond: { $eq: ["$$this.originalId", "$$deckCard.cardId"] },
                           },
                         },
                         0,

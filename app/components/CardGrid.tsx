@@ -127,7 +127,7 @@ export default function CardGrid({ cards }: CardGridProps) {
             title='Compact View'
             aria-label='Compact View'
             aria-pressed={viewMode === "compact"}>
-            <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
+            <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
           </button>
           <button
             onClick={() => setViewMode("large")}
@@ -139,7 +139,7 @@ export default function CardGrid({ cards }: CardGridProps) {
             title='Large View'
             aria-label='Large View'
             aria-pressed={viewMode === "large"}>
-            <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
+            <ViewColumnsIcon className='w-5 h-5' aria-hidden='true' />
           </button>
         </div>
       </div>

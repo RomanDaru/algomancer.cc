@@ -6,24 +6,13 @@ import DeckGrid from "@/app/components/DeckGrid";
 import ElementFilter from "@/app/components/ElementFilter";
 import { ElementType } from "@/app/lib/utils/elements";
 import { Card } from "@/app/lib/types/card";
+import { Deck } from "@/app/lib/types/user";
 
 type DeckWithUserInfo = {
-  deck: {
-    _id: any;
-    name: string;
-    description?: string;
-    youtubeUrl?: string;
-    userId: any;
-    cards: Array<{ cardId: string; quantity: number }>;
-    createdAt: string | Date;
-    updatedAt: string | Date;
-    isPublic: boolean;
-    views: number;
-    likes: number;
-  };
+  deck: Deck;
   user: { name: string; username: string | null };
   isLikedByCurrentUser: boolean;
-  deckElements?: string[]; // basic elements strings
+  deckElements?: string[];
 };
 
 interface Props {

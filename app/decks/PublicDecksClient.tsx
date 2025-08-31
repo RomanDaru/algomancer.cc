@@ -70,7 +70,7 @@ export default function PublicDecksClient({
 
   return (
     <div className='mx-auto px-6 py-8 max-w-[95%]'>
-      <div className='flex justify-between items-center mb-6'>
+      <div className='mb-6'>
         {filteredCard ? (
           <div className='flex items-center'>
             <Link
@@ -83,15 +83,12 @@ export default function PublicDecksClient({
             </h1>
           </div>
         ) : (
-          <div className='grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8 items-center w-full'>
-            <div className='lg:col-span-2'>
+          <>
+            <div>
               <h1 className='text-2xl font-bold text-white'>Public Decks</h1>
-              {/* Filters on their own row above sort (all breakpoints) */}
-              <div className='mt-3'>
-                <ElementFilter onElementsChange={setSelectedElements} />
-              </div>
             </div>
-            <div className='flex items-center justify-start'>
+            <div className='mt-4 md:flex md:justify-between md:items-center gap-4 w-full'>
+              <ElementFilter onElementsChange={setSelectedElements} />
               <div className='flex items-center space-x-2'>
                 <span className='text-gray-400 text-sm'>Sort:</span>
                 <button
@@ -123,7 +120,7 @@ export default function PublicDecksClient({
                 </button>
               </div>
             </div>
-          </div>
+          </>
         )}
       </div>
 

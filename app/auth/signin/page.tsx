@@ -1,17 +1,24 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GuestDeckMigration } from "@/app/lib/utils/guestDeckMigration";
 
 export default function SignIn() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const callbackUrl = useMemo(() => {
+    const cb = searchParams?.get("callbackUrl") || searchParams?.get("returnTo");
+    // Fallback to homepage
+    return cb && cb.length > 0 ? cb : "/";
+  }, [searchParams]);
 
   const login = useCallback(async () => {
     try {
@@ -25,7 +32,7 @@ export default function SignIn() {
         email,
         password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl,
       });
 
       if (result?.error) {
@@ -47,7 +54,7 @@ export default function SignIn() {
         }
       }
 
-      router.push("/");
+      router.push(callbackUrl || "/");
     } catch (error) {
       console.error(error);
       setError("An unexpected error occurred");
@@ -157,7 +164,8 @@ export default function SignIn() {
                       "true"
                     );
                   }
-                  signIn("google", { callbackUrl: "/auth/callback" });
+                  const returnTo = callbackUrl && callbackUrl !== "/" ? `?returnTo=${encodeURIComponent(callbackUrl)}` : "";
+                  signIn("google", { callbackUrl: `/auth/callback${returnTo}` });
                 }}
                 className='w-full flex justify-center py-2 px-4 border border-algomancy-purple/30 rounded-md shadow-sm text-sm font-medium text-white bg-algomancy-dark hover:bg-algomancy-dark/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-algomancy-purple'>
                 <svg className='w-5 h-5 mr-2' viewBox='0 0 24 24'>

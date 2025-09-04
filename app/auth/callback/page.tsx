@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { GuestDeckMigration } from "@/app/lib/utils/guestDeckMigration";
 import { toast, Toaster } from "react-hot-toast";
 
 export default function AuthCallback() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(true);
+
+  const returnTo = useMemo(() => {
+    const rt = searchParams?.get("returnTo");
+    return rt && rt.length > 0 ? rt : "/";
+  }, [searchParams]);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -54,13 +60,13 @@ export default function AuthCallback() {
           }
         }
 
-        // No migration needed or migration failed, go to homepage
-        router.push("/");
+        // No migration needed or migration failed, go to target page
+        router.push(returnTo || "/");
       }
     };
 
     handleCallback();
-  }, [status, session, router]);
+  }, [status, session, router, returnTo]);
 
   if (status === "loading" || isProcessing) {
     return (

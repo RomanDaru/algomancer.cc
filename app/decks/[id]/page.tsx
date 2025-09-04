@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Card } from "@/app/lib/types/card";
 import { Deck } from "@/app/lib/types/user";
 import Image from "next/image";
 import Link from "next/link";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon, DocumentDuplicateIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import DeckStats from "@/app/components/DeckStats";
 import LikeButton from "@/app/components/LikeButton";
 import ShareButton from "@/app/components/ShareButton";
@@ -42,6 +43,7 @@ export default function DeckPage({ params }: DeckPageProps) {
   }, [params]);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [user, setUser] = useState<{
@@ -51,6 +53,72 @@ export default function DeckPage({ params }: DeckPageProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const autoCopyRef = useRef<{ ran: boolean } | null>(null);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsRef = useRef<HTMLDivElement | null>(null);
+  useDropdownAutoClose(optionsOpen, () => setOptionsOpen(false), optionsRef as any);
+
+  // Utility: trigger file download
+  const downloadFile = (filename: string, content: string, mime = "text/plain;charset=utf-8") => {
+    try {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error("Download failed", e);
+      toast.error("Failed to download file");
+    }
+  };
+
+  const sanitizeFilename = (name: string) => name.replace(/[^a-z0-9\-_. ]/gi, "_");
+
+  // Export: .txt deck list
+  const handleExportTxt = () => {
+    if (!deck) return;
+    const nameLine = deck.name;
+    const elementsLine = `Elements: ${deckElements.join("/")}`;
+    const totalLine = `Total cards: ${totalCards}`;
+    const lines: string[] = [nameLine, elementsLine, totalLine, "", "Cards:"];
+    for (const dc of deck.cards) {
+      const card = cards.find((c) => c.id === dc.cardId);
+      const cardName = card?.name || dc.cardId;
+      const elem = card?.element?.type ? ` (${card.element.type})` : "";
+      lines.push(`${dc.quantity}x ${cardName}${elem}`);
+    }
+    const content = lines.join("\n");
+    downloadFile(`${sanitizeFilename(deck.name)}.txt`, content, "text/plain;charset=utf-8");
+    setOptionsOpen(false);
+  };
+
+  // Export: .tss (placeholder JSON for now)
+  const handleExportTss = () => {
+    if (!deck) return;
+    const payload = {
+      name: deck.name,
+      elements: deckElements,
+      totalCards,
+      cards: deck.cards.map((dc) => {
+        const card = cards.find((c) => c.id === dc.cardId);
+        return {
+          id: dc.cardId,
+          name: card?.name || dc.cardId,
+          element: card?.element?.type || null,
+          quantity: dc.quantity,
+        };
+      }),
+      generatedAt: new Date().toISOString(),
+      format: "algomancer.tss.v1",
+    };
+    downloadFile(`${sanitizeFilename(deck.name)}.tss`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
+    setOptionsOpen(false);
+  };
 
   // Fetch deck and cards
   useEffect(() => {
@@ -157,6 +225,66 @@ export default function DeckPage({ params }: DeckPageProps) {
     }
   };
 
+  // Handle deck copy
+  const handleCopyDeck = async () => {
+    if (!id) return;
+
+    // Require auth
+    if (!session?.user?.id) {
+      // Redirect to app's sign-in page with return target
+      let callback = `/decks/${id}`;
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("copyAfterLogin", "1");
+        callback = url.pathname + url.search;
+      }
+      router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+      return;
+    }
+
+    setIsCopying(true);
+    try {
+      const response = await fetch(`/api/decks/${id}/copy`, { method: "POST" });
+      if (!response.ok) {
+        let message = "Failed to copy deck";
+        try {
+          const data = await response.json();
+          if (data?.error) message = data.error;
+        } catch {}
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      const newId = data.deckId || data.id || data._id || data.deck?._id;
+      toast.dismiss();
+      toast.success("Deck copied. Opening editor...");
+      if (newId) {
+        router.push(`/decks/${newId}/edit`);
+      }
+    } catch (error) {
+      console.error("Error copying deck:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to copy deck");
+    } finally {
+      setIsCopying(false);
+    }
+  };
+
+  // After login auto-copy flow (guarded to run only once)
+  useEffect(() => {
+    if (!id) return;
+    if (status !== "authenticated") return;
+    if (isCopying) return;
+    const shouldCopy = searchParams?.get("copyAfterLogin") === "1";
+    if (!shouldCopy) return;
+    // Guard with ref to ensure single execution
+    if (!autoCopyRef.current) autoCopyRef.current = { ran: false };
+    const ref = autoCopyRef.current;
+    if (ref.ran) return;
+    ref.ran = true;
+
+    handleCopyDeck();
+  }, [id, status, searchParams, isCopying]);
+
   if (isLoading) {
     return (
       <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
@@ -241,29 +369,98 @@ export default function DeckPage({ params }: DeckPageProps) {
       <Toaster position='top-right' />
       <div className='max-w-7xl mx-auto'>
         {/* Deck header with gradient background */}
-        <div className='relative rounded-lg overflow-hidden mb-6'>
+        <div className='relative rounded-lg mb-6'>
           {/* Element gradient background with consistent opacity */}
-          <div className='absolute inset-0 opacity-30' style={gradientStyle} />
+          <div className='absolute inset-0 opacity-30 rounded-lg pointer-events-none z-0' style={gradientStyle} />
 
-          <div className='relative p-6 flex flex-col md:flex-row justify-between items-start md:items-start'>
-            <div>
-              {/* Top row: Element icons + Deck name + Creator name */}
-              <div className='flex items-center flex-wrap gap-3'>
-                <ElementIcons
-                  elements={deckElements}
-                  size={24}
-                  showTooltips={true}
-                />
-                <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
-                <span className='text-algomancy-gold font-medium text-lg'>
-                  {user?.username ? (
-                    <>@{user.username}</>
-                  ) : (
-                    <span className='text-gray-300'>
-                      {user?.name || "Unknown User"}
-                    </span>
+          <div className='relative z-10 p-6 flex flex-col md:flex-row justify-between items-start md:items-start'>
+            <div className='flex-1'>
+              {/* Top row: left group (icons/name/user) + right-aligned Options */}
+              <div className='flex items-center w-full gap-3'>
+                <div className='flex items-center flex-wrap gap-3'>
+                  <ElementIcons
+                    elements={deckElements}
+                    size={24}
+                    showTooltips={true}
+                  />
+                  <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
+                  <span className='text-algomancy-gold font-medium text-lg'>
+                    {user?.username ? (
+                      <>@{user.username}</>
+                    ) : (
+                      <span className='text-gray-300'>
+                        {user?.name || "Unknown User"}
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {/* Options dropdown pinned to far right */}
+                <div className='ml-auto relative' ref={optionsRef}>
+                  <button
+                    onClick={() => setOptionsOpen((o) => !o)}
+                    className='flex items-center px-4 py-2 bg-algomancy-dark text-white border border-algomancy-purple/30 rounded hover:bg-algomancy-dark/80 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/50'
+                    aria-haspopup='menu'
+                    aria-expanded={optionsOpen}
+                  >
+                    Options
+                    <ChevronDownIcon className='w-4 h-4 ml-2' />
+                  </button>
+                  {optionsOpen && (
+                    <div
+                      className='absolute right-0 mt-2 w-56 bg-algomancy-darker border border-algomancy-purple/30 rounded shadow-lg z-50 overflow-visible'
+                      role='menu'
+                    >
+                      <button
+                        onClick={() => { setOptionsOpen(false); handleCopyDeck(); }}
+                        disabled={isCopying}
+                        className='w-full text-left px-4 py-2 text-sm text-white hover:bg-algomancy-purple/30 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/40 disabled:opacity-50 flex items-center'
+                        role='menuitem'
+                      >
+                        <DocumentDuplicateIcon className='w-4 h-4 mr-2' />
+                        {isCopying ? "Copying Deck…" : "Copy Deck"}
+                      </button>
+                      <button
+                        onClick={handleExportTxt}
+                        className='w-full text-left px-4 py-2 text-sm text-white hover:bg-algomancy-purple/30 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/40 flex items-center'
+                        role='menuitem'
+                      >
+                        <span className='w-4 h-4 mr-2 rounded-full bg-white/20 inline-block' />
+                        Export deck .txt
+                      </button>
+                      <button
+                        onClick={handleExportTss}
+                        className='w-full text-left px-4 py-2 text-sm text-white hover:bg-algomancy-purple/30 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/40 flex items-center'
+                        role='menuitem'
+                      >
+                        <span className='w-4 h-4 mr-2 rounded bg-white/20 inline-block' />
+                        Export deck .tss
+                      </button>
+                      {isOwner && (
+                        <>
+                          <div className='my-1 border-t border-algomancy-purple/20' />
+                          <button
+                            onClick={() => { setOptionsOpen(false); router.push(`/decks/${id}/edit`); }}
+                            className='w-full text-left px-4 py-2 text-sm text-white hover:bg-algomancy-purple/30 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/40 flex items-center'
+                            role='menuitem'
+                          >
+                            <PencilIcon className='w-4 h-4 mr-2' />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => { setOptionsOpen(false); handleDeleteDeck(); }}
+                            disabled={isDeleting}
+                            className='w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 focus:outline-none focus:ring-1 focus:ring-red-400/40 disabled:opacity-50 flex items-center'
+                            role='menuitem'
+                          >
+                            <TrashIcon className='w-4 h-4 mr-2' />
+                            {isDeleting ? "Deleting…" : "Delete"}
+                          </button>
+                        </>
+                      )}
+                    </div>
                   )}
-                </span>
+                </div>
               </div>
 
               {/* Bottom row: Date, Views, Likes */}
@@ -319,23 +516,7 @@ export default function DeckPage({ params }: DeckPageProps) {
               )}
             </div>
 
-            {isOwner && (
-              <div className='flex space-x-2 mt-4 md:mt-0'>
-                <Link
-                  href={`/decks/${id}/edit`}
-                  className='flex items-center px-4 py-2 bg-algomancy-blue text-white rounded hover:bg-algomancy-blue-dark'>
-                  <PencilIcon className='w-4 h-4 mr-1' />
-                  Edit
-                </Link>
-                <button
-                  onClick={handleDeleteDeck}
-                  disabled={isDeleting}
-                  className='flex items-center px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50'>
-                  <TrashIcon className='w-4 h-4 mr-1' />
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            )}
+            {/* Options dropdown moved into heading row above */}
           </div>
         </div>
 
@@ -373,4 +554,37 @@ export default function DeckPage({ params }: DeckPageProps) {
       </div>
     </div>
   );
+}
+
+// Close dropdown on outside click and Escape key
+// Hook must be inside the module but outside the component body usage is within component
+// We'll bind listeners conditionally when optionsOpen is true
+// Note: This pattern keeps the listeners lightweight
+export function useDropdownAutoClose(
+  isOpen: boolean,
+  onClose: () => void,
+  containerRef: React.RefObject<HTMLElement>
+) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    function handleClick(e: MouseEvent) {
+      const el = containerRef.current;
+      if (!el) return;
+      if (e.target instanceof Node && !el.contains(e.target)) {
+        onClose();
+      }
+    }
+
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [isOpen, onClose, containerRef]);
 }

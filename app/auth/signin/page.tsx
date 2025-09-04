@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GuestDeckMigration } from "@/app/lib/utils/guestDeckMigration";
 
-export default function SignIn() {
+function SignInInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -181,5 +181,21 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
+          <div className='text-center'>
+            <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple mx-auto mb-4'></div>
+            <p className='text-white text-lg'>Loading…</p>
+          </div>
+        </div>
+      }>
+      <SignInInner />
+    </Suspense>
   );
 }

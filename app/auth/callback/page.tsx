@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { GuestDeckMigration } from "@/app/lib/utils/guestDeckMigration";
 import { toast, Toaster } from "react-hot-toast";
 
-export default function AuthCallback() {
+function AuthCallbackInner() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,4 +84,21 @@ export default function AuthCallback() {
   }
 
   return <Toaster position='top-right' />;
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense
+      fallback={
+        <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
+          <Toaster position='top-right' />
+          <div className='text-center'>
+            <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple mx-auto mb-4'></div>
+            <p className='text-white text-lg'>Loading…</p>
+          </div>
+        </div>
+      }>
+      <AuthCallbackInner />
+    </Suspense>
+  );
 }

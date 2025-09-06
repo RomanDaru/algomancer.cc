@@ -119,8 +119,8 @@ export default function DeckPage({ params }: DeckPageProps) {
 
   // Group cards by type for DeckDetailViewer
   const groupedCards: Record<string, { card: Card; quantity: number }[]> = {};
-  deck.cards.forEach((dc: Deck["cards"][number]) => {
-    const card = cards.find((c: Card) => c.id === dc.cardId);
+  deck.cards.forEach((dc) => {
+    const card = cards.find((c) => c.id === dc.cardId);
     if (card) {
       const type = card.typeAndAttributes.mainType;
       if (!groupedCards[type]) groupedCards[type] = [];
@@ -128,14 +128,11 @@ export default function DeckPage({ params }: DeckPageProps) {
     }
   });
 
-  const totalCards = deck.cards.reduce(
-    (sum: number, c: Deck["cards"][number]) => sum + c.quantity,
-    0
-  );
+  const totalCards = deck.cards.reduce((sum, c) => sum + c.quantity, 0);
 
   const cardsWithQuantities = deck.cards
-    .map((dc: Deck["cards"][number]) => {
-      const card = cards.find((c: Card) => c.id === dc.cardId);
+    .map((dc) => {
+      const card = cards.find((c) => c.id === dc.cardId);
       return { card, quantity: dc.quantity };
     })
     .filter((x) => x.card !== undefined) as { card: Card; quantity: number }[];
@@ -224,3 +221,176 @@ export default function DeckPage({ params }: DeckPageProps) {
     </div>
   );
 }
+  deck.cards.forEach((deckCard) => {
+    const card = cards.find((c) => c.id === deckCard.cardId);
+    if (card) {
+      const type = card.typeAndAttributes.mainType;
+      if (!groupedCards[type]) {
+        groupedCards[type] = [];
+      }
+      groupedCards[type].push({ card, quantity: deckCard.quantity });
+    }
+  });
+
+  // Sort card types
+  const sortedTypes = Object.keys(groupedCards).sort();
+
+  // Calculate total cards
+  const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
+
+  // Get deck elements
+  const cardsWithQuantities = deck.cards
+    .map((deckCard) => {
+      const card = cards.find((c) => c.id === deckCard.cardId);
+      return {
+        card,
+        quantity: deckCard.quantity,
+      };
+    })
+    .filter((item) => item.card !== undefined) as {
+    card: Card;
+    quantity: number;
+  }[];
+
+  // Get ALL elements in the deck
+  const deckElements: ElementType[] =
+    cardsWithQuantities.length > 0
+      ? getAllDeckElements(cardsWithQuantities)
+      : (["Colorless"] as ElementType[]);
+
+  // Generate gradient based on deck elements - use non-vibrant colors
+  const gradientStyle = {
+    background: generateElementGradient(deckElements, "135deg", false),
+  };
+
+  return (
+    <div className='container mx-auto px-4 py-8'>
+      <Toaster position='top-right' />
+      <div className='max-w-7xl mx-auto'>
+        {/* Deck header with gradient background */}
+        <div className='relative rounded-lg overflow-hidden mb-6'>
+          {/* Element gradient background with consistent opacity */}
+          <div className='absolute inset-0 opacity-30' style={gradientStyle} />
+
+          <div className='relative p-6 flex flex-col md:flex-row justify-between items-start md:items-start'>
+            <div>
+              {/* Top row: Element icons + Deck name + Creator name */}
+              <div className='flex items-center flex-wrap gap-3'>
+                <ElementIcons
+                  elements={deckElements}
+                  size={24}
+                  showTooltips={true}
+                />
+                <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
+                <span className='text-algomancy-gold font-medium text-lg'>
+                  {user?.username ? (
+                    <>@{user.username}</>
+                  ) : (
+                    <span className='text-gray-300'>
+                      {user?.name || "Unknown User"}
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              {/* Bottom row: Date, Views, Likes */}
+              <div className='flex items-center mt-2 text-sm text-white'>
+                <span>
+                  {formatDistanceToNow(new Date(deck.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+                <span className='ml-3 flex items-center'>
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    className='h-4 w-4 mr-1'
+                    fill='none'
+                    viewBox='0 0 24 24'
+                    stroke='currentColor'>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+                    />
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
+                    />
+                  </svg>
+                  {typeof deck.views === "number" ? deck.views : 0}
+                </span>
+                <span className='ml-3'>
+                  <LikeButton
+                    deckId={deck._id.toString()}
+                    initialLikes={deck.likes || 0}
+                    size='sm'
+                    showCount={true}
+                    className='text-white'
+                  />
+                </span>
+                <span className='ml-3'>
+                  <ShareButton
+                    deckId={deck._id.toString()}
+                    deckName={deck.name}
+                    size='sm'
+                    className='text-white'
+                  />
+                </span>
+
+                {/* Options dropdown next to Share */}
+                <div className='ml-2'>
+                  {id && deck && (
+                    <DeckOptionsMenu deck={deck} cards={cards} deckId={id} isOwner={isOwner} />
+                  )}
+                </div>
+              </div>
+
+              {deck.description && (
+                <p className='text-gray-300 mt-3'>{deck.description}</p>
+              )}
+            </div>
+
+            {/* Edit/Delete kept only in Options menu */}
+          </div>
+        </div>
+
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Left Column - Deck Stats */}
+          <div className='lg:col-span-1'>
+            <DeckStats cards={cards} deckCards={deck.cards} />
+          </div>
+
+          {/* Right Column - Card List */}
+          <div className='lg:col-span-2'>
+            <DeckDetailViewer
+              cards={cards}
+              groupedCards={groupedCards}
+              totalCards={totalCards}
+            />
+          </div>
+        </div>
+
+        {/* YouTube Video Section - Bottom */}
+        {deck.youtubeUrl && (
+          <div className='mt-8'>
+            <div className='max-w-4xl mx-auto'>
+              <h2 className='text-2xl font-bold text-white mb-4 text-center'>
+                Deck Showcase Video
+              </h2>
+              <YouTubeEmbed
+                url={deck.youtubeUrl}
+                title={`${deck.name} - Deck Showcase`}
+                showTitle={false}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+

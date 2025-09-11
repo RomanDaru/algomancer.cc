@@ -97,6 +97,7 @@ Thumbs.db
 /scripts/cloudinary-urls.txt
 /scripts/cloudinary-images.json
 /scripts/README_PRIVATE.md
+/docs/SESSION_NOTES.md
 
 # Backup files
 /app/lib/data/backup_*.ts

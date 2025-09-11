@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, FormEvent } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -27,98 +27,103 @@ export default function SignUp() {
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  const register = useCallback(async () => {
-    // Clear previous errors
-    setError("");
-    setEmailError("");
-    setUsernameError("");
-    setPasswordError("");
-    setConfirmPasswordError("");
+  const register = useCallback(
+    async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    // Validate all fields
-    let hasErrors = false;
+      // Clear previous errors
+      setError("");
+      setEmailError("");
+      setUsernameError("");
+      setPasswordError("");
+      setConfirmPasswordError("");
 
-    // Validate name
-    if (!name.trim()) {
-      setError("Name is required");
-      hasErrors = true;
-    }
+      // Validate all fields
+      let hasErrors = false;
 
-    // Validate email
-    const emailValidation = validateEmail(email);
-    if (!emailValidation.isValid) {
-      setEmailError(emailValidation.error || "Invalid email");
-      hasErrors = true;
-    }
+      // Validate name
+      if (!name.trim()) {
+        setError("Name is required");
+        hasErrors = true;
+      }
 
-    // Validate username
-    const usernameValidation = validateUsername(username);
-    if (!usernameValidation.isValid) {
-      setUsernameError(usernameValidation.error || "Invalid username");
-      hasErrors = true;
-    }
+      // Validate email
+      const emailValidation = validateEmail(email);
+      if (!emailValidation.isValid) {
+        setEmailError(emailValidation.error || "Invalid email");
+        hasErrors = true;
+      }
 
-    // Validate password
-    const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
-      setPasswordError("Password does not meet requirements");
-      hasErrors = true;
-    }
+      // Validate username
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.isValid) {
+        setUsernameError(usernameValidation.error || "Invalid username");
+        hasErrors = true;
+      }
 
-    // Validate password confirmation
-    if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
-      hasErrors = true;
-    }
+      // Validate password
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.isValid) {
+        setPasswordError("Password does not meet requirements");
+        hasErrors = true;
+      }
 
-    if (hasErrors) {
-      return;
-    }
+      // Validate password confirmation
+      if (password !== confirmPassword) {
+        setConfirmPasswordError("Passwords do not match");
+        hasErrors = true;
+      }
 
-    try {
-      setIsLoading(true);
+      if (hasErrors) {
+        return;
+      }
 
-      const response = await fetch("/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name,
-          username,
+      try {
+        setIsLoading(true);
+
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            username,
+            email,
+            password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Something went wrong");
+          return;
+        }
+
+        // Sign in the user after successful registration
+        const result = await signIn("credentials", {
           email,
           password,
-        }),
-      });
+          redirect: false,
+          callbackUrl: "/",
+        });
 
-      const data = await response.json();
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
 
-      if (!response.ok) {
-        setError(data.error || "Something went wrong");
-        return;
+        router.push("/");
+      } catch (error) {
+        console.error(error);
+        setError("An unexpected error occurred");
+      } finally {
+        setIsLoading(false);
       }
-
-      // Sign in the user after successful registration
-      const result = await signIn("credentials", {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: "/",
-      });
-
-      if (result?.error) {
-        setError(result.error);
-        return;
-      }
-
-      router.push("/");
-    } catch (error) {
-      console.error(error);
-      setError("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [name, username, email, password, confirmPassword, router]);
+    },
+    [name, username, email, password, confirmPassword, router]
+  );
 
   // Real-time validation handlers
   const handleEmailChange = (value: string) => {
@@ -158,7 +163,7 @@ export default function SignUp() {
           <p className='mt-2 text-gray-400'>Join the Algomancer community</p>
         </div>
 
-        <div className='mt-8 space-y-6'>
+        <form onSubmit={register} className='mt-8 space-y-6'>
           {error && (
             <div className='p-4 text-sm text-red-500 bg-red-500/10 border border-red-500/20 rounded-md'>
               {error}
@@ -187,12 +192,13 @@ export default function SignUp() {
             <label
               htmlFor='username'
               className='block text-sm font-medium text-gray-300'>
-              Username <span className='text-gray-500 text-xs'>(optional)</span>
+              Username <span className='text-red-500'>*</span>
             </label>
             <input
               id='username'
               name='username'
               type='text'
+              required
               value={username}
               onChange={(e) => handleUsernameChange(e.target.value)}
               className={`mt-1 block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
@@ -275,7 +281,7 @@ export default function SignUp() {
 
           <div>
             <button
-              onClick={register}
+              type='submit'
               disabled={isLoading}
               className='w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-algomancy-purple hover:bg-algomancy-purple-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-algomancy-purple disabled:opacity-50 disabled:cursor-not-allowed'>
               {isLoading ? "Creating account..." : "Sign Up"}
@@ -319,7 +325,7 @@ export default function SignUp() {
               </button>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

@@ -1,4 +1,12 @@
-import NextAuth from "next-auth";
+import NextAuth, {
+  type AuthOptions,
+  type User,
+  type Account,
+  type Profile,
+  type Session,
+} from "next-auth";
+import { AdapterUser } from "next-auth/adapters";
+import { JWT } from "next-auth/jwt";
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
@@ -69,7 +77,7 @@ const authOptions = {
           const connection = await connectToDatabase();
           const db = connection.db;
           const user = await db.collection("users").findOne({
-            email: credentials.email,
+            email: credentials.email.toLowerCase(),
           });
 
           if (!user || !user.hashedPassword) {
@@ -107,7 +115,7 @@ const authOptions = {
             isAdmin: isAdmin,
           };
         } catch (error) {
-          console.error("Error in authorize function:", error);
+          console.error("!!! SKUTOČNÁ CHYBA V AUTHORIZE:", error);
           throw new Error("Authentication failed");
         }
       },
@@ -118,14 +126,22 @@ const authOptions = {
   },
   adapter: MongoDBAdapter(clientPromise),
   session: {
-    strategy: "jwt",
+    strategy: "jwt" as const,
   },
   jwt: {
     secret: process.env.NEXTAUTH_JWT_SECRET,
   },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async signIn({ user, account, profile }) {
+    async signIn({
+      user,
+      account,
+      profile,
+    }: {
+      user: User | AdapterUser;
+      account: Account | null;
+      profile?: Profile;
+    }) {
       // For Google OAuth, check and update admin status
       if (
         account?.provider === "google" &&
@@ -157,34 +173,23 @@ const authOptions = {
 
       return true;
     },
-    async session({ session, token, user }) {
-      // When using JWT strategy
-      if (token) {
-        if (token?.sub) {
-          session.user.id = token.sub;
-        }
-
-        // Include username in session if available in token
-        if (token?.username !== undefined) {
-          session.user.username = token.username;
-        }
-
-        // Include admin status in session if available in token
-        if (token?.isAdmin !== undefined) {
-          session.user.isAdmin = token.isAdmin;
-        }
+    async session({ session, token }: { session: Session; token: JWT }) {
+      if (token && session.user) {
+        session.user.id = token.sub!;
+        session.user.username = token.username ?? null;
+        session.user.isAdmin = token.isAdmin ?? false;
       }
-
-      // When using database strategy
-      if (user) {
-        session.user.id = user.id;
-        session.user.username = user.username || null;
-        session.user.isAdmin = user.isAdmin || false;
-      }
-
       return session;
     },
-    async jwt({ token, user, trigger }) {
+    async jwt({
+      token,
+      user,
+      trigger,
+    }: {
+      token: JWT;
+      user?: User | AdapterUser;
+      trigger?: "signIn" | "signUp" | "update";
+    }) {
       // Always check admin status for roman.daru.ml@gmail.com
       if (token.email === "roman.daru.ml@gmail.com") {
         try {
@@ -212,7 +217,7 @@ const authOptions = {
       if (user) {
         token.id = user.id;
         // Include username in token
-        token.username = user.username;
+        token.username = user.username ?? null;
         // Include admin status in token
         token.isAdmin = user.isAdmin || false;
       }

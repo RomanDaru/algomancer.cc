@@ -31,8 +31,10 @@ export async function POST(request: Request) {
       email,
     });
 
+    const finalEmail = sanitized.email.toLowerCase();
+
     // Validate input
-    if (!sanitized.name || !sanitized.email || !password) {
+    if (!sanitized.name || !finalEmail || !password) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Validate email format
-    const emailValidation = validateEmail(sanitized.email);
+    const emailValidation = validateEmail(finalEmail);
     if (!emailValidation.isValid) {
       return NextResponse.json(
         { error: emailValidation.error || "Invalid email format" },
@@ -85,7 +87,7 @@ export async function POST(request: Request) {
 
     // Check if user already exists with the same email
     const existingUserByEmail = await db.collection("users").findOne({
-      email: sanitized.email,
+      email: finalEmail,
     });
     if (existingUserByEmail) {
       return NextResponse.json(
@@ -114,7 +116,7 @@ export async function POST(request: Request) {
     const result = await db.collection("users").insertOne({
       name: sanitized.name,
       username: sanitized.username || null, // Store username if provided, otherwise null
-      email: sanitized.email,
+      email: finalEmail,
       hashedPassword,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -126,7 +128,7 @@ export async function POST(request: Request) {
         id: result.insertedId,
         name: sanitized.name,
         username: sanitized.username || null,
-        email: sanitized.email,
+        email: finalEmail,
       },
       { status: 201 }
     );

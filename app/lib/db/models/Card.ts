@@ -1,10 +1,11 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema, HydratedDocument } from "mongoose";
 import { Card as CardType } from "../../types/card";
 
-// Interface for the MongoDB document
-export interface CardDocument extends Document, Omit<CardType, "id"> {
-  // MongoDB adds _id automatically, so we omit the id field from CardType
-}
+type CardDocRaw = Omit<CardType, "id"> & {
+  originalId: string;
+};
+
+export type CardDocument = HydratedDocument<CardDocRaw>;
 
 // Schema for the Element subdocument
 const ElementSchema = new Schema(
@@ -91,11 +92,10 @@ const CardSchema = new Schema(
 
 // Create indexes for efficient queries
 CardSchema.index({ originalId: 1 }); // For finding cards by ID (most common query)
-CardSchema.index({ id: 1 }); // Alternative ID field
 CardSchema.index({ currentIndex: 1 }); // For sorting cards by index
 CardSchema.index({ name: 1 }); // For searching cards by name
-CardSchema.index({ "typeAndAttributes.type": 1 }); // For filtering by card type
-CardSchema.index({ "elements.primary": 1 }); // For filtering by primary element
+CardSchema.index({ "typeAndAttributes.mainType": 1 }); // For filtering by main card type
+CardSchema.index({ "element.type": 1 }); // For filtering by primary element
 CardSchema.index({ manaCost: 1 }); // For sorting by mana cost
 
 // Create and export the model
@@ -104,7 +104,7 @@ export const CardModel =
 
 // Helper function to convert between MongoDB document and our Card type
 export function convertDocumentToCard(doc: CardDocument): CardType {
-  const card = doc.toObject();
+  const card = doc.toObject<CardDocRaw>();
   return {
     id: card.originalId,
     name: card.name,
@@ -122,7 +122,7 @@ export function convertDocumentToCard(doc: CardDocument): CardType {
 }
 
 // Helper function to convert our Card type to a MongoDB document
-export function convertCardToDocument(card: CardType): Partial<CardDocument> {
+export function convertCardToDocument(card: CardType): CardDocRaw {
   return {
     originalId: card.id,
     name: card.name,

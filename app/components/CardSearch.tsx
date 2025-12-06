@@ -18,11 +18,13 @@ import {
 interface CardSearchProps {
   cards: Card[];
   onSearchResults: (filteredCards: Card[]) => void;
+  onSearchActiveChange?: (isActive: boolean) => void;
 }
 
 export default function CardSearch({
   cards,
   onSearchResults,
+  onSearchActiveChange,
 }: CardSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -170,6 +172,10 @@ export default function CardSearch({
 
     onSearchResults(filteredCards);
   }, [searchTerm, cards, onSearchResults]);
+
+  useEffect(() => {
+    onSearchActiveChange?.(isSearching);
+  }, [isSearching, onSearchActiveChange]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);

@@ -8,6 +8,7 @@ interface OptimizationOptions {
   quality?: 'auto' | number;
   format?: 'auto' | 'webp' | 'avif' | 'jpg' | 'png';
   crop?: 'fill' | 'fit' | 'scale' | 'crop';
+  dpr?: 'auto' | number;
 }
 
 /**
@@ -30,7 +31,8 @@ export function optimizeCloudinaryUrl(
     height,
     quality = 'auto',
     format = 'auto',
-    crop = 'fill'
+    crop = 'fill',
+    dpr
   } = options;
 
   try {
@@ -70,10 +72,17 @@ export function optimizeCloudinaryUrl(
     if (height) {
       params.push(`h_${height}`);
     }
-    
+
     // Crop mode (how to handle resizing)
     if (width || height) {
       params.push(`c_${crop}`);
+    }
+
+    // Device pixel ratio (sharpness on high-DPR screens)
+    if (dpr) {
+      params.push(
+        dpr === 'auto' ? 'dpr_auto' : `dpr_${dpr}`
+      );
     }
     
     // Combine parameters
@@ -97,10 +106,11 @@ export function optimizeCloudinaryUrl(
  */
 export function optimizeCardThumbnail(url: string): string {
   return optimizeCloudinaryUrl(url, {
-    width: 300,
+    width: 500,
     quality: 'auto',
     format: 'auto',
-    crop: 'fill'
+    crop: 'fill',
+    dpr: 'auto'
   });
 }
 
@@ -109,10 +119,11 @@ export function optimizeCardThumbnail(url: string): string {
  */
 export function optimizeCardDetail(url: string): string {
   return optimizeCloudinaryUrl(url, {
-    width: 600,
+    width: 800,
     quality: 'auto',
     format: 'auto',
-    crop: 'fit'
+    crop: 'fit',
+    dpr: 'auto'
   });
 }
 
@@ -121,10 +132,11 @@ export function optimizeCardDetail(url: string): string {
  */
 export function optimizeCardCompact(url: string): string {
   return optimizeCloudinaryUrl(url, {
-    width: 200,
+    width: 320,
     quality: 'auto',
     format: 'auto',
-    crop: 'fill'
+    crop: 'fill',
+    dpr: 'auto'
   });
 }
 
@@ -137,6 +149,7 @@ export function optimizeProfilePicture(url: string, size: number = 96): string {
     height: size,
     quality: 'auto',
     format: 'auto',
-    crop: 'fill'
+    crop: 'fill',
+    dpr: 'auto'
   });
 }

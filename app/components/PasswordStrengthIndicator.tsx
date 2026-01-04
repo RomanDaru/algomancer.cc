@@ -14,6 +14,7 @@ interface PasswordStrengthIndicatorProps {
   className?: string;
   label?: string;
   required?: boolean;
+  autoComplete?: string;
 }
 
 export default function PasswordStrengthIndicator({
@@ -25,7 +26,8 @@ export default function PasswordStrengthIndicator({
   placeholder = "Enter your password",
   className = "",
   label = "Password",
-  required = true
+  required = true,
+  autoComplete
 }: PasswordStrengthIndicatorProps) {
   const [showPassword, setShowPassword] = useState(false);
   const validation = validatePassword(password);
@@ -48,6 +50,7 @@ export default function PasswordStrengthIndicator({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           required={required}
+          autoComplete={autoComplete}
           className="block w-full px-3 py-2 pr-10 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple"
         />
         

@@ -14,6 +14,29 @@ function SignInInner() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const getFriendlyError = (errorMessage?: string) => {
+    if (!errorMessage) {
+      return "";
+    }
+
+    if (errorMessage === "Email not verified") {
+      return "Please verify your email before signing in.";
+    }
+
+    if (errorMessage === "Email and password required") {
+      return "Email and password are required.";
+    }
+
+    if (
+      errorMessage === "CredentialsSignin" ||
+      errorMessage === "Authentication failed"
+    ) {
+      return "Sign in failed. Check your email and password.";
+    }
+
+    return errorMessage;
+  };
+
   const callbackUrl = useMemo(() => {
     const cb = searchParams?.get("callbackUrl") || searchParams?.get("returnTo");
     // Fallback to homepage
@@ -36,7 +59,7 @@ function SignInInner() {
       });
 
       if (result?.error) {
-        setError(result.error);
+        setError(getFriendlyError(result.error));
         return;
       }
 

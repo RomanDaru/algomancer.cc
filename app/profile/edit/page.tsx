@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "react-hot-toast";
 import Link from "next/link";
+import { validateUsername } from "@/app/lib/utils/validation";
 
 export default function EditProfile() {
   const { data: session, status, update } = useSession();
@@ -13,6 +14,7 @@ export default function EditProfile() {
   const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [usernameError, setUsernameError] = useState("");
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -39,9 +41,11 @@ export default function EditProfile() {
     setIsLoading(true);
 
     try {
-      // Validate username
-      if (username && username.length < 3) {
-        throw new Error("Username must be at least 3 characters");
+      const usernameValidation = validateUsername(username);
+      if (!usernameValidation.isValid) {
+        const message = usernameValidation.error || "Invalid username";
+        setUsernameError(message);
+        throw new Error(message);
       }
 
       // Call API to update user profile
@@ -96,6 +100,17 @@ export default function EditProfile() {
     }
   };
 
+  const handleUsernameChange = (value: string) => {
+    const normalized = value.replace(/\s+/g, "");
+    setUsername(normalized);
+    if (usernameError) {
+      const validation = validateUsername(normalized);
+      if (validation.isValid) {
+        setUsernameError("");
+      }
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
@@ -144,13 +159,24 @@ export default function EditProfile() {
                     id='username'
                     type='text'
                     value={username}
-                    onChange={(e) =>
-                      setUsername(e.target.value.replace(/\s+/g, ""))
-                    }
-                    className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-r text-white'
+                    onChange={(e) => handleUsernameChange(e.target.value)}
+                    autoComplete='username'
+                    autoCapitalize='none'
+                    autoCorrect='off'
+                    spellCheck={false}
+                    className={`w-full p-2 bg-algomancy-dark border rounded-r text-white ${
+                      usernameError
+                        ? "border-red-500"
+                        : "border-algomancy-purple/30"
+                    }`}
                     placeholder='Choose a username'
                   />
                 </div>
+                {usernameError && (
+                  <p className='text-xs text-red-400 mt-1'>
+                    {usernameError}
+                  </p>
+                )}
                 <p className='text-xs text-gray-300 mt-2'>
                   Your username will be displayed publicly on your profile and
                   decks. It should be unique and recognizable.
@@ -173,6 +199,8 @@ export default function EditProfile() {
                   type='text'
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete='name'
+                  autoCapitalize='words'
                   className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
                   placeholder='Your real name'
                   required

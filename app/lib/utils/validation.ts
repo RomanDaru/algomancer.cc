@@ -73,6 +73,100 @@ const RESERVED_USERNAMES = [
   "team",
 ];
 
+const BASE64_USERNAME_MIN_LENGTH = 16;
+const BASE64_USERNAME_UNIQUE_RATIO = 0.85;
+const UNREADABLE_USERNAME_MIN_LENGTH = 12;
+const UNREADABLE_USERNAME_MAX_VOWEL_RATIO = 0.25;
+const UNREADABLE_USERNAME_CONSONANT_RUN = 5;
+
+function looksLikeBase64Username(username: string): boolean {
+  if (username.length < BASE64_USERNAME_MIN_LENGTH) {
+    return false;
+  }
+
+  if (username.length % 4 !== 0) {
+    return false;
+  }
+
+  const hasLower = /[a-z]/.test(username);
+  const hasUpper = /[A-Z]/.test(username);
+
+  if (!hasLower || !hasUpper) {
+    return false;
+  }
+
+  const uniqueRatio = new Set(username).size / username.length;
+  if (uniqueRatio < BASE64_USERNAME_UNIQUE_RATIO) {
+    return false;
+  }
+
+  return true;
+}
+
+function hasLongConsonantRun(username: string): boolean {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  let run = 0;
+
+  for (const char of username.toLowerCase()) {
+    if (!/[a-z]/.test(char)) {
+      run = 0;
+      continue;
+    }
+
+    if (vowels.has(char)) {
+      run = 0;
+      continue;
+    }
+
+    run += 1;
+    if (run >= UNREADABLE_USERNAME_CONSONANT_RUN) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function getVowelRatio(username: string): number {
+  const vowels = new Set(["a", "e", "i", "o", "u"]);
+  let vowelCount = 0;
+  let letterCount = 0;
+
+  for (const char of username.toLowerCase()) {
+    if (!/[a-z]/.test(char)) {
+      continue;
+    }
+
+    letterCount += 1;
+    if (vowels.has(char)) {
+      vowelCount += 1;
+    }
+  }
+
+  if (letterCount === 0) {
+    return 0;
+  }
+
+  return vowelCount / letterCount;
+}
+
+function looksUnreadableUsername(username: string): boolean {
+  if (username.length < UNREADABLE_USERNAME_MIN_LENGTH) {
+    return false;
+  }
+
+  if (/[_-]/.test(username)) {
+    return false;
+  }
+
+  const vowelRatio = getVowelRatio(username);
+  if (vowelRatio <= UNREADABLE_USERNAME_MAX_VOWEL_RATIO) {
+    return true;
+  }
+
+  return hasLongConsonantRun(username);
+}
+
 export function validatePassword(password: string): PasswordValidation {
   const feedback: string[] = [];
   let score = 0;
@@ -218,6 +312,14 @@ export function validateUsername(username: string): UsernameValidation {
     return {
       isValid: false,
       error: "This username is reserved, please choose another",
+    };
+  }
+
+  if (looksLikeBase64Username(username) || looksUnreadableUsername(username)) {
+    return {
+      isValid: false,
+      error:
+        "Username looks like an auto-generated string, please choose a more readable one",
     };
   }
 

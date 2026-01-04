@@ -59,8 +59,16 @@ export async function POST(request: Request) {
       // Prepare email data for client-side sending
       emailData = {
         to_email: email,
+        subject: "Reset Your Algomancer.cc Password",
+        heading: "Reset Your Password",
         user_name: user.name,
-        reset_url: resetUrl,
+        message:
+          "You requested a password reset for your Algomancer.cc account. Click the button below to reset your password:",
+        action_text: "Reset My Password",
+        action_url: resetUrl,
+        expiry_text: "This link will expire in 1 hour for security reasons.",
+        footer:
+          "If you didn't request this reset, please ignore this email.<br>This email was sent from <strong>Algomancer.cc</strong>",
       };
     }
 

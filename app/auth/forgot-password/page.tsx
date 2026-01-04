@@ -46,7 +46,7 @@ export default function ForgotPassword() {
         try {
           await emailjs.send(
             "service_cxh2b2a", // Your EmailJS service ID
-            "template_dx9xbk6", // Your password reset template ID
+            "template_dx9xbk6", // Your action email template ID
             data.emailData,
             "bwTGKiVLZWWg4QG2M" // Your EmailJS public key
           );

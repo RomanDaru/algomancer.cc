@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { connectToDatabase } from "@/app/lib/db/mongodb";
 import { ObjectId } from "mongodb";
+import { validateUsername } from "@/app/lib/utils/validation";
 
 /**
  * PUT /api/user/profile
@@ -29,16 +30,17 @@ export async function PUT(request: NextRequest) {
     console.log("Request body:", JSON.stringify(body, null, 2));
 
     const { name, username } = body;
+    const usernameValue = typeof username === "string" ? username : "";
 
     // Validate input
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
-    // Username is optional but if provided, it must be at least 3 characters
-    if (username && username.length < 3) {
+    const usernameValidation = validateUsername(usernameValue);
+    if (!usernameValidation.isValid) {
       return NextResponse.json(
-        { error: "Username must be at least 3 characters" },
+        { error: usernameValidation.error || "Invalid username" },
         { status: 400 }
       );
     }
@@ -70,12 +72,12 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if username is already taken (if provided and changed)
-    if (username) {
-      console.log("Checking if username is already taken:", username);
+    if (usernameValue) {
+      console.log("Checking if username is already taken:", usernameValue);
       try {
         const existingUserByUsername = await db.collection("users").findOne({
           _id: { $ne: new ObjectId(session.user.id) },
-          username,
+          username: usernameValue,
         });
 
         if (existingUserByUsername) {
@@ -106,7 +108,7 @@ export async function PUT(request: NextRequest) {
         {
           $set: {
             name,
-            username: username || null,
+            username: usernameValue || null,
             updatedAt: new Date(),
           },
         }

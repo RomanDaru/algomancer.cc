@@ -144,6 +144,9 @@ describe("Username Validation", () => {
       "user@name", // Invalid character
       "user name", // Space not allowed
       "user!", // Special character
+      "eTFUNLyqUDWNaxom", // Base64-like
+      "UudszdsdYuDzKUDoKjD", // Unreadable
+      "uudsz7ds65dyudz", // Unreadable
       "_username", // Starts with underscore
       "username_", // Ends with underscore
       "-username", // Starts with hyphen
@@ -169,6 +172,15 @@ describe("Username Validation", () => {
     );
     expect(validateUsername("user@name").error).toBe(
       "Username can only contain letters, numbers, underscores, and hyphens"
+    );
+    expect(validateUsername("eTFUNLyqUDWNaxom").error).toBe(
+      "Username looks like an auto-generated string, please choose a more readable one"
+    );
+    expect(validateUsername("UudszdsdYuDzKUDoKjD").error).toBe(
+      "Username looks like an auto-generated string, please choose a more readable one"
+    );
+    expect(validateUsername("uudsz7ds65dyudz").error).toBe(
+      "Username looks like an auto-generated string, please choose a more readable one"
     );
     expect(validateUsername("_username").error).toBe(
       "Username cannot start or end with underscore or hyphen"

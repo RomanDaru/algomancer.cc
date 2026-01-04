@@ -13,6 +13,9 @@ export interface User {
   updatedAt: Date;
   resetToken?: string; // Password reset token
   resetTokenExpiry?: Date; // Password reset token expiry
+  emailVerified?: Date; // Email verification date
+  emailVerificationToken?: string; // Email verification token
+  emailVerificationTokenExpiry?: Date; // Email verification token expiry
 }
 
 export interface Deck {

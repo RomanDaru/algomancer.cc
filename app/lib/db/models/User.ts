@@ -18,6 +18,8 @@ const UserSchema = new Schema(
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
     emailVerified: { type: Date }, // For NextAuth compatibility
+    emailVerificationToken: { type: String },
+    emailVerificationTokenExpiry: { type: Date },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -46,6 +48,9 @@ export function convertDocumentToUser(doc: UserDocument): UserType {
     updatedAt: user.updatedAt,
     resetToken: user.resetToken,
     resetTokenExpiry: user.resetTokenExpiry,
+    emailVerified: user.emailVerified,
+    emailVerificationToken: user.emailVerificationToken,
+    emailVerificationTokenExpiry: user.emailVerificationTokenExpiry,
   };
 }
 
@@ -62,5 +67,8 @@ export function convertUserToDocument(
     isAdmin: user.isAdmin,
     resetToken: user.resetToken,
     resetTokenExpiry: user.resetTokenExpiry,
+    emailVerified: user.emailVerified,
+    emailVerificationToken: user.emailVerificationToken,
+    emailVerificationTokenExpiry: user.emailVerificationTokenExpiry,
   };
 }

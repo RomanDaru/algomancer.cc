@@ -2,7 +2,6 @@
 
 import { useState, useCallback, FormEvent } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordStrengthIndicator from "@/app/components/PasswordStrengthIndicator";
 import {
@@ -10,15 +9,16 @@ import {
   validateEmail,
   validateUsername,
 } from "@/app/lib/utils/validation";
+import emailjs from "@emailjs/browser";
 
 export default function SignUp() {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Validation states
@@ -33,6 +33,7 @@ export default function SignUp() {
 
       // Clear previous errors
       setError("");
+      setSuccess("");
       setEmailError("");
       setUsernameError("");
       setPasswordError("");
@@ -94,27 +95,35 @@ export default function SignUp() {
           }),
         });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        if (!response.ok) {
-          setError(data.error || "Something went wrong");
-          return;
+      if (!response.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+
+      if (data.emailData) {
+        try {
+          await emailjs.send(
+            "service_cxh2b2a",
+            "template_dx9xbk6",
+            data.emailData,
+            "bwTGKiVLZWWg4QG2M"
+          );
+          console.log("Verification email sent successfully");
+        } catch (emailError) {
+          console.error("Failed to send verification email:", emailError);
         }
+      }
 
-        // Sign in the user after successful registration
-        const result = await signIn("credentials", {
-          email,
-          password,
-          redirect: false,
-          callbackUrl: "/",
-        });
-
-        if (result?.error) {
-          setError(result.error);
-          return;
-        }
-
-        router.push("/");
+        setSuccess(
+          "Account created. Please check your email to confirm your account."
+        );
+        setName("");
+        setUsername("");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
       } catch (error) {
         console.error(error);
         setError("An unexpected error occurred");
@@ -122,7 +131,7 @@ export default function SignUp() {
         setIsLoading(false);
       }
     },
-    [name, username, email, password, confirmPassword, router]
+    [name, username, email, password, confirmPassword]
   );
 
   // Real-time validation handlers
@@ -170,6 +179,12 @@ export default function SignUp() {
             </div>
           )}
 
+          {success && (
+            <div className='p-4 text-sm text-green-500 bg-green-500/10 border border-green-500/20 rounded-md'>
+              {success}
+            </div>
+          )}
+
           <div>
             <label
               htmlFor='name'
@@ -181,6 +196,8 @@ export default function SignUp() {
               name='name'
               type='text'
               required
+              autoComplete='name'
+              autoCapitalize='words'
               value={name}
               onChange={(e) => setName(e.target.value)}
               className='mt-1 block w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple'
@@ -199,6 +216,10 @@ export default function SignUp() {
               name='username'
               type='text'
               required
+              autoComplete='username'
+              autoCapitalize='none'
+              autoCorrect='off'
+              spellCheck={false}
               value={username}
               onChange={(e) => handleUsernameChange(e.target.value)}
               className={`mt-1 block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
@@ -222,6 +243,10 @@ export default function SignUp() {
               name='email'
               type='email'
               required
+              autoComplete='email'
+              autoCapitalize='none'
+              autoCorrect='off'
+              spellCheck={false}
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               className={`mt-1 block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${
@@ -241,6 +266,7 @@ export default function SignUp() {
             placeholder='••••••••'
             showStrength={true}
             showToggle={true}
+            autoComplete='new-password'
           />
           {passwordError && (
             <p className='text-sm text-red-400 mt-1'>{passwordError}</p>
@@ -257,6 +283,7 @@ export default function SignUp() {
               name='confirmPassword'
               type='password'
               required
+              autoComplete='new-password'
               value={confirmPassword}
               onChange={(e) => handleConfirmPasswordChange(e.target.value)}
               className={`block w-full px-3 py-2 bg-algomancy-dark border rounded-md text-white focus:outline-none focus:ring-algomancy-purple focus:border-algomancy-purple ${

@@ -93,6 +93,14 @@ const authOptions = {
             throw new Error("Incorrect password");
           }
 
+          const requiresEmailVerification = Boolean(
+            user.emailVerificationToken || user.emailVerificationTokenExpiry
+          );
+
+          if (requiresEmailVerification && !user.emailVerified) {
+            throw new Error("Email not verified");
+          }
+
           // Check if this is the admin user (only roman.daru.ml@gmail.com)
           const isAdmin = user.email === "roman.daru.ml@gmail.com";
 
@@ -116,6 +124,12 @@ const authOptions = {
           };
         } catch (error) {
           console.error("!!! SKUTOČNÁ CHYBA V AUTHORIZE:", error);
+          if (
+            error instanceof Error &&
+            error.message === "Email not verified"
+          ) {
+            throw error;
+          }
           throw new Error("Authentication failed");
         }
       },
@@ -168,6 +182,28 @@ const authOptions = {
           user.isAdmin = true;
         } catch (error) {
           console.error("Error updating admin status:", error);
+        }
+      }
+
+      if (account?.provider === "google" && user.email) {
+        try {
+          const connection = await connectToDatabase();
+          const db = connection.db;
+
+          await db.collection("users").updateOne(
+            {
+              email: user.email,
+              $or: [{ emailVerified: { $exists: false } }, { emailVerified: null }],
+            },
+            {
+              $set: {
+                emailVerified: new Date(),
+                updatedAt: new Date(),
+              },
+            }
+          );
+        } catch (error) {
+          console.error("Error updating email verification status:", error);
         }
       }
 

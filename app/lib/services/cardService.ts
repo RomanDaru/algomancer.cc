@@ -59,13 +59,16 @@ export const cardService = {
     try {
       if (ids.length === 0) return [];
 
-      // Use cached cards for batch loading (more efficient than individual DB calls)
-      const cards = await getActiveCards();
-      const foundCards = ids
-        .map((id) => cards.find((card) => card.id === id))
-        .filter((card) => card !== undefined) as Card[];
+      const now = Date.now();
 
-      return foundCards;
+      // Use cached cards if available and fresh.
+      if (cachedCards && now - lastCacheTime < CACHE_TTL) {
+        return ids
+          .map((id) => cachedCards!.find((card) => card.id === id))
+          .filter((card) => card !== undefined) as Card[];
+      }
+
+      return await cardDbService.getCardsByIds(ids);
     } catch (error) {
       console.error(`Error getting cards by IDs ${ids.join(", ")}:`, error);
       return [];

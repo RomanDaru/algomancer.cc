@@ -140,13 +140,10 @@ export const deckService = {
         return { deck: null, cards: [] };
       }
 
-      // Get all cards in the deck
-      const cardPromises = deck.cards.map((deckCard) =>
-        cardService.getCardById(deckCard.cardId)
+      const cardIds = Array.from(
+        new Set(deck.cards.map((deckCard) => deckCard.cardId))
       );
-
-      const cardResults = await Promise.all(cardPromises);
-      const cards = cardResults.filter((card) => card !== undefined) as Card[];
+      const cards = await cardService.getCardsByIds(cardIds);
 
       // Get user information
       const user = await deckDbService.getDeckUserInfo(deck.userId.toString());

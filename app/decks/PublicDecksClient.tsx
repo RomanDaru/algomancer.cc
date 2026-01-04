@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import DeckGrid from "@/app/components/DeckGrid";
 import ElementFilter from "@/app/components/ElementFilter";
@@ -14,6 +14,9 @@ type DeckWithUserInfo = {
   isLikedByCurrentUser: boolean;
   deckElements?: string[];
 };
+
+const INITIAL_VISIBLE = 12;
+const LOAD_MORE_STEP = 12;
 
 interface Props {
   initialDecks: DeckWithUserInfo[];
@@ -31,6 +34,7 @@ export default function PublicDecksClient({
   );
   const [sortTransition, setSortTransition] = useState(false);
   const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
 
   const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
     if (newSortBy === sortBy) return;
@@ -41,12 +45,18 @@ export default function PublicDecksClient({
 
   const decks = useMemo(() => initialDecks, [initialDecks]);
 
+  useEffect(() => {
+    setVisibleCount(INITIAL_VISIBLE);
+  }, [sortBy, selectedElements, filteredCard?.id, initialDecks.length]);
+
   const filteredAndSorted = useMemo(() => {
     let list = decks;
 
     if (selectedElements.length > 0) {
       list = list.filter((item) => {
-        const elems = (item.deckElements || []) as ElementType[];
+        const elems = (item.deckElements ||
+          item.deck.deckElements ||
+          []) as ElementType[];
         if (elems.length === 0) return false;
         return selectedElements.every((e) => elems.includes(e));
       });
@@ -67,6 +77,9 @@ export default function PublicDecksClient({
 
     return sorted;
   }, [decks, selectedElements, sortBy]);
+
+  const displayedDecks = filteredAndSorted.slice(0, visibleCount);
+  const canLoadMore = filteredAndSorted.length > visibleCount;
 
   return (
     <div className='mx-auto px-6 py-8 max-w-[95%]'>
@@ -152,7 +165,7 @@ export default function PublicDecksClient({
           sortTransition ? "opacity-50 scale-95" : "opacity-100 scale-100"
         }`}>
         <DeckGrid
-          decksWithUserInfo={filteredAndSorted}
+          decksWithUserInfo={displayedDecks}
           emptyMessage={
             filteredCard
               ? `No decks found containing ${filteredCard.name}`
@@ -176,6 +189,21 @@ export default function PublicDecksClient({
           className='py-4'
         />
       </div>
+
+      {canLoadMore && (
+        <div className='mt-6 text-center'>
+          <button
+            type='button'
+            onClick={() =>
+              setVisibleCount((prev) =>
+                Math.min(prev + LOAD_MORE_STEP, filteredAndSorted.length)
+              )
+            }
+            className='inline-flex items-center justify-center px-4 py-2 text-sm rounded-md bg-algomancy-purple/30 hover:bg-algomancy-purple/50 text-white transition-colors'>
+            Load more
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -38,6 +38,7 @@ interface DeckGridProps {
   viewAllLink?: string;
   viewAllText?: string;
   maxDisplay?: number;
+  onDeckLikeChange?: (deckId: string, liked: boolean, likes: number) => void;
   columns?: {
     sm?: number;
     md?: number;
@@ -60,6 +61,7 @@ export default function DeckGrid({
   viewAllLink,
   viewAllText,
   maxDisplay,
+  onDeckLikeChange,
   columns = {
     sm: 1,
     md: 2,
@@ -141,6 +143,12 @@ export default function DeckGrid({
                 cards={cards}
                 deckElements={deckElements}
                 isLikedByCurrentUser={isLikedByCurrentUser} // 🎯 Pass optimized like status
+                onLikeChange={
+                  onDeckLikeChange
+                    ? (liked, likes) =>
+                        onDeckLikeChange(deck._id.toString(), liked, likes)
+                    : undefined
+                }
               />
             );
           } else {
@@ -160,6 +168,12 @@ export default function DeckGrid({
                 user={deckUser || { name: "Unknown", username: null }}
                 cards={cards}
                 // isLikedByCurrentUser is undefined, so LikeButton will fetch it
+                onLikeChange={
+                  onDeckLikeChange
+                    ? (liked, likes) =>
+                        onDeckLikeChange(deck._id.toString(), liked, likes)
+                    : undefined
+                }
               />
             );
           }

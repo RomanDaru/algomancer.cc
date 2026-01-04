@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Deck } from "@/app/lib/types/user";
-import { Card } from "@/app/lib/types/card";
-import { formatDistanceToNow } from "date-fns";
 import { toast, Toaster } from "react-hot-toast";
 import DeckGrid from "@/app/components/DeckGrid";
 import GuestDeckMigrationBanner from "@/app/components/GuestDeckMigrationBanner";
@@ -16,7 +14,6 @@ export default function MyDecks() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMigrationBanner, setShowMigrationBanner] = useState(false);
@@ -53,7 +50,7 @@ export default function MyDecks() {
     }
   }, [status]);
 
-  // Fetch user's decks and cards
+  // Fetch user's decks
   useEffect(() => {
     async function fetchData() {
       try {
@@ -64,16 +61,6 @@ export default function MyDecks() {
         }
         const decksData = await decksResponse.json();
         setDecks(decksData);
-
-        // Fetch all cards for element display (with cache control)
-        const cardsResponse = await fetch("/api/cards", {
-          next: { revalidate: 300 }, // Cache for 5 minutes
-        });
-        if (!cardsResponse.ok) {
-          throw new Error("Failed to fetch cards");
-        }
-        const cardsData = await cardsResponse.json();
-        setCards(cardsData);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError(error instanceof Error ? error.message : "An error occurred");
@@ -147,7 +134,6 @@ export default function MyDecks() {
 
         <DeckGrid
           decks={decks}
-          cards={cards}
           user={{
             name: session.user.name || "",
             username: username,

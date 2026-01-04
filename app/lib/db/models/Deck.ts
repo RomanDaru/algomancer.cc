@@ -24,6 +24,8 @@ const DeckSchema = new Schema(
     youtubeUrl: { type: String }, // YouTube video URL for deck showcase
     userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     cards: { type: [DeckCardSchema], default: [] },
+    deckElements: { type: [String], default: ["Colorless"] },
+    totalCards: { type: Number, default: 0 },
     isPublic: { type: Boolean, default: false },
     views: { type: Number, default: 0 }, // Track number of views
     viewedBy: { type: [String], default: [] }, // Store IPs or session IDs that have viewed the deck
@@ -59,6 +61,8 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
     youtubeUrl: deck.youtubeUrl,
     userId: deck.userId,
     cards: deck.cards,
+    deckElements: deck.deckElements || [],
+    totalCards: typeof deck.totalCards === "number" ? deck.totalCards : undefined,
     createdAt: deck.createdAt,
     updatedAt: deck.updatedAt,
     isPublic: deck.isPublic,
@@ -78,6 +82,8 @@ export function convertAggregationToDeck(obj: any): DeckType {
     youtubeUrl: obj.youtubeUrl,
     userId: obj.userId,
     cards: obj.cards || [],
+    deckElements: obj.deckElements || [],
+    totalCards: typeof obj.totalCards === "number" ? obj.totalCards : undefined,
     createdAt: obj.createdAt,
     updatedAt: obj.updatedAt,
     isPublic: obj.isPublic,
@@ -100,6 +106,8 @@ export function convertToDeck(input: DeckDocument | any): DeckType {
     youtubeUrl: obj.youtubeUrl,
     userId: obj.userId,
     cards: obj.cards || [],
+    deckElements: obj.deckElements || [],
+    totalCards: typeof obj.totalCards === "number" ? obj.totalCards : undefined,
     createdAt: obj.createdAt,
     updatedAt: obj.updatedAt,
     isPublic: obj.isPublic,
@@ -121,5 +129,7 @@ export function convertDeckToDocument(
     userId: deck.userId,
     cards: deck.cards,
     isPublic: deck.isPublic,
+    deckElements: deck.deckElements,
+    totalCards: deck.totalCards,
   };
 }

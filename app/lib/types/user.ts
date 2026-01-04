@@ -25,6 +25,8 @@ export interface Deck {
   youtubeUrl?: string; // YouTube video URL for deck showcase
   userId: ObjectId;
   cards: DeckCard[];
+  deckElements?: string[];
+  totalCards?: number;
   createdAt: Date;
   updatedAt: Date;
   isPublic: boolean;

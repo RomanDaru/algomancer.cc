@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Deck } from "@/app/lib/types/user";
-import { Card } from "@/app/lib/types/card";
 import { toast, Toaster } from "react-hot-toast";
 import DeckGrid from "@/app/components/DeckGrid";
 
@@ -15,13 +14,14 @@ interface DeckWithUser {
     name: string;
     username: string | null;
   };
+  isLikedByCurrentUser: boolean;
+  deckElements?: string[];
 }
 
 export default function LikedDecksPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [decks, setDecks] = useState<DeckWithUser[]>([]);
-  const [cards, setCards] = useState<Card[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Redirect if not authenticated
@@ -33,7 +33,7 @@ export default function LikedDecksPage() {
     }
   }, [session, status, router]);
 
-  // Fetch liked decks and cards
+  // Fetch liked decks
   useEffect(() => {
     async function fetchData() {
       if (!session?.user?.id) return;
@@ -41,27 +41,20 @@ export default function LikedDecksPage() {
       try {
         setLoading(true);
 
-        // Fetch liked decks and cards in parallel
-        const [likedDecksResponse, cardsResponse] = await Promise.all([
-          fetch("/api/user/liked-decks"),
-          fetch("/api/cards"),
-        ]);
+        const likedDecksResponse = await fetch("/api/user/liked-decks");
 
         if (!likedDecksResponse.ok) {
           throw new Error("Failed to fetch liked decks");
         }
 
-        if (!cardsResponse.ok) {
-          throw new Error("Failed to fetch cards");
-        }
-
-        const [likedDecksData, cardsData] = await Promise.all([
-          likedDecksResponse.json(),
-          cardsResponse.json(),
-        ]);
-
-        setDecks(likedDecksData);
-        setCards(cardsData);
+        const likedDecksData = await likedDecksResponse.json();
+        const normalized = Array.isArray(likedDecksData)
+          ? likedDecksData.map((item) => ({
+              ...item,
+              isLikedByCurrentUser: Boolean(item.isLikedByCurrentUser),
+            }))
+          : [];
+        setDecks(normalized);
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load liked decks");
@@ -120,18 +113,18 @@ export default function LikedDecksPage() {
 
         {/* Liked Decks Grid */}
         <DeckGrid
-          decks={decks.map(item => item.deck)}
-          cards={cards}
-          users={decks.reduce((acc, { deck, user }) => {
-            if (deck.userId) {
-              acc[deck.userId.toString()] = user;
-            }
-            return acc;
-          }, {} as Record<string, { name: string; username: string | null }>)}
+          decksWithUserInfo={decks}
           emptyMessage="You haven't liked any decks yet."
           emptyAction={{
             text: "Browse Community Decks",
             link: "/decks",
+          }}
+          onDeckLikeChange={(deckId, liked) => {
+            if (!liked) {
+              setDecks((prev) =>
+                prev.filter((item) => item.deck._id.toString() !== deckId)
+              );
+            }
           }}
           columns={{ sm: 1, md: 2, lg: 2, xl: 3 }}
           className="py-4"

@@ -6,16 +6,26 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Deck } from "@/app/lib/types/user";
-import { Card } from "@/app/lib/types/card";
-import { formatDistanceToNow } from "date-fns";
 import DeckGrid from "@/app/components/DeckGrid";
 
 export default function Profile() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [decks, setDecks] = useState<Deck[]>([]);
-  const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [likedDecks, setLikedDecks] = useState<
+    Array<{
+      deck: Deck;
+      user: { name: string; username: string | null };
+      isLikedByCurrentUser: boolean;
+      deckElements?: string[];
+    }>
+  >([]);
+  const [likedDecksLoading, setLikedDecksLoading] = useState(false);
+  const [likedDecksLoaded, setLikedDecksLoaded] = useState(false);
+  const [shouldLoadLikedDecks, setShouldLoadLikedDecks] = useState(false);
+  const [likedDecksTarget, setLikedDecksTarget] =
+    useState<HTMLDivElement | null>(null);
 
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -24,7 +34,7 @@ export default function Profile() {
     }
   }, [status, router]);
 
-  // Fetch user's decks and cards
+  // Fetch user's decks
   useEffect(() => {
     async function fetchData() {
       if (status === "authenticated") {
@@ -38,16 +48,6 @@ export default function Profile() {
           }
           const decksData = await decksResponse.json();
           setDecks(decksData);
-
-          // Fetch all cards for element display (with cache control)
-          const cardsResponse = await fetch("/api/cards", {
-            next: { revalidate: 300 }, // Cache for 5 minutes
-          });
-          if (!cardsResponse.ok) {
-            throw new Error("Failed to fetch cards");
-          }
-          const cardsData = await cardsResponse.json();
-          setCards(cardsData);
         } catch (error) {
           console.error("Error fetching data:", error);
         } finally {
@@ -58,6 +58,70 @@ export default function Profile() {
 
     fetchData();
   }, [status]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (shouldLoadLikedDecks) return;
+    const target = likedDecksTarget;
+    if (!target) return;
+
+    if (!("IntersectionObserver" in window)) {
+      setShouldLoadLikedDecks(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setShouldLoadLikedDecks(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [status, shouldLoadLikedDecks, likedDecksTarget]);
+
+  useEffect(() => {
+    async function fetchLikedDecks() {
+      if (!session?.user?.id) return;
+
+      try {
+        setLikedDecksLoading(true);
+        const response = await fetch("/api/user/liked-decks");
+        if (!response.ok) {
+          throw new Error("Failed to fetch liked decks");
+        }
+        const data = await response.json();
+        const normalized = Array.isArray(data)
+          ? data.map((item) => ({
+              ...item,
+              isLikedByCurrentUser: Boolean(item.isLikedByCurrentUser),
+            }))
+          : [];
+        setLikedDecks(normalized);
+      } catch (error) {
+        console.error("Error fetching liked decks:", error);
+        setLikedDecks([]);
+      } finally {
+        setLikedDecksLoading(false);
+        setLikedDecksLoaded(true);
+      }
+    }
+
+    if (!shouldLoadLikedDecks || likedDecksLoaded || likedDecksLoading) {
+      return;
+    }
+
+    fetchLikedDecks();
+  }, [
+    shouldLoadLikedDecks,
+    likedDecksLoaded,
+    likedDecksLoading,
+    session?.user?.id,
+  ]);
 
   if (status === "loading" || isLoading) {
     return (
@@ -149,7 +213,6 @@ export default function Profile() {
                 </div>
                 <DeckGrid
                   decks={decks}
-                  cards={cards}
                   user={{
                     name: session.user.name || "",
                     username: username,
@@ -176,15 +239,44 @@ export default function Profile() {
                     View All
                   </Link>
                 </div>
-                <div className='text-center py-8 text-gray-400'>
-                  <p className='mb-4'>
-                    ❤️ Discover and like amazing decks from the community!
-                  </p>
-                  <Link
-                    href='/decks'
-                    className='inline-block px-4 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark rounded-md text-white text-sm transition-colors'>
-                    Browse Community Decks
-                  </Link>
+                <div ref={setLikedDecksTarget}>
+                  {shouldLoadLikedDecks ? (
+                    likedDecksLoading ? (
+                      <div className='flex justify-center items-center py-6'>
+                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-algomancy-purple'></div>
+                      </div>
+                    ) : (
+                      <DeckGrid
+                        decksWithUserInfo={likedDecks.slice(0, 3)}
+                        emptyMessage="You haven't liked any decks yet."
+                        emptyAction={{
+                          text: "Browse Community Decks",
+                          link: "/decks",
+                        }}
+                        onDeckLikeChange={(deckId, liked) => {
+                          if (!liked) {
+                            setLikedDecks((prev) =>
+                              prev.filter(
+                                (item) => item.deck._id.toString() !== deckId
+                              )
+                            );
+                          }
+                        }}
+                        columns={{ sm: 1, md: 1, lg: 1, xl: 1 }}
+                      />
+                    )
+                  ) : (
+                    <div className='text-center py-8 text-gray-400'>
+                      <p className='mb-4'>
+                        Discover and like amazing decks from the community!
+                      </p>
+                      <Link
+                        href='/decks'
+                        className='inline-block px-4 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark rounded-md text-white text-sm transition-colors'>
+                        Browse Community Decks
+                      </Link>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

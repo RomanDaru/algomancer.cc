@@ -1,4 +1,5 @@
 import { Deck, DeckCard } from "../../types/user";
+import { Card } from "../../types/card";
 import { connectToDatabase } from "../mongodb";
 import {
   DeckModel,
@@ -10,6 +11,7 @@ import { ObjectId } from "mongodb";
 
 // Single database connection instance
 let dbConnection: any = null;
+const BASIC_ELEMENTS = ["Fire", "Water", "Earth", "Wood", "Metal"];
 
 /**
  * Ensure database connection is established
@@ -20,6 +22,62 @@ async function ensureDbConnection() {
     dbConnection = await connectToDatabase();
   }
   return dbConnection;
+}
+
+async function computeDeckSummary(cards: DeckCard[]): Promise<{
+  deckElements: string[];
+  totalCards: number;
+}> {
+  const totalCards = cards.reduce((sum, card) => sum + card.quantity, 0);
+
+  if (!cards || cards.length === 0) {
+    return { deckElements: ["Colorless"], totalCards };
+  }
+
+  const uniqueCardIds = Array.from(
+    new Set(cards.map((card) => card.cardId).filter(Boolean))
+  );
+
+  if (uniqueCardIds.length === 0) {
+    return { deckElements: ["Colorless"], totalCards };
+  }
+
+  const connection = await ensureDbConnection();
+  if (!connection || !connection.db) {
+    return { deckElements: ["Colorless"], totalCards };
+  }
+
+  const cardDocs = await connection.db
+    .collection("cards")
+    .find(
+      { originalId: { $in: uniqueCardIds } },
+      { projection: { originalId: 1, "element.type": 1 } }
+    )
+    .toArray();
+
+  const elementSet = new Set<string>();
+  for (const card of cardDocs) {
+    const elementType = card?.element?.type;
+    if (typeof elementType !== "string") continue;
+
+    const parts = elementType.includes("/")
+      ? elementType.split("/")
+      : [elementType];
+
+    for (const part of parts) {
+      const trimmed = part.trim();
+      if (BASIC_ELEMENTS.includes(trimmed)) {
+        elementSet.add(trimmed);
+      }
+    }
+  }
+
+  const deckElements =
+    elementSet.size > 0
+      ? BASIC_ELEMENTS.filter((element) => elementSet.has(element))
+      : ["Colorless"];
+
+  return { deckElements, totalCards };
 }
 
 /**
@@ -117,15 +175,6 @@ export const deckDbService = {
             as: "userInfo",
           },
         },
-        // Join with cards collection to get element information
-        {
-          $lookup: {
-            from: "cards",
-            localField: "cards.cardId",
-            foreignField: "originalId",
-            as: "deckCardDetails",
-          },
-        },
         {
           $addFields: {
             user: {
@@ -148,32 +197,7 @@ export const deckDbService = {
                 { name: "Unknown User", username: null },
               ],
             },
-            // Calculate deck elements from card data
-            // Derive basic element set from card element.type (supports hybrid like "Fire/Water")
-            deckElements: {
-              $reduce: {
-                input: "$deckCardDetails",
-                initialValue: [],
-                in: {
-                  $setUnion: [
-                    "$$value",
-                    {
-                      $cond: [
-                        { $ne: ["$$this.element.type", null] },
-                        {
-                          $cond: [
-                            { $gt: [{ $indexOfBytes: ["$$this.element.type", "/"] }, -1] },
-                            { $split: ["$$this.element.type", "/"] },
-                            ["$$this.element.type"],
-                          ],
-                        },
-                        [],
-                      ],
-                    },
-                  ],
-                },
-              },
-            },
+            deckElements: { $ifNull: ["$deckElements", []] },
             // Add like status for current user if provided
             isLikedByCurrentUser: currentUserId
               ? {
@@ -200,7 +224,6 @@ export const deckDbService = {
       pipeline.push({
         $project: {
           userInfo: 0,
-          deckCardDetails: 0,
         },
       });
 
@@ -270,7 +293,12 @@ export const deckDbService = {
   async createDeck(deck: Partial<Deck>): Promise<Deck> {
     try {
       await ensureDbConnection();
-      const deckDoc = new DeckModel(convertDeckToDocument(deck));
+      const summary = await computeDeckSummary(deck.cards || []);
+      const deckDoc = new DeckModel({
+        ...convertDeckToDocument(deck),
+        deckElements: summary.deckElements,
+        totalCards: summary.totalCards,
+      });
       await deckDoc.save();
       return convertDocumentToDeck(deckDoc);
     } catch (error) {
@@ -285,9 +313,23 @@ export const deckDbService = {
   async updateDeck(id: string, deck: Partial<Deck>): Promise<Deck | null> {
     try {
       await ensureDbConnection();
+      const updateData = convertDeckToDocument(deck);
+      const cardsToUpdate = Array.isArray(deck.cards) ? deck.cards : null;
+
+      if (cardsToUpdate !== null) {
+        const summary = await computeDeckSummary(cardsToUpdate);
+        updateData.cards = cardsToUpdate;
+        updateData.deckElements = summary.deckElements;
+        updateData.totalCards = summary.totalCards;
+      } else {
+        delete updateData.cards;
+        delete updateData.deckElements;
+        delete updateData.totalCards;
+      }
+
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(id),
-        { $set: convertDeckToDocument(deck) },
+        { $set: updateData },
         { new: true }
       );
       return deckDoc ? convertDocumentToDeck(deckDoc) : null;
@@ -401,6 +443,10 @@ export const deckDbService = {
         deck.cards.push({ cardId, quantity });
       }
 
+      const summary = await computeDeckSummary(deck.cards);
+      deck.deckElements = summary.deckElements;
+      deck.totalCards = summary.totalCards;
+
       // Save the updated deck
       await deck.save();
 
@@ -442,6 +488,10 @@ export const deckDbService = {
           deck.cards.splice(existingCardIndex, 1);
         }
 
+        const summary = await computeDeckSummary(deck.cards);
+        deck.deckElements = summary.deckElements;
+        deck.totalCards = summary.totalCards;
+
         // Save the updated deck
         await deck.save();
       }
@@ -466,9 +516,16 @@ export const deckDbService = {
     try {
       await ensureDbConnection();
 
+      const summary = await computeDeckSummary(cards);
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(deckId),
-        { $set: { cards } },
+        {
+          $set: {
+            cards,
+            deckElements: summary.deckElements,
+            totalCards: summary.totalCards,
+          },
+        },
         { new: true }
       );
 

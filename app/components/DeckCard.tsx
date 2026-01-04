@@ -23,6 +23,7 @@ interface DeckCardProps {
   deckElements?: string[]; // 🎯 NEW: Server-provided deck elements
   className?: string;
   isLikedByCurrentUser?: boolean; // 🎯 NEW: Like status from optimized API
+  onLikeChange?: (liked: boolean, likes: number) => void;
 }
 
 export default function DeckCard({
@@ -32,9 +33,13 @@ export default function DeckCard({
   deckElements: serverDeckElements, // 🎯 NEW: Server-provided elements
   className = "",
   isLikedByCurrentUser, // 🎯 NEW: Receive like status
+  onLikeChange,
 }: DeckCardProps) {
   // Calculate total cards
-  const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
+  const totalCards =
+    typeof deck.totalCards === "number"
+      ? deck.totalCards
+      : deck.cards?.reduce((sum, card) => sum + card.quantity, 0) || 0;
 
   // Determine deck elements - prioritize server-provided elements
   let deckElements: ElementType[] = ["Colorless"];
@@ -42,6 +47,10 @@ export default function DeckCard({
   // Use server-provided elements if available
   if (serverDeckElements && serverDeckElements.length > 0) {
     deckElements = serverDeckElements as ElementType[];
+  }
+  // Use stored deck elements if present
+  else if (deck.deckElements && deck.deckElements.length > 0) {
+    deckElements = deck.deckElements as ElementType[];
   }
   // Fallback: Calculate from cards if available
   else if (cards && cards.length > 0 && deck.cards.length > 0) {
@@ -182,6 +191,7 @@ export default function DeckCard({
                     initialLiked={isLikedByCurrentUser} // 🎯 NEW: Pass optimized like status
                     size='sm'
                     showCount={true}
+                    onLikeChange={onLikeChange}
                   />
                 </div>
               </div>
@@ -221,4 +231,3 @@ export default function DeckCard({
 }
 
 // Import here to avoid circular dependency
-import { getDeckElements } from "@/app/lib/utils/elements";

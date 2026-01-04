@@ -2,10 +2,68 @@ import { Deck, DeckCard } from "../types/user";
 import { deckDbService } from "../db/services/deckDbService";
 import { cardService } from "./cardService";
 import { Card } from "../types/card";
+import { getAllDeckElements } from "../utils/elements";
 
 // Cache for decks
 let cachedUserDecks: Record<string, { decks: Deck[]; timestamp: number }> = {};
 const CACHE_TTL = 60 * 1000; // 1 minute
+
+async function addDeckElementsToDecks(decks: Deck[]): Promise<Deck[]> {
+  if (decks.length === 0) {
+    return decks;
+  }
+
+  const uniqueCardIds = new Set<string>();
+  for (const deck of decks) {
+    for (const deckCard of deck.cards || []) {
+      if (deckCard.cardId) {
+        uniqueCardIds.add(deckCard.cardId);
+      }
+    }
+  }
+
+  if (uniqueCardIds.size === 0) {
+    return decks.map((deck) => ({
+      ...deck,
+      deckElements:
+        deck.deckElements && deck.deckElements.length > 0
+          ? deck.deckElements
+          : ["Colorless"],
+      totalCards:
+        typeof deck.totalCards === "number"
+          ? deck.totalCards
+          : deck.cards.reduce((sum, card) => sum + card.quantity, 0),
+    }));
+  }
+
+  const cards = await cardService.getCardsByIds([...uniqueCardIds]);
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+
+  return decks.map((deck) => {
+    const cardsWithQuantities = (deck.cards || [])
+      .map((deckCard) => {
+        const card = cardMap.get(deckCard.cardId);
+        if (!card) return null;
+        return { card, quantity: deckCard.quantity };
+      })
+      .filter(Boolean) as { card: Card; quantity: number }[];
+
+    const deckElements =
+      cardsWithQuantities.length > 0
+        ? getAllDeckElements(cardsWithQuantities)
+        : ["Colorless"];
+    const totalCards =
+      typeof deck.totalCards === "number"
+        ? deck.totalCards
+        : deck.cards.reduce((sum, card) => sum + card.quantity, 0);
+
+    return {
+      ...deck,
+      deckElements,
+      totalCards,
+    };
+  });
+}
 
 /**
  * Service for deck operations
@@ -27,14 +85,15 @@ export const deckService = {
 
     try {
       const decks = await deckDbService.getUserDecks(userId);
+      const decksWithElements = await addDeckElementsToDecks(decks);
 
       // Update cache
       cachedUserDecks[userId] = {
-        decks,
+        decks: decksWithElements,
         timestamp: now,
       };
 
-      return decks;
+      return decksWithElements;
     } catch (error) {
       console.error(`Error getting decks for user ${userId}:`, error);
       throw error;
@@ -177,12 +236,53 @@ export const deckService = {
   > {
     try {
       // Use the optimized aggregation method from deckDbService
-      return await deckDbService.getPublicDecksWithUserInfo(
+      const results = await deckDbService.getPublicDecksWithUserInfo(
         sortBy,
         limit,
         skip,
         currentUserId
       );
+
+      if (results.length === 0) {
+        return results;
+      }
+
+      const uniqueCardIds = new Set<string>();
+      for (const item of results) {
+        for (const deckCard of item.deck.cards || []) {
+          uniqueCardIds.add(deckCard.cardId);
+        }
+      }
+
+      if (uniqueCardIds.size === 0) {
+        return results.map((item) => ({
+          ...item,
+          deckElements: item.deckElements?.length ? item.deckElements : ["Colorless"],
+        }));
+      }
+
+      const cards = await cardService.getCardsByIds([...uniqueCardIds]);
+      const cardMap = new Map(cards.map((card) => [card.id, card]));
+
+      return results.map((item) => {
+        const cardsWithQuantities = (item.deck.cards || [])
+          .map((deckCard) => {
+            const card = cardMap.get(deckCard.cardId);
+            if (!card) return null;
+            return { card, quantity: deckCard.quantity };
+          })
+          .filter(Boolean) as { card: Card; quantity: number }[];
+
+        const deckElements =
+          cardsWithQuantities.length > 0
+            ? getAllDeckElements(cardsWithQuantities)
+            : ["Colorless"];
+
+        return {
+          ...item,
+          deckElements,
+        };
+      });
     } catch (error) {
       console.error("Error getting public decks with user info:", error);
       throw error;
@@ -342,18 +442,29 @@ export const deckService = {
   async getUserLikedDecksWithUserInfo(
     userId: string
   ): Promise<
-    Array<{ deck: Deck; user: { name: string; username: string | null } }>
+    Array<{
+      deck: Deck;
+      user: { name: string; username: string | null };
+      isLikedByCurrentUser: boolean;
+      deckElements: string[];
+    }>
   > {
     try {
       const likedDecks = await this.getUserLikedDecks(userId);
+      const likedDecksWithElements = await addDeckElementsToDecks(likedDecks);
 
       // Get user information for each deck
       const decksWithUserInfo = await Promise.all(
-        likedDecks.map(async (deck) => {
+        likedDecksWithElements.map(async (deck) => {
           const user = await deckDbService.getDeckUserInfo(
             deck.userId.toString()
           );
-          return { deck, user };
+          return {
+            deck,
+            user,
+            isLikedByCurrentUser: true,
+            deckElements: deck.deckElements || [],
+          };
         })
       );
 

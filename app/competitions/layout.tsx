@@ -1,4 +1,7 @@
 import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const metadata: Metadata = {
   title: "Deck Building Competitions - Algomancer.cc",
@@ -20,10 +23,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CompetitionsLayout({
+export default async function CompetitionsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.isAdmin) {
+    redirect("/");
+  }
+
   return children;
 }

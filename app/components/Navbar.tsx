@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
@@ -11,11 +12,20 @@ import Image from "next/image";
  */
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const pathname = usePathname();
+  const showCompetitions = Boolean(session?.user?.isAdmin);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const menuButtonRef = useRef<HTMLDivElement>(null);
+  const desktopContainerRef = useRef<HTMLDivElement>(null);
+  const desktopLinkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const [desktopIndicator, setDesktopIndicator] = useState({
+    left: 0,
+    width: 0,
+    opacity: 0,
+  });
 
   // Handle menu toggle with a single function to avoid race conditions
   const handleMenuToggle = (
@@ -92,6 +102,66 @@ export default function Navbar() {
     };
   }, []);
 
+  const isActiveLink = (href: string) => {
+    if (!pathname) return false;
+    if (href === "/") return pathname === "/";
+    return pathname === href || pathname.startsWith(`${href}/`);
+  };
+
+  const getDesktopLinkClass = (href: string) =>
+    [
+      "px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  const getMobileLinkClass = (href: string) =>
+    [
+      "relative block px-3 py-2 rounded-md hover:bg-algomancy-purple/20 after:content-[''] after:absolute after:left-3 after:right-3 after:bottom-0.5 after:h-[2px] after:rounded-full after:bg-algomancy-purple after:origin-left after:scale-x-0 after:opacity-0 after:pointer-events-none after:transition-transform after:transition-opacity after:duration-200 after:ease-out",
+      isActiveLink(href) ? "after:scale-x-100 after:opacity-100" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  useEffect(() => {
+    const updateDesktopIndicator = () => {
+      const container = desktopContainerRef.current;
+      if (!container) return;
+
+      const linkCandidates = showCompetitions
+        ? ["/", "/cards", "/decks", "/competitions"]
+        : ["/", "/cards", "/decks"];
+      const activeHref = linkCandidates.find((href) => isActiveLink(href));
+
+      if (!activeHref) {
+        setDesktopIndicator({ left: 0, width: 0, opacity: 0 });
+        return;
+      }
+
+      const linkEl = desktopLinkRefs.current[activeHref];
+      if (!linkEl) {
+        setDesktopIndicator({ left: 0, width: 0, opacity: 0 });
+        return;
+      }
+
+      const containerRect = container.getBoundingClientRect();
+      const linkRect = linkEl.getBoundingClientRect();
+      const inset = 12;
+      const width = Math.max(0, linkRect.width - inset * 2);
+      const left = linkRect.left - containerRect.left + inset;
+
+      setDesktopIndicator({ left, width, opacity: 1 });
+    };
+
+    const rafId = requestAnimationFrame(updateDesktopIndicator);
+    window.addEventListener("resize", updateDesktopIndicator);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("resize", updateDesktopIndicator);
+    };
+  }, [pathname, showCompetitions]);
+
   return (
     <nav
       className='bg-algomancy-dark border-b border-algomancy-purple-DEFAULT/30 text-white'
@@ -111,67 +181,74 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <div className='hidden md:block'>
-            <ul
-              className='flex space-x-4'
-              role='menubar'
-              aria-label='Main menu'>
-              <li role='none'>
-                <Link
-                  href='/'
-                  className='px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block'
-                  role='menuitem'
-                  aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/"
-                      ? "page"
-                      : undefined
-                  }>
-                  Home
-                </Link>
-              </li>
-              <li role='none'>
-                <Link
-                  href='/cards'
-                  className='px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block'
-                  role='menuitem'
-                  aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/cards"
-                      ? "page"
-                      : undefined
-                  }>
-                  Cards
-                </Link>
-              </li>
-              <li role='none'>
-                <Link
-                  href='/decks'
-                  className='px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block'
-                  role='menuitem'
-                  aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/decks"
-                      ? "page"
-                      : undefined
-                  }>
-                  Decks
-                </Link>
-              </li>
-              <li role='none'>
-                <Link
-                  href='/competitions'
-                  className='px-3 py-2 rounded-md hover:bg-algomancy-purple-dark/30 inline-block'
-                  role='menuitem'
-                  aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/competitions"
-                      ? "page"
-                      : undefined
-                  }>
-                  Competitions
-                </Link>
-              </li>
-            </ul>
+            <div className='relative inline-block' ref={desktopContainerRef}>
+              <ul
+                className='flex space-x-4'
+                role='menubar'
+                aria-label='Main menu'>
+                <li role='none'>
+                  <Link
+                    href='/'
+                    className={getDesktopLinkClass("/")}
+                    role='menuitem'
+                    aria-current={isActiveLink("/") ? "page" : undefined}
+                    ref={(el) => {
+                      desktopLinkRefs.current["/"] = el;
+                    }}>
+                    Home
+                  </Link>
+                </li>
+                <li role='none'>
+                  <Link
+                    href='/cards'
+                    className={getDesktopLinkClass("/cards")}
+                    role='menuitem'
+                    aria-current={isActiveLink("/cards") ? "page" : undefined}
+                    ref={(el) => {
+                      desktopLinkRefs.current["/cards"] = el;
+                    }}>
+                    Cards
+                  </Link>
+                </li>
+                <li role='none'>
+                  <Link
+                    href='/decks'
+                    className={getDesktopLinkClass("/decks")}
+                    role='menuitem'
+                    aria-current={isActiveLink("/decks") ? "page" : undefined}
+                    ref={(el) => {
+                      desktopLinkRefs.current["/decks"] = el;
+                    }}>
+                    Decks
+                  </Link>
+                </li>
+              {showCompetitions && (
+                <li role='none'>
+                  <Link
+                    href='/competitions'
+                    className={getDesktopLinkClass("/competitions")}
+                    role='menuitem'
+                    aria-current={
+                      isActiveLink("/competitions") ? "page" : undefined
+                    }
+                    ref={(el) => {
+                      desktopLinkRefs.current["/competitions"] = el;
+                    }}>
+                    Competitions
+                  </Link>
+                </li>
+              )}
+              </ul>
+              <span
+                aria-hidden='true'
+                className='pointer-events-none absolute bottom-0.5 h-[2px] rounded-full bg-algomancy-purple transition-[left,width,opacity] duration-300 ease-out'
+                style={{
+                  left: desktopIndicator.left,
+                  width: desktopIndicator.width,
+                  opacity: desktopIndicator.opacity,
+                }}
+              />
+            </div>
           </div>
 
           {/* Placeholder for layout balance on mobile */}
@@ -393,14 +470,11 @@ export default function Navbar() {
               <li role='none'>
                 <Link
                   href='/'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  className={getMobileLinkClass("/")}
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                   role='menuitem'
                   aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/"
-                      ? "page"
-                      : undefined
+                    isActiveLink("/") ? "page" : undefined
                   }>
                   Home
                 </Link>
@@ -408,14 +482,11 @@ export default function Navbar() {
               <li role='none'>
                 <Link
                   href='/cards'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  className={getMobileLinkClass("/cards")}
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                   role='menuitem'
                   aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/cards"
-                      ? "page"
-                      : undefined
+                    isActiveLink("/cards") ? "page" : undefined
                   }>
                   Cards
                 </Link>
@@ -423,33 +494,29 @@ export default function Navbar() {
               <li role='none'>
                 <Link
                   href='/decks'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  className={getMobileLinkClass("/decks")}
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                   role='menuitem'
                   aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/decks"
-                      ? "page"
-                      : undefined
+                    isActiveLink("/decks") ? "page" : undefined
                   }>
                   Decks
                 </Link>
               </li>
-              <li role='none'>
-                <Link
-                  href='/competitions'
-                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
-                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
-                  role='menuitem'
-                  aria-current={
-                    typeof window !== "undefined" &&
-                    window.location.pathname === "/competitions"
-                      ? "page"
-                      : undefined
-                  }>
-                  Competitions
-                </Link>
-              </li>
+              {showCompetitions && (
+                <li role='none'>
+                  <Link
+                    href='/competitions'
+                    className={getMobileLinkClass("/competitions")}
+                    onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                    role='menuitem'
+                    aria-current={
+                      isActiveLink("/competitions") ? "page" : undefined
+                    }>
+                    Competitions
+                  </Link>
+                </li>
+              )}
             </ul>
 
             {status === "authenticated" && (

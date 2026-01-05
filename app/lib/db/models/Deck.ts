@@ -26,7 +26,7 @@ const DeckSchema = new Schema(
     cards: { type: [DeckCardSchema], default: [] },
     deckElements: { type: [String], default: ["Colorless"] },
     totalCards: { type: Number, default: 0 },
-    isPublic: { type: Boolean, default: false },
+    isPublic: { type: Boolean, default: true },
     views: { type: Number, default: 0 }, // Track number of views
     viewedBy: { type: [String], default: [] }, // Store IPs or session IDs that have viewed the deck
     likes: { type: Number, default: 0 }, // Track number of likes

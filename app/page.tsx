@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowRightIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
 import StructuredData from "./components/StructuredData";
 import { Metadata } from "next";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export const metadata: Metadata = {
   title: "Algomancy Deck Builder - Build Powerful Decks | Algomancer.cc",
@@ -32,13 +34,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const showCompetitions = Boolean(session?.user?.isAdmin);
+
   return (
     <>
       <StructuredData type='website' data={{}} />
       <StructuredData type='organization' data={{}} />
       <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-black'>
-        <div className='max-w-3xl w-full text-center mb-8 md:mb-16'>
+        <div className='max-w-3xl w-full text-center mb-8'>
           <h1 className='text-4xl md:text-6xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
             Algomancer.cc
           </h1>
@@ -58,7 +63,10 @@ export default function Home() {
           </div>
         </div>
 
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 w-full max-w-6xl'>
+        <div
+          className={`grid grid-cols-1 md:grid-cols-2 ${
+            showCompetitions ? "lg:grid-cols-4" : "lg:grid-cols-3"
+          } gap-4 md:gap-6 w-full max-w-6xl`}>
           <Link
             href='/decks/create'
             className='group flex flex-col items-center p-4 md:p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-purple/30 hover:border-algomancy-purple/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-purple/20 cursor-pointer'>
@@ -152,51 +160,47 @@ export default function Home() {
             </span>
           </Link>
 
-          <Link
-            href='/competitions'
-            className='group flex flex-col items-center p-4 md:p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-red-500/30 hover:border-red-500/70 transition-all duration-300 hover:shadow-md hover:shadow-red-500/20 cursor-pointer'>
-            <div className='w-12 h-12 md:w-12 md:h-12 mb-2 md:mb-4 rounded-full bg-red-500/20 flex items-center justify-center group-hover:bg-red-500/30 transition-all'>
-              <svg
-                xmlns='http://www.w3.org/2000/svg'
-                className='h-6 w-6 md:h-6 md:w-6 text-red-500'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'>
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={1.5}
-                  d='M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'
-                />
-              </svg>
-            </div>
-            <h2 className='text-lg md:text-xl font-bold text-white group-hover:text-red-500 transition-colors'>
-              Competitions
-            </h2>
-            {/* Desktop-only description and action text */}
-            <p className='hidden md:block text-gray-400 text-center text-sm mb-3 px-2'>
-              Join deck building competitions and showcase your skills
-            </p>
-            <span className='hidden md:flex items-center text-red-500 text-sm font-medium'>
-              Compete{" "}
-              <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
-            </span>
-          </Link>
+          {showCompetitions && (
+            <Link
+              href='/competitions'
+              className='group flex flex-col items-center p-4 md:p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-red-500/30 hover:border-red-500/70 transition-all duration-300 hover:shadow-md hover:shadow-red-500/20 cursor-pointer'>
+              <div className='w-12 h-12 md:w-12 md:h-12 mb-2 md:mb-4 rounded-full bg-red-500/20 flex items-center justify-center group-hover:bg-red-500/30 transition-all'>
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-6 w-6 md:h-6 md:w-6 text-red-500'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'>
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={1.5}
+                    d='M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z'
+                  />
+                </svg>
+              </div>
+              <h2 className='text-lg md:text-xl font-bold text-white group-hover:text-red-500 transition-colors'>
+                Competitions
+              </h2>
+              {/* Desktop-only description and action text */}
+              <p className='hidden md:block text-gray-400 text-center text-sm mb-3 px-2'>
+                Join deck building competitions and showcase your skills
+              </p>
+              <span className='hidden md:flex items-center text-red-500 text-sm font-medium'>
+                Compete{" "}
+                <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
+              </span>
+            </Link>
+          )}
         </div>
 
         {/* Promote the official Algomancy game */}
         <div className='w-full max-w-6xl mt-8'>
-          <div className='group relative overflow-hidden rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-gold/30 hover:border-algomancy-gold/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-gold/20 p-5 md:p-6'>
-            <div className='flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+          <div className='group relative overflow-hidden rounded-lg transition-all duration-300 p-5 md:p-6'>
+            <div className='flex flex-col md:flex-row items-center justify-between gap-4'>
               <div className='flex items-center'>
-                <div className='w-12 h-12 md:w-14 md:h-14 mr-3 md:mr-4 rounded-full bg-algomancy-gold/20 flex items-center justify-center'>
-                  <GlobeAltIcon
-                    className='w-7 h-7 md:w-8 md:h-8 text-algomancy-gold'
-                    aria-hidden='true'
-                  />
-                </div>
                 <div>
-                  <h2 className='text-lg md:text-xl font-bold text-white'>
+                  <h2 className='text-lg md:text-xl text-center font-bold text-white pb-2'>
                     Play Algomancy
                   </h2>
                   <p className='text-gray-300 text-sm md:text-base'>

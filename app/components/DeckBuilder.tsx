@@ -33,7 +33,7 @@ export default function DeckBuilder({
   initialDeckDescription = "",
   initialYouTubeUrl = "",
   initialDeckCards = [],
-  initialIsPublic = false,
+  initialIsPublic = true,
   deckId,
   isEditing = false,
   isGuestMode = false,
@@ -406,14 +406,14 @@ export default function DeckBuilder({
               <input
                 type='checkbox'
                 id='isPublic-mobile'
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
+                checked={!isPublic}
+                onChange={(e) => setIsPublic(!e.target.checked)}
                 className='mr-2'
               />
               <label
                 htmlFor='isPublic-mobile'
                 className='text-sm text-gray-300'>
-                Make this deck public
+                Make this deck private
               </label>
             </div>
 
@@ -501,12 +501,12 @@ export default function DeckBuilder({
               <input
                 type='checkbox'
                 id='isPublic'
-                checked={isPublic}
-                onChange={(e) => setIsPublic(e.target.checked)}
+                checked={!isPublic}
+                onChange={(e) => setIsPublic(!e.target.checked)}
                 className='mr-2'
               />
               <label htmlFor='isPublic' className='text-sm text-gray-300'>
-                Make this deck public
+                Make this deck private
               </label>
             </div>
 

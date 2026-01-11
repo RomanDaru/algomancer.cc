@@ -351,6 +351,14 @@ export default function Navbar() {
                           Profile
                         </Link>
                         <Link
+                          href='/game-logs'
+                          className='block px-4 py-2 text-sm hover:bg-algomancy-purple/20'
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          role='menuitem'
+                          tabIndex={0}>
+                          My Logs
+                        </Link>
+                        <Link
                           href='/profile/decks'
                           className='block px-4 py-2 text-sm hover:bg-algomancy-purple/20'
                           onClick={() => setIsProfileMenuOpen(false)}
@@ -553,6 +561,13 @@ export default function Navbar() {
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                 >
                   Profile
+                </Link>
+                <Link
+                  href='/game-logs'
+                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                >
+                  My Logs
                 </Link>
                 <Link
                   href='/profile/decks'

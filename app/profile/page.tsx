@@ -200,6 +200,19 @@ export default function Profile() {
 
           {/* Profile Content */}
           <div className='p-6 sm:p-8'>
+            <div className='flex flex-wrap items-center justify-between gap-3 mb-6'>
+              <div>
+                <h2 className='text-lg font-semibold text-white'>My Logs</h2>
+                <p className='text-sm text-gray-400'>
+                  Review and edit your recorded matches.
+                </p>
+              </div>
+              <Link
+                href='/game-logs'
+                className='px-4 py-2 text-sm rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark'>
+                View My Logs
+              </Link>
+            </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* My Decks Section */}
               <div className='bg-algomancy-dark border border-algomancy-purple/20 rounded-lg p-6'>

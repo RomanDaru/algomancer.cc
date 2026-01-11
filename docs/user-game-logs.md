@@ -50,14 +50,14 @@ Phase 2: Create UI (incremental)
 - [x] 13. Wire submit to POST API + show success/error state.
 
 Phase 3: List + detail + edit
-- [ ] 14. Create `/game-logs` list view + filters (format/outcome).
-- [ ] 15. Create `/game-logs/[id]` detail view.
-- [ ] 16. Add edit mode + PATCH wiring for owner.
-- [ ] 17. Add delete action + confirmation.
+- [x] 14. Create `/game-logs` list view + filters (format/outcome).
+- [x] 15. Create `/game-logs/[id]` detail view.
+- [x] 16. Add edit mode + PATCH wiring for owner.
+- [x] 17. Add delete action + confirmation.
 
 Phase 4: Polish + QA
-- [ ] 18. Add loading + empty states, minor UI polish.
-- [ ] 19. Add tests (model + API validation + UI smoke).
+- [x] 18. Add loading + empty states, minor UI polish.
+- [x] 19. Add tests (model + API validation + UI smoke).
 
 ## Engineering Notes
 - Session polling reduced: `SessionProvider` now uses `refetchInterval={0}` and `refetchOnWindowFocus={false}` to minimize `/api/auth/session` spam. Restore polling by setting a non-zero interval if needed.

@@ -34,6 +34,8 @@ export default function GameLogDetailPage() {
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState(false);
   const [deckLookup, setDeckLookup] = useState<Record<string, string>>({});
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const logId = typeof params?.id === "string" ? params.id : "";
 
@@ -172,6 +174,33 @@ export default function GameLogDetailPage() {
     return date.toLocaleString();
   };
 
+  const handleDelete = async () => {
+    if (!logId || isDeleting) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this game log? This cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      const response = await fetch(`/api/game-logs/${logId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || "Failed to delete game log");
+      }
+      router.push("/game-logs");
+    } catch (err) {
+      setDeleteError(
+        err instanceof Error ? err.message : "Failed to delete game log"
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
@@ -217,16 +246,25 @@ export default function GameLogDetailPage() {
             className='text-sm text-algomancy-purple hover:text-algomancy-gold transition-colors'>
             Back to logs
           </Link>
-          <div className='flex flex-wrap items-center gap-3'>
-            <h1 className='text-2xl font-bold text-white'>{log.title}</h1>
-            <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
-                log.isPublic
-                  ? "bg-algomancy-gold/20 text-algomancy-gold"
-                  : "bg-white/10 text-gray-300"
-              }`}>
-              {log.isPublic ? "Public" : "Private"}
-            </span>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <div className='flex flex-wrap items-center gap-3'>
+              <h1 className='text-2xl font-bold text-white'>{log.title}</h1>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium ${
+                  log.isPublic
+                    ? "bg-algomancy-gold/20 text-algomancy-gold"
+                    : "bg-white/10 text-gray-300"
+                }`}>
+                {log.isPublic ? "Public" : "Private"}
+              </span>
+            </div>
+            {isOwner && (
+              <Link
+                href={`/game-logs/${logId}/edit`}
+                className='inline-flex items-center justify-center rounded-md bg-algomancy-purple px-4 py-2 text-sm text-white hover:bg-algomancy-purple-dark transition-colors'>
+                Edit Log
+              </Link>
+            )}
           </div>
           <p className='text-sm text-gray-400'>{formatPlayedAt(log.playedAt)}</p>
         </div>
@@ -510,10 +548,20 @@ export default function GameLogDetailPage() {
         </div>
 
         {isOwner && (
-          <div className='text-xs text-gray-500'>
-            Edit and delete controls will be added next.
+          <div className='flex items-center justify-end gap-3'>
+            {deleteError && (
+              <span className='text-xs text-red-300'>{deleteError}</span>
+            )}
+            <button
+              type='button'
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className='inline-flex items-center justify-center rounded-md border border-red-500/50 px-4 py-2 text-sm text-red-200 transition-colors hover:border-red-400 disabled:opacity-50'>
+              {isDeleting ? "Deleting..." : "Delete Log"}
+            </button>
           </div>
         )}
+
       </div>
     </div>
   );

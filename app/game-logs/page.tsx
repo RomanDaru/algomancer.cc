@@ -30,26 +30,30 @@ const OUTCOME_OPTIONS = [
 
 const PAGE_SIZES = [12, 24, 48, 96];
 
-const FORMAT_STYLES: Record<
-  string,
-  { stripe: string; glow: string; glowHover: string }
-> = {
-  constructed: {
-    stripe: "bg-gradient-to-r from-algomancy-gold via-algomancy-gold-dark to-algomancy-gold",
-    glow: "bg-gradient-to-br from-algomancy-gold/15 via-transparent to-transparent",
-    glowHover: "group-hover:from-algomancy-gold/30",
-  },
-  live_draft: {
-    stripe: "bg-gradient-to-r from-algomancy-purple via-algomancy-purple-dark to-algomancy-purple",
-    glow: "bg-gradient-to-br from-algomancy-purple/20 via-transparent to-transparent",
-    glowHover: "group-hover:from-algomancy-purple/35",
-  },
+const FORMAT_COLORS: Record<string, { base: string }> = {
+  constructed: { base: "#f9c74f" },
+  live_draft: { base: "#7b2cbf" },
 };
 
-const OUTCOME_BADGE: Record<string, string> = {
-  win: "border-emerald-400/40 bg-emerald-500/20 text-emerald-200",
-  loss: "border-red-400/40 bg-red-500/20 text-red-200",
-  draw: "border-amber-400/40 bg-amber-500/20 text-amber-200",
+const OUTCOME_COLORS: Record<string, string> = {
+  win: "#00ff86",
+  loss: "#ff0033",
+  draw: "#f59e0b",
+};
+
+const hexToRgba = (hex: string, alpha: number) => {
+  const normalized = hex.replace("#", "");
+  if (normalized.length !== 6) return `rgba(0,0,0,${alpha})`;
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+const OUTCOME_TEXT: Record<string, string> = {
+  win: "text-emerald-300",
+  loss: "text-red-300",
+  draw: "text-amber-300",
 };
 
 export default function GameLogsPage() {
@@ -258,18 +262,34 @@ export default function GameLogsPage() {
         ) : (
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
             {logs.map((log) => {
-              const style = FORMAT_STYLES[log.format];
+              const baseColor = FORMAT_COLORS[log.format]?.base || "#7b2cbf";
+              const outcomeColor = OUTCOME_COLORS[log.outcome] || baseColor;
+              const stripeStyle = {
+                backgroundColor: baseColor,
+              };
+              const glowStyle = {
+                background: `linear-gradient(135deg, ${hexToRgba(
+                  baseColor,
+                  0.11
+                )} 0%, ${hexToRgba(outcomeColor, 0.35)} 100%)`,
+              };
+              const glowHoverStyle = {
+                background: `linear-gradient(135deg, ${hexToRgba(
+                  baseColor,
+                  0.18
+                )} 0%, ${hexToRgba(outcomeColor, 0.45)} 100%)`,
+              };
               return (
                 <Link
                   key={log._id.toString()}
                   href={`/game-logs/${log._id}`}
                   className='group relative h-[190px] overflow-hidden rounded-lg border border-white/10 bg-black/30 transition-colors'>
+                  <div className='absolute inset-0 opacity-70' style={glowStyle} />
                   <div
-                    className={`absolute inset-0 transition-opacity ${style?.glow || ""} ${
-                      style?.glowHover || ""
-                    }`}
+                    className='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'
+                    style={glowHoverStyle}
                   />
-                  <div className={`absolute inset-x-0 top-0 h-1.5 ${style?.stripe || ""}`} />
+                  <div className='absolute inset-x-0 top-0 h-1.5' style={stripeStyle} />
                   <div className='relative flex h-full flex-col p-4'>
                     <div className='flex items-start justify-between gap-3'>
                       <div className='min-w-0'>
@@ -286,26 +306,26 @@ export default function GameLogsPage() {
                       </span>
                     </div>
 
-                    <div className='mt-auto flex flex-wrap gap-2 text-xs text-gray-300 pt-3'>
-                      <span className='rounded-full border border-white/10 px-2 py-1'>
-                        {log.format === "constructed"
-                          ? "Constructed"
-                          : "Live Draft"}
-                      </span>
-                      <span
-                        className={`rounded-full border px-2 py-1 text-xs font-semibold uppercase tracking-wide ${
-                          OUTCOME_BADGE[log.outcome] || "border-white/10 text-gray-300"
-                        }`}>
-                        {log.outcome}
-                      </span>
-                      <span className='rounded-full border border-white/10 px-2 py-1 uppercase'>
-                        {log.matchType}
-                      </span>
-                      {log.durationMinutes > 0 && (
-                        <span className='rounded-full border border-white/10 px-2 py-1'>
-                          {log.durationMinutes}m
+                    <div className='mt-auto pt-3 text-xs text-gray-300'>
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <span>
+                          {log.format === "constructed"
+                            ? "Constructed"
+                            : "Live Draft"}
                         </span>
-                      )}
+                        <span className='text-gray-500'>|</span>
+                        <span className={`font-semibold uppercase ${OUTCOME_TEXT[log.outcome] || ""}`}>
+                          {log.outcome}
+                        </span>
+                        <span className='text-gray-500'>|</span>
+                        <span className='uppercase'>{log.matchType}</span>
+                        {log.durationMinutes > 0 && (
+                          <>
+                            <span className='text-gray-500'>|</span>
+                            <span>{log.durationMinutes}m</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </Link>

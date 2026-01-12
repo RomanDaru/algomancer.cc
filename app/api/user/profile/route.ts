@@ -29,8 +29,12 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     console.log("Request body:", JSON.stringify(body, null, 2));
 
-    const { name, username } = body;
+    const { name, username, includePrivateLogsInCommunityStats } = body;
     const usernameValue = typeof username === "string" ? username : "";
+    const includePrivateLogsValue =
+      typeof includePrivateLogsInCommunityStats === "boolean"
+        ? includePrivateLogsInCommunityStats
+        : undefined;
 
     // Validate input
     if (!name) {
@@ -103,14 +107,20 @@ export async function PUT(request: NextRequest) {
       const userId = new ObjectId(session.user.id);
       console.log("User ID as ObjectId:", userId.toString());
 
+      const updateFields: Record<string, any> = {
+        name,
+        username: usernameValue || null,
+        updatedAt: new Date(),
+      };
+
+      if (includePrivateLogsValue !== undefined) {
+        updateFields.includePrivateLogsInCommunityStats = includePrivateLogsValue;
+      }
+
       const result = await db.collection("users").updateOne(
         { _id: userId },
         {
-          $set: {
-            name,
-            username: usernameValue || null,
-            updatedAt: new Date(),
-          },
+          $set: updateFields,
         }
       );
 
@@ -142,6 +152,8 @@ export async function PUT(request: NextRequest) {
         name: updatedUser.name,
         username: updatedUser.username || null,
         email: updatedUser.email,
+        includePrivateLogsInCommunityStats:
+          updatedUser.includePrivateLogsInCommunityStats || false,
       });
     } catch (error) {
       console.error("Error in database operations:", error);

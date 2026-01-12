@@ -125,6 +125,8 @@ export async function POST(request: Request) {
       createdAt: new Date(),
       updatedAt: new Date(),
       image: null,
+      includePrivateLogsInCommunityStats: false,
+      achievementXp: 0,
       emailVerified: null,
       emailVerificationToken: verificationToken,
       emailVerificationTokenExpiry: verificationTokenExpiry,

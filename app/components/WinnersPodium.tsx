@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TrophyIcon, StarIcon } from "@heroicons/react/24/outline";
 import { CompetitionWinner, Competition } from "@/app/lib/types/user";
 import Badge, { BADGE_CONFIGS } from "./Badge";
+import UserNameWithRank from "./UserNameWithRank";
 
 interface WinnersPodiumProps {
   winners: CompetitionWinner[];
@@ -70,15 +71,16 @@ export default function WinnersPodium({
             {/* Winner Name */}
             {winner.user && (
               <div className='font-medium mb-2'>
-                {winner.user.username ? (
-                  <span className='text-algomancy-gold'>
-                    @{winner.user.username}
-                  </span>
-                ) : (
-                  <span className='text-gray-300'>
-                    {winner.user.name || "Unknown User"}
-                  </span>
-                )}
+                <UserNameWithRank
+                  name={winner.user.name}
+                  username={winner.user.username || null}
+                  achievementXp={winner.user.achievementXp}
+                  className={
+                    winner.user.username ? "text-algomancy-gold" : "text-gray-300"
+                  }
+                  iconClassName='text-algomancy-gold'
+                  iconSize={14}
+                />
               </div>
             )}
 

@@ -12,12 +12,14 @@ import {
   generateElementGradient,
   getAllDeckElements,
 } from "@/app/lib/utils/elements";
+import UserNameWithRank from "./UserNameWithRank";
 
 interface DeckCardProps {
   deck: Deck;
   user: {
     name: string;
     username: string | null;
+    achievementXp?: number;
   };
   cards?: Card[];
   deckElements?: string[]; // 🎯 NEW: Server-provided deck elements
@@ -205,13 +207,16 @@ export default function DeckCard({
             <div className='flex items-center justify-between mt-2 text-sm'>
               <div className='flex items-center'>
                 <span className='text-white/80'>By </span>
-                {user.username ? (
-                  <span className='text-white ml-1'>@{user.username}</span>
-                ) : (
-                  <span className='text-white/80 ml-1'>
-                    {user.name || "Unknown User"}
-                  </span>
-                )}
+                <UserNameWithRank
+                  name={user.name}
+                  username={user.username}
+                  achievementXp={user.achievementXp}
+                  className={`ml-1 ${
+                    user.username ? "text-white" : "text-white/80"
+                  }`}
+                  iconClassName='text-algomancy-gold'
+                  iconSize={14}
+                />
               </div>
 
               {/* YouTube video indicator - same row as username */}

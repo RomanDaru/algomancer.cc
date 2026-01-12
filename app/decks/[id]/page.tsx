@@ -15,6 +15,7 @@ import ElementIcons from "@/app/components/ElementIcons";
 import DeckDetailViewer from "@/app/components/DeckDetailViewer";
 import YouTubeEmbed from "@/app/components/YouTubeEmbed";
 import DeckOptionsMenu from "@/app/components/DeckOptionsMenu";
+import UserNameWithRank from "@/app/components/UserNameWithRank";
 import {
   ElementType,
   getAllDeckElements,
@@ -32,9 +33,11 @@ export default function DeckPage({ params }: DeckPageProps) {
 
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
-  const [user, setUser] = useState<{ name: string; username: string | null } | null>(
-    null
-  );
+  const [user, setUser] = useState<{
+    name: string;
+    username: string | null;
+    achievementXp?: number;
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,13 +166,18 @@ export default function DeckPage({ params }: DeckPageProps) {
               <div className='flex items-center flex-wrap gap-3'>
                 <ElementIcons elements={deckElements} size={24} showTooltips={true} />
                 <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
-                <span className='text-algomancy-gold font-medium text-lg'>
-                  {user?.username ? (
-                    <>@{user.username}</>
-                  ) : (
-                    <span className='text-gray-300'>{user?.name || "Unknown User"}</span>
-                  )}
-                </span>
+                <UserNameWithRank
+                  name={user?.name}
+                  username={user?.username}
+                  achievementXp={user?.achievementXp}
+                  className={`font-medium text-lg ${
+                    user?.username ? "text-algomancy-gold" : "text-gray-300"
+                  }`}
+                  iconClassName={
+                    user?.username ? "text-algomancy-gold" : "text-gray-500"
+                  }
+                  iconSize={16}
+                />
               </div>
 
               {/* Bottom row: Date, Views, Likes, Share, Options */}

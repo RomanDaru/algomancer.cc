@@ -10,7 +10,7 @@ import { Deck } from "@/app/lib/types/user";
 
 type DeckWithUserInfo = {
   deck: Deck;
-  user: { name: string; username: string | null };
+  user: { name: string; username: string | null; achievementXp?: number };
   isLikedByCurrentUser: boolean;
   deckElements?: string[];
 };

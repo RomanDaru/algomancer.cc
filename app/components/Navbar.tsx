@@ -129,8 +129,8 @@ export default function Navbar() {
       if (!container) return;
 
       const linkCandidates = showCompetitions
-        ? ["/", "/cards", "/decks", "/competitions"]
-        : ["/", "/cards", "/decks"];
+        ? ["/", "/cards", "/decks", "/stats", "/competitions"]
+        : ["/", "/cards", "/decks", "/stats"];
       const activeHref = linkCandidates.find((href) => isActiveLink(href));
 
       if (!activeHref) {
@@ -220,6 +220,18 @@ export default function Navbar() {
                       desktopLinkRefs.current["/decks"] = el;
                     }}>
                     Decks
+                  </Link>
+                </li>
+                <li role='none'>
+                  <Link
+                    href='/stats'
+                    className={getDesktopLinkClass("/stats")}
+                    role='menuitem'
+                    aria-current={isActiveLink("/stats") ? "page" : undefined}
+                    ref={(el) => {
+                      desktopLinkRefs.current["/stats"] = el;
+                    }}>
+                    Stats
                   </Link>
                 </li>
               {showCompetitions && (
@@ -509,6 +521,18 @@ export default function Navbar() {
                     isActiveLink("/decks") ? "page" : undefined
                   }>
                   Decks
+                </Link>
+              </li>
+              <li role='none'>
+                <Link
+                  href='/stats'
+                  className={getMobileLinkClass("/stats")}
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                  role='menuitem'
+                  aria-current={
+                    isActiveLink("/stats") ? "page" : undefined
+                  }>
+                  Stats
                 </Link>
               </li>
               {showCompetitions && (

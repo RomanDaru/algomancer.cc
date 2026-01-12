@@ -121,6 +121,9 @@ const authOptions = {
             username: user.username || null,
             image: user.image,
             isAdmin: isAdmin,
+            includePrivateLogsInCommunityStats:
+              user.includePrivateLogsInCommunityStats || false,
+            achievementXp: typeof user.achievementXp === "number" ? user.achievementXp : 0,
           };
         } catch (error) {
           console.error("!!! SKUTOČNÁ CHYBA V AUTHORIZE:", error);
@@ -214,6 +217,10 @@ const authOptions = {
         session.user.id = token.sub!;
         session.user.username = token.username ?? null;
         session.user.isAdmin = token.isAdmin ?? false;
+        session.user.includePrivateLogsInCommunityStats =
+          token.includePrivateLogsInCommunityStats ?? false;
+        session.user.achievementXp =
+          typeof token.achievementXp === "number" ? token.achievementXp : 0;
       }
       return session;
     },
@@ -221,10 +228,12 @@ const authOptions = {
       token,
       user,
       trigger,
+      session,
     }: {
       token: JWT;
       user?: User | AdapterUser;
       trigger?: "signIn" | "signUp" | "update";
+      session?: any;
     }) {
       // Always check admin status for roman.daru.ml@gmail.com
       if (token.email === "roman.daru.ml@gmail.com") {
@@ -256,6 +265,44 @@ const authOptions = {
         token.username = user.username ?? null;
         // Include admin status in token
         token.isAdmin = user.isAdmin || false;
+        token.includePrivateLogsInCommunityStats =
+          (user as any).includePrivateLogsInCommunityStats ?? false;
+        token.achievementXp =
+          typeof (user as any).achievementXp === "number"
+            ? (user as any).achievementXp
+            : token.achievementXp ?? 0;
+      }
+
+      if (
+        token.achievementXp === undefined &&
+        token.sub &&
+        ObjectId.isValid(token.sub)
+      ) {
+        try {
+          const connection = await connectToDatabase();
+          const db = connection.db;
+          const dbUser = await db.collection("users").findOne({
+            _id: new ObjectId(token.sub),
+          });
+          if (dbUser) {
+            token.achievementXp =
+              typeof dbUser.achievementXp === "number" ? dbUser.achievementXp : 0;
+          }
+        } catch (error) {
+          console.error("Error loading achievement XP in JWT:", error);
+        }
+      }
+
+      if (trigger === "update" && session?.user) {
+        token.username =
+          session.user.username !== undefined ? session.user.username : token.username;
+        token.includePrivateLogsInCommunityStats =
+          session.user.includePrivateLogsInCommunityStats ??
+          token.includePrivateLogsInCommunityStats;
+        token.achievementXp =
+          typeof session.user.achievementXp === "number"
+            ? session.user.achievementXp
+            : token.achievementXp;
       }
       return token;
     },

@@ -13,6 +13,7 @@ interface DeckWithUser {
   user: {
     name: string;
     username: string | null;
+    achievementXp?: number;
   };
   isLikedByCurrentUser: boolean;
   deckElements?: string[];

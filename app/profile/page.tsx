@@ -1,143 +1,65 @@
-"use client";
-
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Deck } from "@/app/lib/types/user";
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { deckService } from "@/app/lib/services/deckService";
+import type { Deck } from "@/app/lib/types/user";
 import DeckGrid from "@/app/components/DeckGrid";
+import UserNameWithRank from "@/app/components/UserNameWithRank";
+import RankIcon from "@/app/components/RankIcon";
+import { achievementService } from "@/app/lib/services/achievementService";
+import {
+  getAchievementRarityLabel,
+  getAchievementXp,
+} from "@/app/lib/achievements/definitions";
+import { getRankProgress } from "@/app/lib/achievements/ranks";
 
-export default function Profile() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [decks, setDecks] = useState<Deck[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [likedDecks, setLikedDecks] = useState<
-    Array<{
-      deck: Deck;
-      user: { name: string; username: string | null };
-      isLikedByCurrentUser: boolean;
-      deckElements?: string[];
-    }>
-  >([]);
-  const [likedDecksLoading, setLikedDecksLoading] = useState(false);
-  const [likedDecksLoaded, setLikedDecksLoaded] = useState(false);
-  const [shouldLoadLikedDecks, setShouldLoadLikedDecks] = useState(false);
-  const [likedDecksTarget, setLikedDecksTarget] =
-    useState<HTMLDivElement | null>(null);
+type LikedDeckItem = {
+  deck: Deck;
+  user: { name: string; username: string | null; achievementXp?: number };
+  isLikedByCurrentUser: boolean;
+  deckElements?: string[];
+};
 
-  // Redirect to sign in if not authenticated
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
+const toSerializable = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
-  // Fetch user's decks
-  useEffect(() => {
-    async function fetchData() {
-      if (status === "authenticated") {
-        try {
-          setIsLoading(true);
+export default async function Profile() {
+  const session = await getServerSession(authOptions);
 
-          // Fetch decks
-          const decksResponse = await fetch("/api/decks");
-          if (!decksResponse.ok) {
-            throw new Error("Failed to fetch decks");
-          }
-          const decksData = await decksResponse.json();
-          setDecks(decksData);
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    fetchData();
-  }, [status]);
-
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    if (shouldLoadLikedDecks) return;
-    const target = likedDecksTarget;
-    if (!target) return;
-
-    if (!("IntersectionObserver" in window)) {
-      setShouldLoadLikedDecks(true);
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setShouldLoadLikedDecks(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: "200px" }
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [status, shouldLoadLikedDecks, likedDecksTarget]);
-
-  useEffect(() => {
-    async function fetchLikedDecks() {
-      if (!session?.user?.id) return;
-
-      try {
-        setLikedDecksLoading(true);
-        const response = await fetch("/api/user/liked-decks");
-        if (!response.ok) {
-          throw new Error("Failed to fetch liked decks");
-        }
-        const data = await response.json();
-        const normalized = Array.isArray(data)
-          ? data.map((item) => ({
-              ...item,
-              isLikedByCurrentUser: Boolean(item.isLikedByCurrentUser),
-            }))
-          : [];
-        setLikedDecks(normalized);
-      } catch (error) {
-        console.error("Error fetching liked decks:", error);
-        setLikedDecks([]);
-      } finally {
-        setLikedDecksLoading(false);
-        setLikedDecksLoaded(true);
-      }
-    }
-
-    if (!shouldLoadLikedDecks || likedDecksLoaded || likedDecksLoading) {
-      return;
-    }
-
-    fetchLikedDecks();
-  }, [
-    shouldLoadLikedDecks,
-    likedDecksLoaded,
-    likedDecksLoading,
-    session?.user?.id,
-  ]);
-
-  if (status === "loading" || isLoading) {
-    return (
-      <div className='flex justify-center items-center min-h-[calc(100vh-64px)]'>
-        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-algomancy-purple'></div>
-      </div>
-    );
+  if (!session?.user?.id) {
+    redirect("/auth/signin");
   }
 
-  if (!session) {
-    return null;
+  let decks: Deck[] = [];
+  let likedDecks: LikedDeckItem[] = [];
+  let achievementSnapshot = { achievementXp: 0, achievements: [] as any[] };
+
+  try {
+    const [userDecks, likedDeckItems] = await Promise.all([
+      deckService.getUserDecks(session.user.id),
+      deckService.getUserLikedDecksWithUserInfo(session.user.id),
+    ]);
+    decks = toSerializable(userDecks);
+    likedDecks = toSerializable(likedDeckItems);
+  } catch (error) {
+    console.error("Error loading profile decks:", error);
   }
 
-  // Access the username safely
-  const username =
-    session.user.username !== undefined ? session.user.username : null;
+  try {
+    achievementSnapshot = await achievementService.getAchievementSnapshot(
+      session.user.id
+    );
+  } catch (error) {
+    console.error("Error loading achievements:", error);
+  }
+
+  const username = session.user.username ?? null;
+  const achievementXp = achievementSnapshot.achievementXp ?? 0;
+  const rankProgress = getRankProgress(achievementXp);
+  const unlockedCount = achievementSnapshot.achievements.filter(
+    (achievement) => achievement.unlocked
+  ).length;
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -163,7 +85,14 @@ export default function Profile() {
               <div className='text-center sm:text-left'>
                 <h1 className='text-2xl font-bold text-white'>
                   {username ? (
-                    <>@{username}</>
+                    <UserNameWithRank
+                      name={session.user.name}
+                      username={username}
+                      achievementXp={achievementXp}
+                      className='text-2xl font-bold text-white'
+                      iconClassName='text-algomancy-gold'
+                      iconSize={18}
+                    />
                   ) : (
                     <div className='flex items-center'>
                       <span>No Username Set</span>
@@ -213,6 +142,9 @@ export default function Profile() {
                 View My Logs
               </Link>
             </div>
+
+            <div className='h-px w-full bg-algomancy-purple/20 mb-6'></div>
+
             <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
               {/* My Decks Section */}
               <div className='bg-algomancy-dark border border-algomancy-purple/20 rounded-lg p-6'>
@@ -229,6 +161,7 @@ export default function Profile() {
                   user={{
                     name: session.user.name || "",
                     username: username,
+                    achievementXp: achievementXp,
                   }}
                   emptyMessage="You haven't created any decks yet."
                   createDeckLink='/decks/create'
@@ -252,44 +185,139 @@ export default function Profile() {
                     View All
                   </Link>
                 </div>
-                <div ref={setLikedDecksTarget}>
-                  {shouldLoadLikedDecks ? (
-                    likedDecksLoading ? (
-                      <div className='flex justify-center items-center py-6'>
-                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-algomancy-purple'></div>
-                      </div>
-                    ) : (
-                      <DeckGrid
-                        decksWithUserInfo={likedDecks.slice(0, 3)}
-                        emptyMessage="You haven't liked any decks yet."
-                        emptyAction={{
-                          text: "Browse Community Decks",
-                          link: "/decks",
-                        }}
-                        onDeckLikeChange={(deckId, liked) => {
-                          if (!liked) {
-                            setLikedDecks((prev) =>
-                              prev.filter(
-                                (item) => item.deck._id.toString() !== deckId
-                              )
-                            );
-                          }
-                        }}
-                        columns={{ sm: 1, md: 1, lg: 1, xl: 1 }}
+                {likedDecks.length === 0 ? (
+                  <div className='text-center py-8 text-gray-400'>
+                    <p className='mb-4'>
+                      Discover and like amazing decks from the community!
+                    </p>
+                    <Link
+                      href='/decks'
+                      className='inline-block px-4 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark rounded-md text-white text-sm transition-colors'>
+                      Browse Community Decks
+                    </Link>
+                  </div>
+                ) : (
+                  <DeckGrid
+                    decksWithUserInfo={likedDecks.slice(0, 3)}
+                    emptyMessage="You haven't liked any decks yet."
+                    emptyAction={{
+                      text: "Browse Community Decks",
+                      link: "/decks",
+                    }}
+                    columns={{ sm: 1, md: 1, lg: 1, xl: 1 }}
+                  />
+                )}
+              </div>
+            </div>
+
+            <div className='h-px w-full bg-algomancy-purple/20 mt-8'></div>
+
+            <div className='grid grid-cols-1 lg:grid-cols-[1.1fr,1.9fr] gap-6 mt-8'>
+              <div className='bg-algomancy-dark border border-algomancy-purple/20 rounded-lg p-6'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-3'>
+                    <div className='h-12 w-12 rounded-lg bg-algomancy-darker border border-algomancy-purple/20 flex items-center justify-center'>
+                      <RankIcon
+                        rankKey={rankProgress.current.key}
+                        size={26}
+                        className='text-algomancy-gold'
+                        title={rankProgress.current.name}
                       />
-                    )
-                  ) : (
-                    <div className='text-center py-8 text-gray-400'>
-                      <p className='mb-4'>
-                        Discover and like amazing decks from the community!
-                      </p>
-                      <Link
-                        href='/decks'
-                        className='inline-block px-4 py-2 bg-algomancy-purple hover:bg-algomancy-purple-dark rounded-md text-white text-sm transition-colors'>
-                        Browse Community Decks
-                      </Link>
                     </div>
-                  )}
+                    <div>
+                      <p className='text-xs uppercase text-gray-400'>Rank</p>
+                      <p className='text-lg font-semibold text-white'>
+                        {rankProgress.current.name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='text-right'>
+                    <p className='text-xs text-gray-400'>Total XP</p>
+                    <p className='text-lg font-semibold text-white'>
+                      {achievementXp}
+                    </p>
+                  </div>
+                </div>
+
+                <div className='mt-4'>
+                  <div className='flex items-center justify-between text-xs text-gray-400'>
+                    <span>{rankProgress.current.minXp} XP</span>
+                    <span>
+                      {rankProgress.next ? `${rankProgress.next.minXp} XP` : "Max"}
+                    </span>
+                  </div>
+                  <div className='mt-2 h-2 rounded-full bg-algomancy-darker border border-algomancy-purple/20 overflow-hidden'>
+                    <div
+                      className='h-full bg-algomancy-gold transition-all'
+                      style={{ width: `${rankProgress.progress * 100}%` }}
+                    />
+                  </div>
+                  <div className='mt-2 text-xs text-gray-400'>
+                    {rankProgress.next
+                      ? `${Math.max(
+                          0,
+                          rankProgress.next.minXp - rankProgress.currentXp
+                        )} XP to ${rankProgress.next.name}`
+                      : "Max rank achieved"}
+                  </div>
+                </div>
+              </div>
+
+              <div className='bg-algomancy-dark border border-algomancy-purple/20 rounded-lg p-6'>
+                <div className='flex items-center justify-between mb-4'>
+                  <div>
+                    <h2 className='text-lg font-semibold text-white'>
+                      Achievements
+                    </h2>
+                    <p className='text-sm text-gray-400'>
+                      {unlockedCount} of {achievementSnapshot.achievements.length} unlocked
+                    </p>
+                  </div>
+                </div>
+                <div className='space-y-3'>
+                  {achievementSnapshot.achievements.map((achievement) => {
+                    const xp = getAchievementXp(achievement.definition.rarity);
+                    const rarityLabel = getAchievementRarityLabel(
+                      achievement.definition.rarity
+                    );
+
+                    return (
+                      <div
+                        key={achievement.definition.key}
+                        className={`flex items-start gap-3 rounded-lg border px-4 py-3 ${
+                          achievement.unlocked
+                            ? "border-algomancy-purple/30 bg-algomancy-darker/60"
+                            : "border-white/5 bg-algomancy-darker/20 opacity-70"
+                        }`}>
+                        <div
+                          className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                          style={{
+                            color: achievement.definition.color,
+                            backgroundColor: `${achievement.definition.color}20`,
+                            border: `1px solid ${achievement.definition.color}`,
+                          }}>
+                          {achievement.definition.icon}
+                        </div>
+                        <div className='flex-1'>
+                          <div className='flex items-center justify-between'>
+                            <p className='text-sm font-semibold text-white'>
+                              {achievement.definition.title}
+                            </p>
+                            <div className='flex items-center gap-2 text-xs text-gray-400'>
+                              <span>{rarityLabel}</span>
+                              <span>+{xp} XP</span>
+                            </div>
+                          </div>
+                          <p className='text-xs text-gray-400'>
+                            {achievement.definition.description}
+                          </p>
+                        </div>
+                        <div className='text-xs text-gray-500'>
+                          {achievement.unlocked ? "Unlocked" : "Locked"}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

@@ -9,6 +9,8 @@ export interface User {
   hashedPassword?: string;
   image?: string;
   isAdmin?: boolean; // Admin role for competition management
+  includePrivateLogsInCommunityStats?: boolean;
+  achievementXp?: number;
   createdAt: Date;
   updatedAt: Date;
   resetToken?: string; // Password reset token
@@ -68,6 +70,7 @@ export interface CompetitionWinner {
     name: string;
     email: string;
     username?: string;
+    achievementXp?: number;
   };
   // Populated deck data (when fetched with deck info)
   deck?: {
@@ -91,7 +94,12 @@ export interface CompetitionEntry {
 
 export interface Badge {
   _id: ObjectId;
-  type: "best_constructed_monthly" | "best_draft_monthly" | "hall_of_fame";
+  type:
+    | "best_constructed_monthly"
+    | "best_draft_monthly"
+    | "hall_of_fame"
+    | "achievement";
+  key?: string;
   title: string;
   description: string;
   icon: string; // Emoji or icon identifier

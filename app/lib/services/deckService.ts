@@ -190,7 +190,7 @@ export const deckService = {
   async getDeckWithCards(deckId: string): Promise<{
     deck: Deck | null;
     cards: Card[];
-    user?: { name: string; username: string | null };
+    user?: { name: string; username: string | null; achievementXp?: number };
   }> {
     try {
       const deck = await deckDbService.getDeckById(deckId);
@@ -229,7 +229,7 @@ export const deckService = {
   ): Promise<
     {
       deck: Deck;
-      user: { name: string; username: string | null };
+      user: { name: string; username: string | null; achievementXp?: number };
       isLikedByCurrentUser: boolean;
       deckElements: string[];
     }[]
@@ -378,7 +378,7 @@ export const deckService = {
   ): Promise<
     {
       deck: Deck;
-      user: { name: string; username: string | null };
+      user: { name: string; username: string | null; achievementXp?: number };
       cards: Card[];
     }[]
   > {
@@ -444,7 +444,7 @@ export const deckService = {
   ): Promise<
     Array<{
       deck: Deck;
-      user: { name: string; username: string | null };
+      user: { name: string; username: string | null; achievementXp?: number };
       isLikedByCurrentUser: boolean;
       deckElements: string[];
     }>

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { ObjectId } from "mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { gameLogService } from "@/app/lib/services/gameLogService";
+import { achievementService } from "@/app/lib/services/achievementService";
 import { validateGameLogData } from "@/app/lib/utils/gameLogValidation";
 import { normalizeGameLogPayload } from "@/app/lib/utils/gameLogPayload";
 
@@ -84,7 +85,31 @@ export async function POST(request: NextRequest) {
     }
 
     const created = await gameLogService.createGameLog(normalized);
-    return NextResponse.json(created, { status: 201 });
+
+    let achievementsUnlocked: any[] = [];
+    let achievementXp: number | undefined;
+    let previousAchievementXp: number | undefined;
+
+    try {
+      const awardResult = await achievementService.awardAchievementsForUser(
+        session.user.id
+      );
+      achievementsUnlocked = awardResult.unlocked;
+      achievementXp = awardResult.achievementXp;
+      previousAchievementXp = awardResult.previousAchievementXp;
+    } catch (awardError) {
+      console.error("Error awarding achievements:", awardError);
+    }
+
+    return NextResponse.json(
+      {
+        log: created,
+        achievementsUnlocked,
+        achievementXp,
+        previousAchievementXp,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating game log:", error);
     return NextResponse.json({ error: "Failed to create game log" }, { status: 500 });

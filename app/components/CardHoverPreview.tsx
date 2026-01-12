@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Card } from "@/app/lib/types/card";
+import type { Card } from "@/app/lib/types/card";
 import Image from "next/image";
 
+type CardPreview = Pick<Card, "name" | "imageUrl">;
+
 interface CardHoverPreviewProps {
-  card: Card;
+  card: CardPreview;
   children: React.ReactNode;
   onClick?: () => void;
 }

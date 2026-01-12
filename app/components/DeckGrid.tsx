@@ -13,17 +13,19 @@ interface DeckGridProps {
     [key: string]: {
       name: string;
       username: string | null;
+      achievementXp?: number;
     };
   };
   user?: {
     name: string;
     username: string | null;
+    achievementXp?: number;
   };
 
   // Option 2: Optimized format with like status
   decksWithUserInfo?: Array<{
     deck: Deck;
-    user: { name: string; username: string | null };
+    user: { name: string; username: string | null; achievementXp?: number };
     isLikedByCurrentUser: boolean;
     deckElements?: string[];
   }>;
@@ -130,7 +132,7 @@ export default function DeckGrid({
               deckElements,
             } = item as {
               deck: Deck;
-              user: { name: string; username: string | null };
+              user: { name: string; username: string | null; achievementXp?: number };
               isLikedByCurrentUser: boolean;
               deckElements?: string[];
             };

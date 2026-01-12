@@ -6,7 +6,11 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
+import { getRankForXp } from "@/app/lib/achievements/ranks";
+import { LEVEL_UP_EVENT, LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
+import type { LevelUpPayload } from "@/app/lib/types/levelUp";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { toast } from "react-hot-toast";
 
 const OUTCOME_OPTIONS = [
   { value: "win", label: "Win" },
@@ -33,7 +37,7 @@ function getLocalDateTimeValue(date: Date) {
 }
 
 export default function CreateGameLogPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
 
   const [opponents, setOpponents] = useState<
@@ -724,6 +728,10 @@ export default function CreateGameLogPage() {
 
   const handleSubmit = async () => {
     if (!isAuthenticated) return;
+    const previousXp =
+      typeof session?.user?.achievementXp === "number"
+        ? session.user.achievementXp
+        : 0;
     const errors = validateForm();
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
@@ -752,8 +760,57 @@ export default function CreateGameLogPage() {
       }
 
       setSubmitSuccess("Game log saved.");
-      if (data?._id) {
-        router.push(`/game-logs/${data._id}`);
+      const savedLog = data?.log ?? data;
+      const unlocked = Array.isArray(data?.achievementsUnlocked)
+        ? data.achievementsUnlocked
+        : [];
+
+      if (unlocked.length > 0) {
+        unlocked.forEach((achievement: any) => {
+          const xpLabel =
+            typeof achievement?.xp === "number" ? ` (+${achievement.xp} XP)` : "";
+          toast.success(`Achievement unlocked: ${achievement?.title}${xpLabel}`);
+        });
+      }
+
+      if (typeof data?.achievementXp === "number") {
+        const responsePreviousXp =
+          typeof data?.previousAchievementXp === "number"
+            ? data.previousAchievementXp
+            : previousXp;
+        const previousRankKey = getRankForXp(responsePreviousXp).key;
+        const newRankKey = getRankForXp(data.achievementXp).key;
+        if (newRankKey !== previousRankKey) {
+          const payload: LevelUpPayload = {
+            previousRankKey,
+            newRankKey,
+            previousXp: responsePreviousXp,
+            newXp: data.achievementXp,
+          };
+          try {
+            sessionStorage.setItem(
+              LEVEL_UP_STORAGE_KEY,
+              JSON.stringify(payload)
+            );
+            window.dispatchEvent(
+              new CustomEvent(LEVEL_UP_EVENT, { detail: payload })
+            );
+          } catch (storageError) {
+            console.error(
+              "Unable to store level-up modal payload:",
+              storageError
+            );
+          }
+        }
+        update?.({
+          user: {
+            achievementXp: data.achievementXp,
+          },
+        });
+      }
+
+      if (savedLog?._id) {
+        router.push(`/game-logs/${savedLog._id}`);
       }
     } catch (error) {
       setSubmitError(

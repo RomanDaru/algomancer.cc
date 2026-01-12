@@ -1,12 +1,13 @@
-import NextAuth, { DefaultSession } from "next-auth";
-import { DefaultSession, DefaultUser } from "next-auth";
-import { JWT, DefaultJWT } from "next-auth/jwt";
+import { DefaultSession } from "next-auth";
+import { DefaultJWT } from "next-auth/jwt";
 
 declare module "next-auth/jwt" {
   /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
   interface JWT extends DefaultJWT {
     username: string | null;
     isAdmin: boolean;
+    includePrivateLogsInCommunityStats?: boolean;
+    achievementXp?: number;
   }
 }
 
@@ -22,6 +23,10 @@ declare module "next-auth" {
       username?: string | null;
       /** The user's admin status (only for roman.daru.ml@gmail.com) */
       isAdmin?: boolean;
+      /** Include private logs in anonymous community stats */
+      includePrivateLogsInCommunityStats?: boolean;
+      /** Achievement XP for rank display */
+      achievementXp?: number;
     } & DefaultSession["user"];
   }
 
@@ -30,5 +35,9 @@ declare module "next-auth" {
     username?: string | null;
     /** The user's admin status (only for roman.daru.ml@gmail.com) */
     isAdmin?: boolean;
+    /** Include private logs in anonymous community stats */
+    includePrivateLogsInCommunityStats?: boolean;
+    /** Achievement XP for rank display */
+    achievementXp?: number;
   }
 }

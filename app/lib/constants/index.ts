@@ -31,6 +31,9 @@ export const BADGE_TYPE = {
   HALL_OF_FAME: "hall_of_fame",
 } as const;
 
+export const LEVEL_UP_STORAGE_KEY = "algomancy-level-up";
+export const LEVEL_UP_EVENT = "algomancy-level-up";
+
 // Export types for TypeScript
 export type CompetitionStatus =
   (typeof COMPETITION_STATUS)[keyof typeof COMPETITION_STATUS];

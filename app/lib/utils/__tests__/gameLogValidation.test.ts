@@ -109,4 +109,26 @@ describe("validateGameLogData", () => {
     expect(result.isValid).toBe(false);
     expect(result.fieldErrors.durationMinutes?.length).toBeGreaterThan(0);
   });
+
+  test("requires format when constructed payload is provided in patch", () => {
+    const result = validateGameLogData(
+      { constructed: { deckId: validDeckId } },
+      { requireAll: false }
+    );
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.format?.length).toBeGreaterThan(0);
+  });
+
+  test("rejects payload containing both constructed and liveDraft", () => {
+    const result = validateGameLogData(
+      {
+        ...baseLog,
+        format: "constructed",
+        liveDraft: { elementsPlayed: ["Fire"] },
+      },
+      { requireAll: true }
+    );
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors.format?.length).toBeGreaterThan(0);
+  });
 });

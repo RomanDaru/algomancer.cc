@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectToDatabase } from "@/app/lib/db/mongodb";
 import { gameLogStatsDbService } from "@/app/lib/db/services/gameLogStatsDbService";
 import { CardModel } from "@/app/lib/db/models/Card";
 import { DeckModel } from "@/app/lib/db/models/Deck";
-import { UserModel } from "@/app/lib/db/models/User";
 import type {
   CardPreview,
   GameStatsResponse,
@@ -67,22 +65,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    let includeUserIds: string[] | undefined;
-    if (scopeParam === "community") {
-      await connectToDatabase();
-      const optedInUsers = await UserModel.find(
-        { includePrivateLogsInCommunityStats: true },
-        "_id"
-      ).lean();
-      includeUserIds = optedInUsers.map((user) => user._id.toString());
-    }
-
     const aggregate = await gameLogStatsDbService.getGameLogStatsAggregate({
       scope: scopeParam,
       userId: session?.user?.id,
       from: from || undefined,
       to: to || undefined,
-      includeUserIds,
     });
 
     const summaryRaw = aggregate.summary[0];
@@ -194,6 +181,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (cardIds.length > 0 || deckIds.length > 0) {
+      const { connectToDatabase } = await import("@/app/lib/db/mongodb");
       await connectToDatabase();
     }
 

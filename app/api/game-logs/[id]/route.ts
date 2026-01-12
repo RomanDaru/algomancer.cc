@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { gameLogService } from "@/app/lib/services/gameLogService";
+import { achievementService } from "@/app/lib/services/achievementService";
+import { resolveConstructedElements } from "@/app/lib/services/gameLogElementService";
 import { validateGameLogData } from "@/app/lib/utils/gameLogValidation";
 import { normalizeGameLogPayload } from "@/app/lib/utils/gameLogPayload";
+import { UserModel } from "@/app/lib/db/models/User";
 
 export async function GET(
   request: NextRequest,
@@ -77,8 +80,21 @@ export async function PATCH(
       delete normalized.matchTypeLabel;
     }
 
+    if (normalized.isPublic !== undefined) {
+      const userDoc = await UserModel.findById(session.user.id, {
+        includePrivateLogsInCommunityStats: 1,
+      });
+      const includePrivate = userDoc?.includePrivateLogsInCommunityStats === true;
+      const isPublic = normalized.isPublic === true;
+      normalized.includeInCommunityStats = isPublic || includePrivate;
+    }
+
     if (normalized.format === "constructed") {
       delete normalized.liveDraft;
+      if (normalized.constructed) {
+        normalized.constructed.elementsPlayed =
+          await resolveConstructedElements(normalized.constructed);
+      }
     } else if (normalized.format === "live_draft") {
       delete normalized.constructed;
     }
@@ -123,6 +139,12 @@ export async function DELETE(
     const success = await gameLogService.deleteGameLog(logId);
     if (!success) {
       return NextResponse.json({ error: "Failed to delete game log" }, { status: 500 });
+    }
+
+    try {
+      await achievementService.reconcileAchievementsForUser(session.user.id);
+    } catch (awardError) {
+      console.error("Error reconciling achievements after delete:", awardError);
     }
 
     return NextResponse.json({ success: true });

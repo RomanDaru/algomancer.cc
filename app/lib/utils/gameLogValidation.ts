@@ -361,6 +361,20 @@ export function validateGameLogData(
     }
   }
 
+  if ((data.constructed || data.liveDraft) && !data.format) {
+    addFieldError(
+      "format",
+      "format is required when constructed or live_draft data is provided"
+    );
+  }
+
+  if (data.constructed && data.liveDraft) {
+    addFieldError(
+      "format",
+      "cannot provide both constructed and live_draft data"
+    );
+  }
+
   if (data.format && data.constructed && data.format !== "constructed") {
     addFieldError("constructed", "constructed is only valid for constructed format");
   }

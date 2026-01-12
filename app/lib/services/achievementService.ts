@@ -6,7 +6,6 @@ import { UserModel } from "@/app/lib/db/models/User";
 import { GameLogModel } from "@/app/lib/db/models/GameLog";
 import { DeckModel } from "@/app/lib/db/models/Deck";
 import { BASIC_ELEMENTS, type BasicElementType } from "@/app/lib/types/card";
-import { parseAlgomancerDeckId } from "@/app/lib/utils/deckUrl";
 import { calculateBonusXp } from "@/app/lib/utils/achievementXp";
 import {
   ACHIEVEMENTS,
@@ -28,6 +27,7 @@ type AchievementSnapshot = {
 };
 
 let dbConnection: Awaited<ReturnType<typeof connectToDatabase>> | null = null;
+let cachedAchievementBadgeMap: Map<string, ObjectId> | null = null;
 
 const ensureDbConnection = async () => {
   if (!dbConnection) {
@@ -37,38 +37,61 @@ const ensureDbConnection = async () => {
 };
 
 const ensureAchievementBadges = async () => {
+  if (cachedAchievementBadgeMap && cachedAchievementBadgeMap.size > 0) {
+    return cachedAchievementBadgeMap;
+  }
+
   await ensureDbConnection();
   const badgeMap = new Map<string, ObjectId>();
-  const now = new Date();
 
-  const badgeDocs = await Promise.all(
-    ACHIEVEMENTS.map((achievement) =>
-      BadgeModel.findOneAndUpdate(
-        { type: "achievement", key: achievement.key },
-        {
-          $set: {
-            type: "achievement",
-            key: achievement.key,
-            title: achievement.title,
-            description: achievement.description,
-            icon: achievement.icon,
-            color: achievement.color,
+  let badgeDocs = await BadgeModel.find(
+    {
+      type: "achievement",
+      key: { $in: ACHIEVEMENTS.map((achievement) => achievement.key) },
+    },
+    { key: 1 }
+  ).lean();
+
+  if (badgeDocs.length < ACHIEVEMENTS.length) {
+    const now = new Date();
+    await Promise.all(
+      ACHIEVEMENTS.map((achievement) =>
+        BadgeModel.findOneAndUpdate(
+          { type: "achievement", key: achievement.key },
+          {
+            $set: {
+              type: "achievement",
+              key: achievement.key,
+              title: achievement.title,
+              description: achievement.description,
+              icon: achievement.icon,
+              color: achievement.color,
+            },
+            $setOnInsert: {
+              awardedAt: now,
+            },
           },
-          $setOnInsert: {
-            awardedAt: now,
-          },
-        },
-        { upsert: true, new: true }
+          { upsert: true, new: true }
+        )
       )
-    )
-  );
+    );
 
-  badgeDocs.forEach((doc, index) => {
-    if (doc) {
-      badgeMap.set(ACHIEVEMENTS[index].key, doc._id);
+    badgeDocs = await BadgeModel.find(
+      {
+        type: "achievement",
+        key: { $in: ACHIEVEMENTS.map((achievement) => achievement.key) },
+      },
+      { key: 1 }
+    ).lean();
+  }
+
+  badgeDocs.forEach((doc: any) => {
+    if (doc?.key && doc?._id) {
+      badgeMap.set(doc.key, doc._id);
     }
   });
 
+  cachedAchievementBadgeMap = badgeMap;
   return badgeMap;
 };
 
@@ -87,6 +110,7 @@ const getAchievementMetrics = async (userId: ObjectId) => {
     liveDraftLogs,
     publicLogs,
     mvpLogs,
+    elementAgg,
   ] = await Promise.all([
     GameLogModel.countDocuments(baseQuery),
     GameLogModel.countDocuments({ ...baseQuery, outcome: "win" }),
@@ -100,6 +124,59 @@ const getAchievementMetrics = async (userId: ObjectId) => {
         { "opponents.mvpCardIds.0": { $exists: true } },
       ],
     }),
+    GameLogModel.aggregate([
+      {
+        $match: {
+          ...baseQuery,
+          $or: [
+            { "liveDraft.elementsPlayed.0": { $exists: true } },
+            { "constructed.elementsPlayed.0": { $exists: true } },
+          ],
+        },
+      },
+      {
+        $project: {
+          outcome: 1,
+          elements: {
+            $cond: [
+              { $eq: ["$format", "live_draft"] },
+              { $ifNull: ["$liveDraft.elementsPlayed", []] },
+              { $ifNull: ["$constructed.elementsPlayed", []] },
+            ],
+          },
+        },
+      },
+      {
+        $project: {
+          outcome: 1,
+          elements: { $setIntersection: ["$elements", Object.values(BASIC_ELEMENTS)] },
+        },
+      },
+      {
+        $addFields: {
+          elementCount: { $size: "$elements" },
+        },
+      },
+      {
+        $addFields: {
+          weight: {
+            $cond: [{ $gte: ["$elementCount", 2] }, 0.5, 1],
+          },
+        },
+      },
+      { $unwind: "$elements" },
+      {
+        $group: {
+          _id: "$elements",
+          total: { $sum: "$weight" },
+          wins: {
+            $sum: {
+              $cond: [{ $eq: ["$outcome", "win"] }, "$weight", 0],
+            },
+          },
+        },
+      },
+    ]),
   ]);
 
   const elementLogs: Record<BasicElementType, number> = {
@@ -121,76 +198,11 @@ const getAchievementMetrics = async (userId: ObjectId) => {
     elementWins[element] = elementWins[element] ?? 0;
   });
 
-  const logs = await GameLogModel.find(
-    { ...baseQuery },
-    {
-      outcome: 1,
-      format: 1,
-      "liveDraft.elementsPlayed": 1,
-      "constructed.deckId": 1,
-      "constructed.externalDeckUrl": 1,
-    }
-  ).lean();
-
-  const deckIdSet = new Set<string>();
-  logs.forEach((log: any) => {
-    const deckId = log?.constructed?.deckId?.toString?.();
-    if (deckId) {
-      deckIdSet.add(deckId);
-    }
-    if (typeof log?.constructed?.externalDeckUrl === "string") {
-      const parsed = parseAlgomancerDeckId(log.constructed.externalDeckUrl);
-      if (parsed) {
-        deckIdSet.add(parsed);
-      }
-    }
-  });
-
-  const connection = await ensureDbConnection();
-  const deckElementsMap = new Map<string, string[]>();
-  if (deckIdSet.size > 0) {
-    const deckIds = [...deckIdSet].map((id) => new ObjectId(id));
-    const deckDocs = await connection.db
-      .collection("decks")
-      .find({ _id: { $in: deckIds } }, { projection: { deckElements: 1 } })
-      .toArray();
-    deckDocs.forEach((doc: any) => {
-      deckElementsMap.set(doc._id.toString(), doc.deckElements || []);
-    });
-  }
-
-  const basicElementSet = new Set(Object.values(BASIC_ELEMENTS));
-
-  logs.forEach((log: any) => {
-    let elements: string[] = [];
-    if (log.format === "live_draft") {
-      elements = Array.isArray(log?.liveDraft?.elementsPlayed)
-        ? log.liveDraft.elementsPlayed
-        : [];
-    } else if (log.format === "constructed") {
-      const deckId = log?.constructed?.deckId?.toString?.();
-      const externalId =
-        typeof log?.constructed?.externalDeckUrl === "string"
-          ? parseAlgomancerDeckId(log.constructed.externalDeckUrl)
-          : null;
-      const lookupId = deckId || externalId;
-      if (lookupId) {
-        elements = deckElementsMap.get(lookupId) || [];
-      }
-    }
-
-    const uniqueElements = Array.from(
-      new Set(elements.filter((element) => basicElementSet.has(element)))
-    );
-    if (uniqueElements.length === 0) return;
-    const weight = uniqueElements.length >= 2 ? 0.5 : 1;
-
-    uniqueElements.forEach((element) => {
-      elementLogs[element] = (elementLogs[element] || 0) + weight;
-      if (log.outcome === "win") {
-        elementWins[element] = (elementWins[element] || 0) + weight;
-      }
-    });
+  elementAgg.forEach((entry: any) => {
+    const element = entry?._id as BasicElementType;
+    if (!element || !(element in elementLogs)) return;
+    elementLogs[element] = entry.total || 0;
+    elementWins[element] = entry.wins || 0;
   });
 
   return {
@@ -237,6 +249,50 @@ const meetsCriteria = (
 
 const getCriteriaCount = (criteria: AchievementCriteria) => criteria.count;
 
+const getQualifiedAchievementKeys = (
+  metrics: Awaited<ReturnType<typeof getAchievementMetrics>>
+) => {
+  const qualifiedKeys = new Set<string>();
+  const chainGroups = new Map<string, AchievementDefinition[]>();
+
+  ACHIEVEMENTS.forEach((achievement) => {
+    if (achievement.seriesKey) {
+      const group = chainGroups.get(achievement.seriesKey) ?? [];
+      group.push(achievement);
+      chainGroups.set(achievement.seriesKey, group);
+      return;
+    }
+
+    if (meetsCriteria(achievement.criteria, metrics)) {
+      qualifiedKeys.add(achievement.key);
+    }
+  });
+
+  chainGroups.forEach((group) => {
+    const qualified = group.filter((achievement) =>
+      meetsCriteria(achievement.criteria, metrics)
+    );
+    if (qualified.length === 0) return;
+
+    const maxQualifiedCount = Math.max(
+      ...qualified.map((achievement) => getCriteriaCount(achievement.criteria))
+    );
+
+    group
+      .slice()
+      .sort(
+        (left, right) =>
+          getCriteriaCount(left.criteria) - getCriteriaCount(right.criteria)
+      )
+      .forEach((achievement) => {
+        if (getCriteriaCount(achievement.criteria) > maxQualifiedCount) return;
+        qualifiedKeys.add(achievement.key);
+      });
+  });
+
+  return qualifiedKeys;
+};
+
 const getBonusXp = async (userId: ObjectId) => {
   await ensureDbConnection();
 
@@ -257,14 +313,93 @@ const getBonusXp = async (userId: ObjectId) => {
   ]);
 
   const totalLikes = likesAgg?.[0]?.totalLikes ?? 0;
+  const totalLogs = await GameLogModel.countDocuments({
+    userId,
+    seedTag: { $exists: false },
+  });
 
   return calculateBonusXp({
     totalLikes,
     deckCounts,
+    totalLogs,
   });
 };
 
 export const achievementService = {
+  async reconcileAchievementsForUser(userId: string) {
+    const userObjectId = new ObjectId(userId);
+    const badgeMap = await ensureAchievementBadges();
+    const badgeIds = [...badgeMap.values()];
+
+    const metrics = await getAchievementMetrics(userObjectId);
+    const qualifiedKeys = getQualifiedAchievementKeys(metrics);
+
+    const existingBadges = await UserBadgeModel.find({
+      userId: userObjectId,
+      badgeId: { $in: badgeIds },
+    }).populate("badgeId");
+
+    const existingKeys = new Set(
+      existingBadges
+        .map((userBadge) => (userBadge.badgeId as any)?.key)
+        .filter(Boolean)
+    );
+
+    const toAdd = ACHIEVEMENTS.filter(
+      (achievement) =>
+        qualifiedKeys.has(achievement.key) && !existingKeys.has(achievement.key)
+    );
+    const toRemove = existingBadges.filter((userBadge) => {
+      const key = (userBadge.badgeId as any)?.key;
+      return key && !qualifiedKeys.has(key);
+    });
+
+    if (toAdd.length > 0) {
+      const now = new Date();
+      const inserts = toAdd
+        .map((achievement) => {
+          const badgeId = badgeMap.get(achievement.key);
+          if (!badgeId) return null;
+          return {
+            userId: userObjectId,
+            badgeId,
+            awardedAt: now,
+          };
+        })
+        .filter(Boolean);
+      if (inserts.length > 0) {
+        await UserBadgeModel.insertMany(inserts, { ordered: false });
+      }
+    }
+
+    if (toRemove.length > 0) {
+      const badgeIdsToRemove = toRemove.map((userBadge) => userBadge.badgeId);
+      await UserBadgeModel.deleteMany({
+        userId: userObjectId,
+        badgeId: { $in: badgeIdsToRemove },
+      });
+    }
+
+    const xpFromBadges = ACHIEVEMENTS.reduce((sum, achievement) => {
+      if (!qualifiedKeys.has(achievement.key)) return sum;
+      return sum + getAchievementXp(achievement.rarity);
+    }, 0);
+
+    const bonusXp = await getBonusXp(userObjectId);
+    const totalXp = xpFromBadges + bonusXp.totalBonusXp;
+
+    const connection = await ensureDbConnection();
+    await connection.db.collection("users").updateOne(
+      { _id: userObjectId },
+      { $set: { achievementXp: totalXp, updatedAt: new Date() } }
+    );
+
+    return {
+      achievementXp: totalXp,
+      added: toAdd,
+      removed: toRemove.length,
+    };
+  },
   async refreshUserXp(userId: string) {
     const userObjectId = new ObjectId(userId);
     const badgeMap = await ensureAchievementBadges();
@@ -444,6 +579,11 @@ export const achievementService = {
       }, 0);
       const bonusXp = await getBonusXp(userObjectId);
       const totalXp = xpFromBadges + bonusXp.totalBonusXp;
+      const connection = await ensureDbConnection();
+      await connection.db.collection("users").updateOne(
+        { _id: userObjectId },
+        { $set: { achievementXp: totalXp, updatedAt: new Date() } }
+      );
       return {
         unlocked: [] as AchievementUnlock[],
         achievementXp: totalXp,

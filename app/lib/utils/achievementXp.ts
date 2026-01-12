@@ -2,6 +2,7 @@ import {
   DECK_CREATE_DAILY_CAP,
   DECK_CREATE_XP,
   LIKE_XP,
+  LOG_CREATE_XP,
 } from "@/app/lib/constants";
 
 type DeckCountEntry = { count?: number };
@@ -24,6 +25,16 @@ export const calculateLikeXp = (
   return totalLikes * likeXp;
 };
 
+export const calculateLogXp = (
+  totalLogs: number,
+  logXp: number = LOG_CREATE_XP
+) => {
+  if (typeof totalLogs !== "number" || totalLogs <= 0 || logXp <= 0) {
+    return 0;
+  }
+  return totalLogs * logXp;
+};
+
 export const calculateDeckCreateXp = (
   deckCounts: DeckCountEntry[],
   deckXp: number = DECK_CREATE_XP,
@@ -40,14 +51,20 @@ export const calculateDeckCreateXp = (
 
 export const calculateBonusXp = (input: {
   totalLikes: number;
+  totalLogs?: number;
   deckCounts: DeckCountEntry[];
   likeXp?: number;
   deckXp?: number;
   dailyCap?: number;
+  logXp?: number;
 }) => {
   const likeXpValue = calculateLikeXp(
     input.totalLikes,
     input.likeXp ?? LIKE_XP
+  );
+  const logXpValue = calculateLogXp(
+    input.totalLogs ?? 0,
+    input.logXp ?? LOG_CREATE_XP
   );
   const deckXpValue = calculateDeckCreateXp(
     input.deckCounts,
@@ -58,6 +75,7 @@ export const calculateBonusXp = (input: {
   return {
     likeXp: likeXpValue,
     deckXp: deckXpValue,
-    totalBonusXp: likeXpValue + deckXpValue,
+    logXp: logXpValue,
+    totalBonusXp: likeXpValue + deckXpValue + logXpValue,
   };
 };

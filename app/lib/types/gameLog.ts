@@ -18,6 +18,7 @@ export interface GameLogConstructed {
   externalDeckUrl?: string;
   teammateDeckId?: ObjectId;
   teammateExternalDeckUrl?: string;
+  elementsPlayed?: BasicElementType[];
 }
 
 export interface GameLogLiveDraft {
@@ -36,6 +37,7 @@ export interface GameLog {
   matchType: GameLogMatchType;
   matchTypeLabel?: string;
   isPublic: boolean;
+  includeInCommunityStats?: boolean;
   opponents: GameLogOpponent[];
   notes?: string;
   constructed?: GameLogConstructed;

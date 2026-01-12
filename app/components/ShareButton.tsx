@@ -9,6 +9,8 @@ interface ShareButtonProps {
   deckName?: string;
   size?: "sm" | "md" | "lg";
   className?: string;
+  label?: string;
+  showLabel?: boolean;
 }
 
 export default function ShareButton({
@@ -16,6 +18,8 @@ export default function ShareButton({
   deckName,
   size = "md",
   className = "",
+  label = "Share Deck",
+  showLabel = true,
 }: ShareButtonProps) {
   const [loading, setLoading] = useState(false);
 
@@ -23,17 +27,17 @@ export default function ShareButton({
   const sizeConfig = {
     sm: {
       icon: "w-4 h-4",
-      button: "p-1",
-      text: "text-xs",
+      button: "px-2 py-1",
+      text: "text-sm",
     },
     md: {
       icon: "w-5 h-5",
-      button: "p-2",
+      button: "px-3 py-1.5",
       text: "text-sm",
     },
     lg: {
       icon: "w-6 h-6",
-      button: "p-3",
+      button: "px-4 py-2",
       text: "text-base",
     },
   };
@@ -95,16 +99,18 @@ export default function ShareButton({
       onClick={handleShare}
       disabled={loading}
       className={`
-        flex items-center space-x-1 rounded-md transition-all duration-200
+        inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 text-white
+        transition-all duration-200 hover:bg-white/20 hover:border-white/30
         ${config.button}
-        text-gray-400 hover:text-algomancy-purple hover:bg-gray-800/50 cursor-pointer
+        cursor-pointer
         ${loading ? "opacity-50" : ""}
         ${className}
       `}
-      title="Share this deck"
-      aria-label="Share this deck"
+      title={label}
+      aria-label={label}
     >
       <ShareIcon className={`${config.icon}`} />
+      {showLabel && <span className={`${config.text} font-semibold`}>{label}</span>}
     </button>
   );
 }

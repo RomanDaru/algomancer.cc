@@ -25,6 +25,7 @@ const ConstructedSchema = new Schema<GameLogConstructed>(
     externalDeckUrl: { type: String, trim: true },
     teammateDeckId: { type: Schema.Types.ObjectId, ref: "Deck" },
     teammateExternalDeckUrl: { type: String, trim: true },
+    elementsPlayed: { type: [String], default: [] },
   },
   { _id: false }
 );
@@ -62,6 +63,7 @@ const GameLogSchema = new Schema<GameLogDocument>(
       },
     },
     isPublic: { type: Boolean, default: false },
+    includeInCommunityStats: { type: Boolean, default: false },
     opponents: { type: [OpponentSchema], default: [] },
     notes: { type: String, trim: true },
     constructed: { type: ConstructedSchema },
@@ -74,6 +76,7 @@ const GameLogSchema = new Schema<GameLogDocument>(
 
 GameLogSchema.index({ userId: 1, playedAt: -1 });
 GameLogSchema.index({ isPublic: 1, playedAt: -1 });
+GameLogSchema.index({ includeInCommunityStats: 1, playedAt: -1 });
 GameLogSchema.index({ outcome: 1, playedAt: -1 });
 GameLogSchema.index({ "liveDraft.mvpCardIds": 1 });
 
@@ -93,6 +96,7 @@ export function convertDocumentToGameLog(doc: GameLogDocument): GameLog {
     matchType: log.matchType,
     matchTypeLabel: log.matchTypeLabel,
     isPublic: log.isPublic,
+    includeInCommunityStats: log.includeInCommunityStats,
     opponents: log.opponents || [],
     notes: log.notes,
     constructed: log.constructed,
@@ -115,6 +119,7 @@ export function convertGameLogToDocument(
     matchType: log.matchType,
     matchTypeLabel: log.matchTypeLabel,
     isPublic: log.isPublic,
+    includeInCommunityStats: log.includeInCommunityStats,
     opponents: log.opponents,
     notes: log.notes,
     constructed: log.constructed,

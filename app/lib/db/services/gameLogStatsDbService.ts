@@ -85,6 +85,7 @@ export const gameLogStatsDbService = {
     await ensureDbConnection();
 
     const match: Record<string, any> = {};
+    match.seedTag = { $exists: false };
 
     if (query.scope === "my") {
       if (!query.userId) {
@@ -92,21 +93,7 @@ export const gameLogStatsDbService = {
       }
       match.userId = new ObjectId(query.userId);
     } else {
-      if (query.includeUserIds && query.includeUserIds.length > 0) {
-        const optedInIds = query.includeUserIds
-          .filter((id) => ObjectId.isValid(id))
-          .map((id) => new ObjectId(id));
-        if (optedInIds.length > 0) {
-          match.$or = [
-            { isPublic: true },
-            { isPublic: false, userId: { $in: optedInIds } },
-          ];
-        } else {
-          match.isPublic = true;
-        }
-      } else {
-        match.isPublic = true;
-      }
+      match.$or = [{ isPublic: true }, { includeInCommunityStats: true }];
     }
 
     if (query.from || query.to) {

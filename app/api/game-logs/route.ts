@@ -4,8 +4,10 @@ import { ObjectId } from "mongodb";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { gameLogService } from "@/app/lib/services/gameLogService";
 import { achievementService } from "@/app/lib/services/achievementService";
+import { resolveConstructedElements } from "@/app/lib/services/gameLogElementService";
 import { validateGameLogData } from "@/app/lib/utils/gameLogValidation";
 import { normalizeGameLogPayload } from "@/app/lib/utils/gameLogPayload";
+import { UserModel } from "@/app/lib/db/models/User";
 
 const ALLOWED_FORMATS = new Set(["constructed", "live_draft"]);
 const ALLOWED_OUTCOMES = new Set(["win", "loss", "draw"]);
@@ -78,8 +80,19 @@ export async function POST(request: NextRequest) {
       delete normalized.matchTypeLabel;
     }
 
+    const userDoc = await UserModel.findById(session.user.id, {
+      includePrivateLogsInCommunityStats: 1,
+    });
+    const includePrivate = userDoc?.includePrivateLogsInCommunityStats === true;
+    const isPublic = normalized.isPublic === true;
+    normalized.includeInCommunityStats = isPublic || includePrivate;
+
     if (normalized.format === "constructed") {
       delete normalized.liveDraft;
+      if (normalized.constructed) {
+        normalized.constructed.elementsPlayed =
+          await resolveConstructedElements(normalized.constructed);
+      }
     } else if (normalized.format === "live_draft") {
       delete normalized.constructed;
     }

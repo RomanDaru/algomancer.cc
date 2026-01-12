@@ -6,6 +6,7 @@ import {
   convertDocumentToGameLog,
   convertGameLogToDocument,
 } from "../models/GameLog";
+import { buildGameLogUpdate } from "../../utils/gameLogUpdate";
 
 let dbConnection: any = null;
 
@@ -106,10 +107,24 @@ export const gameLogDbService = {
   async updateGameLog(id: string, log: Partial<GameLog>): Promise<GameLog | null> {
     try {
       await ensureDbConnection();
+      const update = buildGameLogUpdate(log);
+      const updateDoc: Record<string, any> = {};
+      if (Object.keys(update.$set).length > 0) {
+        updateDoc.$set = update.$set;
+      }
+      if (Object.keys(update.$unset).length > 0) {
+        updateDoc.$unset = update.$unset;
+      }
+
+      if (Object.keys(updateDoc).length === 0) {
+        const doc = await GameLogModel.findById(new ObjectId(id));
+        return doc ? convertDocumentToGameLog(doc) : null;
+      }
+
       const doc = await GameLogModel.findByIdAndUpdate(
         new ObjectId(id),
-        convertGameLogToDocument(log),
-        { new: true }
+        updateDoc,
+        { new: true, runValidators: true }
       );
       return doc ? convertDocumentToGameLog(doc) : null;
     } catch (error) {

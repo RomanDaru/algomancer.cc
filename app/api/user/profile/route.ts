@@ -147,6 +147,19 @@ export async function PUT(request: NextRequest) {
         );
       }
 
+      if (includePrivateLogsValue !== undefined) {
+        const includePrivate = includePrivateLogsValue === true;
+        await db.collection("gamelogs").updateMany(
+          {
+            userId,
+            isPublic: false,
+          },
+          {
+            $set: { includeInCommunityStats: includePrivate },
+          }
+        );
+      }
+
       return NextResponse.json({
         id: updatedUser._id,
         name: updatedUser.name,

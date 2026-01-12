@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRightIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
 import StructuredData from "./components/StructuredData";
+import WhatsNewButton from "./components/WhatsNewButton";
 import { Metadata } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -43,7 +44,7 @@ export default async function Home() {
       <StructuredData type='website' data={{}} />
       <StructuredData type='organization' data={{}} />
       <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-black'>
-        <div className='max-w-3xl w-full text-center mb-8'>
+        <div className='max-w-3xl w-full text-center'>
           <h1 className='text-4xl md:text-6xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
             Algomancer.cc
           </h1>
@@ -53,7 +54,7 @@ export default async function Home() {
           </p>
 
           {/* Desktop description - hidden on mobile */}
-          <div className='hidden md:block max-w-2xl mx-auto mb-12 text-gray-400 text-lg leading-relaxed'>
+          <div className='hidden md:block max-w-2xl mx-auto text-gray-400 text-lg leading-relaxed'>
             <p>
               Build powerful Algomancy decks with our comprehensive deck
               builder. Search through the complete card database, analyze deck
@@ -61,6 +62,10 @@ export default async function Home() {
               Free to use, no signup required to start building!
             </p>
           </div>
+        </div>
+
+        <div className='my-12 flex w-full justify-center'>
+          <WhatsNewButton />
         </div>
 
         <div

@@ -336,15 +336,15 @@ export default function CreateGameLogPage() {
     if (isConstructed) {
       const trimmedExternal = externalDeckUrl.trim();
       if (!deckId && !trimmedExternal) {
-        errors.constructed = "Choose a deck or provide an external link.";
+        errors.constructed = "Choose a deck or paste a deck link.";
       }
       if (!deckId && trimmedExternal && !isValidUrl(trimmedExternal)) {
-        errors.externalDeckUrl = "External deck URL must be an Algomancer link.";
+        errors.externalDeckUrl = "Deck link must be an Algomancer link.";
       }
       const trimmedMateExternal = teammateExternalDeckUrl.trim();
       if (!teammateDeckId && trimmedMateExternal && !isValidUrl(trimmedMateExternal)) {
         errors.teammateExternalDeckUrl =
-          "Teammate deck URL must be an Algomancer link.";
+          "Teammate deck link must be an Algomancer link.";
       }
     }
 
@@ -374,7 +374,7 @@ export default function CreateGameLogPage() {
       const opponentUrl = opponent.externalDeckUrl.trim();
       if (opponentUrl && !isValidUrl(opponentUrl)) {
         errors[`opponents.${opponent.id}.externalDeckUrl`] =
-          "Opponent deck URL must be an Algomancer link.";
+          "Opponent deck link must be an Algomancer link.";
       }
     });
 
@@ -436,7 +436,7 @@ export default function CreateGameLogPage() {
                     onChange={(event) =>
                       updateOpponentDeckUrl(opponent.id, event.target.value)
                     }
-                    placeholder='Opponent deck URL (optional)'
+                    placeholder='Opponent deck link (optional)'
                     className='w-full rounded-md bg-algomancy-dark border border-algomancy-purple/30 px-3 py-2 text-white'
                   />
                   {fieldErrors[`opponents.${opponent.id}.externalDeckUrl`] && (
@@ -998,7 +998,7 @@ export default function CreateGameLogPage() {
                     Constructed Decks
                   </h2>
                   <p className='text-sm text-gray-400'>
-                    Pick one of your decks or paste an external deck link.
+                    Pick one of your decks or paste a deck link.
                   </p>
                 </div>
 
@@ -1038,7 +1038,7 @@ export default function CreateGameLogPage() {
 
                   <div className='space-y-2'>
                     <label className='block text-sm text-gray-300'>
-                      External Deck URL (optional)
+                      Paste deck link (optional)
                     </label>
                     <input
                       type='url'
@@ -1101,7 +1101,7 @@ export default function CreateGameLogPage() {
                       </div>
                       <div>
                         <label className='block text-sm text-gray-300 mb-2'>
-                          Teammate External Deck URL (optional)
+                          Paste teammate deck link (optional)
                         </label>
                         <input
                           type='url'

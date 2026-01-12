@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
+import { achievementService } from "@/app/lib/services/achievementService";
+import { UserModel } from "@/app/lib/db/models/User";
+import { connectToDatabase } from "@/app/lib/db/mongodb";
 import { ObjectId } from "mongodb";
 
 /**
@@ -27,6 +30,22 @@ export async function POST(
     }
 
     const userId = new ObjectId(session.user.id);
+    const minAccountAgeMs = 24 * 60 * 60 * 1000;
+    await connectToDatabase();
+    const userDoc = await UserModel.findById(userId, { createdAt: 1 });
+    if (!userDoc?.createdAt) {
+      return NextResponse.json(
+        { error: "Unable to verify account age" },
+        { status: 403 }
+      );
+    }
+    const accountAgeMs = Date.now() - new Date(userDoc.createdAt).getTime();
+    if (accountAgeMs < minAccountAgeMs) {
+      return NextResponse.json(
+        { error: "Account must be at least 24 hours old to like decks" },
+        { status: 403 }
+      );
+    }
 
     // Check if deck exists and is public
     const deck = await deckService.getDeckById(deckId);
@@ -57,6 +76,12 @@ export async function POST(
         { error: "Failed to update like status" },
         { status: 500 }
       );
+    }
+
+    try {
+      await achievementService.refreshUserXp(deck.userId.toString());
+    } catch (error) {
+      console.error("Error refreshing XP after like toggle:", error);
     }
 
     return NextResponse.json({

@@ -90,6 +90,10 @@ export default function MyDecks() {
   // Access the username safely
   const username =
     session.user.username !== undefined ? session.user.username : null;
+  const achievementXp =
+    typeof session.user.achievementXp === "number"
+      ? session.user.achievementXp
+      : undefined;
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -137,6 +141,7 @@ export default function MyDecks() {
           user={{
             name: session.user.name || "",
             username: username,
+            achievementXp: achievementXp,
           }}
           emptyMessage="You haven't created any decks yet. Start building your first deck!"
           createDeckLink='/decks/create'

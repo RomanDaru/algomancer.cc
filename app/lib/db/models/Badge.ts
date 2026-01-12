@@ -12,8 +12,14 @@ const BadgeSchema = new Schema(
     type: { 
       type: String, 
       required: true, 
-      enum: ["best_constructed_monthly", "best_draft_monthly", "hall_of_fame"] 
+      enum: [
+        "best_constructed_monthly",
+        "best_draft_monthly",
+        "hall_of_fame",
+        "achievement",
+      ],
     },
+    key: { type: String },
     title: { type: String, required: true },
     description: { type: String, required: true },
     icon: { type: String, required: true },
@@ -30,6 +36,7 @@ const BadgeSchema = new Schema(
 // Create indexes for efficient queries
 BadgeSchema.index({ type: 1, month: 1 });
 BadgeSchema.index({ type: 1, year: 1 });
+BadgeSchema.index({ type: 1, key: 1 });
 
 // Export the model
 export const BadgeModel = mongoose.models.Badge || mongoose.model<BadgeDocument>("Badge", BadgeSchema);
@@ -40,6 +47,7 @@ export function convertDocumentToBadge(doc: BadgeDocument): BadgeType {
   return {
     _id: badge._id,
     type: badge.type,
+    key: badge.key,
     title: badge.title,
     description: badge.description,
     icon: badge.icon,
@@ -57,6 +65,7 @@ export function convertBadgeToDocument(
 ): Partial<BadgeDocument> {
   return {
     type: badge.type,
+    key: badge.key,
     title: badge.title,
     description: badge.description,
     icon: badge.icon,

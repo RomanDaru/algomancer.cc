@@ -14,6 +14,7 @@ import {
 } from "@/app/lib/utils/elements";
 import CardImageSkeleton from "./CardImageSkeleton";
 import { optimizeCardDetail } from "@/app/lib/utils/imageOptimization";
+import UserNameWithRank from "./UserNameWithRank";
 
 interface CardDetailsProps {
   card: CardType;
@@ -25,6 +26,7 @@ interface DeckWithUserAndCards {
   user: {
     name: string;
     username: string | null;
+    achievementXp?: number;
   };
   cards: CardType[];
 }
@@ -353,11 +355,14 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                             />
                           </div>
                           <div className='text-sm text-algomancy-gold mt-1'>
-                            {user.username ? (
-                              <>@{user.username}</>
-                            ) : (
-                              <span className='text-gray-400'>{user.name}</span>
-                            )}
+                            <UserNameWithRank
+                              name={user.name}
+                              username={user.username}
+                              achievementXp={user.achievementXp}
+                              className={user.username ? "" : "text-gray-400"}
+                              iconClassName='text-algomancy-gold'
+                              iconSize={13}
+                            />
                             <span className='text-gray-500 text-xs ml-2'>
                               - {" "}
                               {formatDistanceToNow(new Date(deck.createdAt), {

@@ -12,6 +12,8 @@ export default function EditProfile() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
+  const [includePrivateLogsInCommunityStats, setIncludePrivateLogsInCommunityStats] =
+    useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [usernameError, setUsernameError] = useState("");
@@ -32,6 +34,9 @@ export default function EditProfile() {
       const username =
         session.user.username !== undefined ? session.user.username : "";
       setUsername(username);
+      setIncludePrivateLogsInCommunityStats(
+        session.user.includePrivateLogsInCommunityStats ?? false
+      );
     }
   }, [session]);
 
@@ -57,6 +62,7 @@ export default function EditProfile() {
         body: JSON.stringify({
           name,
           username,
+          includePrivateLogsInCommunityStats,
         }),
       });
 
@@ -75,6 +81,8 @@ export default function EditProfile() {
             ...session?.user,
             name: updatedUser.name,
             username: updatedUser.username,
+            includePrivateLogsInCommunityStats:
+              updatedUser.includePrivateLogsInCommunityStats ?? false,
           },
         });
         console.log("Session updated successfully");
@@ -208,6 +216,26 @@ export default function EditProfile() {
                 <p className='text-xs text-gray-400 mt-1'>
                   Your real name is only used for account purposes and is not
                   displayed publicly.
+                </p>
+              </div>
+
+              <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
+                <label className='flex items-start gap-3 text-sm text-gray-200'>
+                  <input
+                    type='checkbox'
+                    checked={includePrivateLogsInCommunityStats}
+                    onChange={(e) =>
+                      setIncludePrivateLogsInCommunityStats(e.target.checked)
+                    }
+                    className='mt-1 h-4 w-4 accent-algomancy-gold'
+                  />
+                  <span>
+                    Include my private logs in anonymous community stats.
+                  </span>
+                </label>
+                <p className='text-xs text-gray-400 mt-2'>
+                  This only affects aggregated stats and never exposes your
+                  private logs directly.
                 </p>
               </div>
 

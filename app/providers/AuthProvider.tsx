@@ -5,13 +5,16 @@ import { ReactNode } from "react";
 
 interface AuthProviderProps {
   children: ReactNode;
+  session?: any;
 }
 
-export default function AuthProvider({ children }: AuthProviderProps) {
+export default function AuthProvider({ children, session }: AuthProviderProps) {
   return (
     <SessionProvider
-      // Reduce session refetch frequency to prevent excessive API calls
-      refetchInterval={5 * 60} // Refetch every 5 minutes instead of default (4 minutes)
+      session={session}
+      // Disable periodic polling; session is fetched on mount only.
+      // Re-enable refetchInterval if we need auto refresh.
+      refetchInterval={0}
       refetchOnWindowFocus={false} // Don't refetch when window gains focus
       refetchWhenOffline={false} // Don't refetch when coming back online
     >

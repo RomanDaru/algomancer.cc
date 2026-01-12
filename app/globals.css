@@ -130,3 +130,85 @@ button[disabled] {
 .custom-scrollbar::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+@keyframes level-up-fill-bump {
+  0% {
+    transform: scaleX(0);
+  }
+  80% {
+    transform: scaleX(1);
+  }
+  90% {
+    transform: scaleX(1) scaleY(1);
+  }
+  95% {
+    transform: scaleX(1) scaleY(1.2);
+  }
+  100% {
+    transform: scaleX(1) scaleY(1);
+  }
+}
+
+.level-up-fill {
+  transform-origin: left center;
+  transform: scaleX(0);
+  animation: level-up-fill-bump 1.6s ease-out forwards;
+  will-change: transform;
+}
+
+.level-up-rank-old {
+  animation: level-up-rank-old 1.2s ease-out forwards;
+}
+
+.level-up-rank-new {
+  opacity: 0;
+  animation: level-up-rank-new 1.2s ease-out forwards;
+}
+
+@keyframes level-up-rank-old {
+  0% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.4) translateY(-6px) rotate(-12deg);
+  }
+}
+
+@keyframes level-up-rank-new {
+  0% {
+    opacity: 0;
+    transform: scale(0.4) translateY(6px) rotate(12deg);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.8) translateY(2px) rotate(4deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-up-fill {
+    animation: none;
+    transform: scaleX(1);
+  }
+  .level-up-rank-old,
+  .level-up-rank-new {
+    animation: none;
+    transform: scale(1);
+  }
+  .level-up-rank-old {
+    opacity: 0;
+  }
+  .level-up-rank-new {
+    opacity: 1;
+  }
+}

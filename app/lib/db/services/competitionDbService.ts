@@ -82,11 +82,11 @@ export const competitionDbService = {
               // Convert string ID to ObjectId for MongoDB query
               const userObjectId = new ObjectId(winner.userId.toString());
 
-              const userDoc = await db
+                const userDoc = await db
                 .collection("users")
                 .findOne(
                   { _id: userObjectId },
-                  { projection: { name: 1, email: 1, username: 1 } }
+                  { projection: { name: 1, email: 1, username: 1, achievementXp: 1 } }
                 );
               if (userDoc) {
                 userData = {
@@ -94,6 +94,10 @@ export const competitionDbService = {
                   name: userDoc.name,
                   email: userDoc.email,
                   username: userDoc.username,
+                  achievementXp:
+                    typeof userDoc.achievementXp === "number"
+                      ? userDoc.achievementXp
+                      : 0,
                 };
               }
             } catch (userError) {
@@ -129,7 +133,7 @@ export const competitionDbService = {
                       .collection("users")
                       .findOne(
                         { _id: deckDoc.userId },
-                        { projection: { name: 1, email: 1, username: 1 } }
+                        { projection: { name: 1, email: 1, username: 1, achievementXp: 1 } }
                       );
                     if (deckOwnerDoc) {
                       userData = {
@@ -137,6 +141,10 @@ export const competitionDbService = {
                         name: deckOwnerDoc.name,
                         email: deckOwnerDoc.email,
                         username: deckOwnerDoc.username,
+                        achievementXp:
+                          typeof deckOwnerDoc.achievementXp === "number"
+                            ? deckOwnerDoc.achievementXp
+                            : 0,
                       };
                     }
                   } catch (ownerError) {

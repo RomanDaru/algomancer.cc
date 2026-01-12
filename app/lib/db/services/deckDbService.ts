@@ -146,7 +146,7 @@ export const deckDbService = {
   ): Promise<
     Array<{
       deck: Deck;
-      user: { name: string; username: string | null };
+      user: { name: string; username: string | null; achievementXp?: number };
       isLikedByCurrentUser: boolean;
       deckElements: string[];
     }>
@@ -188,13 +188,16 @@ export const deckDbService = {
                         in: {
                           name: { $ifNull: ["$$u.name", "Unknown User"] },
                           username: "$$u.username",
+                          achievementXp: {
+                            $ifNull: ["$$u.achievementXp", 0],
+                          },
                         },
                       },
                     },
                     0,
                   ],
                 },
-                { name: "Unknown User", username: null },
+                { name: "Unknown User", username: null, achievementXp: 0 },
               ],
             },
             deckElements: { $ifNull: ["$deckElements", []] },
@@ -246,7 +249,7 @@ export const deckDbService = {
    */
   async getDeckUserInfo(
     userId: string
-  ): Promise<{ name: string; username: string | null }> {
+  ): Promise<{ name: string; username: string | null; achievementXp?: number }> {
     try {
       const connection = await ensureDbConnection();
       if (!connection || !connection.db) {
@@ -266,10 +269,12 @@ export const deckDbService = {
       return {
         name: user.name || "Unknown User",
         username: user.username || null,
+        achievementXp:
+          typeof user.achievementXp === "number" ? user.achievementXp : 0,
       };
     } catch (error) {
       console.error(`Error getting user info for user ${userId}:`, error);
-      return { name: "Unknown User", username: null };
+      return { name: "Unknown User", username: null, achievementXp: 0 };
     }
   },
 
@@ -575,7 +580,7 @@ export const deckDbService = {
   ): Promise<
     Array<{
       deck: Deck;
-      user: { name: string; username: string | null };
+      user: { name: string; username: string | null; achievementXp?: number };
       cards: Card[];
     }>
   > {
@@ -627,13 +632,16 @@ export const deckDbService = {
                         in: {
                           name: { $ifNull: ["$$u.name", "Unknown User"] },
                           username: "$$u.username",
+                          achievementXp: {
+                            $ifNull: ["$$u.achievementXp", 0],
+                          },
                         },
                       },
                     },
                     0,
                   ],
                 },
-                { name: "Unknown User", username: null },
+                { name: "Unknown User", username: null, achievementXp: 0 },
               ],
             },
             // Map card details to maintain order and quantities

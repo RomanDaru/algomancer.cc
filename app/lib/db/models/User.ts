@@ -15,6 +15,8 @@ const UserSchema = new Schema(
     hashedPassword: { type: String },
     image: { type: String },
     isAdmin: { type: Boolean, default: false },
+    includePrivateLogsInCommunityStats: { type: Boolean, default: false },
+    achievementXp: { type: Number, default: 0 },
     resetToken: { type: String },
     resetTokenExpiry: { type: Date },
     emailVerified: { type: Date }, // For NextAuth compatibility
@@ -44,6 +46,9 @@ export function convertDocumentToUser(doc: UserDocument): UserType {
     hashedPassword: user.hashedPassword,
     image: user.image,
     isAdmin: user.isAdmin || false,
+    includePrivateLogsInCommunityStats:
+      user.includePrivateLogsInCommunityStats || false,
+    achievementXp: typeof user.achievementXp === "number" ? user.achievementXp : 0,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
     resetToken: user.resetToken,
@@ -65,6 +70,8 @@ export function convertUserToDocument(
     hashedPassword: user.hashedPassword,
     image: user.image,
     isAdmin: user.isAdmin,
+    includePrivateLogsInCommunityStats: user.includePrivateLogsInCommunityStats,
+    achievementXp: user.achievementXp,
     resetToken: user.resetToken,
     resetTokenExpiry: user.resetTokenExpiry,
     emailVerified: user.emailVerified,

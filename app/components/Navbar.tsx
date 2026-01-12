@@ -129,8 +129,8 @@ export default function Navbar() {
       if (!container) return;
 
       const linkCandidates = showCompetitions
-        ? ["/", "/cards", "/decks", "/competitions"]
-        : ["/", "/cards", "/decks"];
+        ? ["/", "/cards", "/decks", "/stats", "/competitions"]
+        : ["/", "/cards", "/decks", "/stats"];
       const activeHref = linkCandidates.find((href) => isActiveLink(href));
 
       if (!activeHref) {
@@ -220,6 +220,18 @@ export default function Navbar() {
                       desktopLinkRefs.current["/decks"] = el;
                     }}>
                     Decks
+                  </Link>
+                </li>
+                <li role='none'>
+                  <Link
+                    href='/stats'
+                    className={getDesktopLinkClass("/stats")}
+                    role='menuitem'
+                    aria-current={isActiveLink("/stats") ? "page" : undefined}
+                    ref={(el) => {
+                      desktopLinkRefs.current["/stats"] = el;
+                    }}>
+                    Stats
                   </Link>
                 </li>
               {showCompetitions && (
@@ -349,6 +361,14 @@ export default function Navbar() {
                           role='menuitem'
                           tabIndex={0}>
                           Profile
+                        </Link>
+                        <Link
+                          href='/game-logs'
+                          className='block px-4 py-2 text-sm hover:bg-algomancy-purple/20'
+                          onClick={() => setIsProfileMenuOpen(false)}
+                          role='menuitem'
+                          tabIndex={0}>
+                          My Logs
                         </Link>
                         <Link
                           href='/profile/decks'
@@ -503,6 +523,18 @@ export default function Navbar() {
                   Decks
                 </Link>
               </li>
+              <li role='none'>
+                <Link
+                  href='/stats'
+                  className={getMobileLinkClass("/stats")}
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                  role='menuitem'
+                  aria-current={
+                    isActiveLink("/stats") ? "page" : undefined
+                  }>
+                  Stats
+                </Link>
+              </li>
               {showCompetitions && (
                 <li role='none'>
                   <Link
@@ -553,6 +585,13 @@ export default function Navbar() {
                   onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                 >
                   Profile
+                </Link>
+                <Link
+                  href='/game-logs'
+                  className='block px-3 py-2 rounded-md hover:bg-algomancy-purple/20'
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                >
+                  My Logs
                 </Link>
                 <Link
                   href='/profile/decks'

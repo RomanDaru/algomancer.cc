@@ -191,12 +191,12 @@ export default function DeckOptionsMenu({
       <button
         ref={btnRef}
         onClick={() => setOpen((o) => !o)}
-        className='flex items-center px-4 py-2 bg-algomancy-dark text-white border border-algomancy-purple/30 rounded hover:bg-algomancy-dark/80 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/50'
+        className='inline-flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-2 py-1 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20 hover:border-white/30 focus:outline-none focus:ring-1 focus:ring-white/30'
         aria-haspopup='menu'
         aria-expanded={open}
       >
         Options
-        <ChevronDownIcon className='w-4 h-4 ml-2' />
+        <ChevronDownIcon className='w-4 h-4' />
       </button>
 
       {open && menuPos &&

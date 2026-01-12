@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import type { GameLog } from "../types/gameLog";
 import { BASIC_ELEMENTS } from "../types/card";
 import type { ValidationResult } from "./competitionValidation";
+import { isValidAlgomancerDeckUrl } from "./deckUrl";
 
 const OUTCOMES = ["win", "loss", "draw"] as const;
 const FORMATS = ["constructed", "live_draft"] as const;
@@ -187,6 +188,11 @@ export function validateGameLogData(
             `opponents.${index}.externalDeckUrl`,
             "opponent externalDeckUrl is invalid"
           );
+        } else if (externalValue && !isValidAlgomancerDeckUrl(externalValue)) {
+          addFieldError(
+            `opponents.${index}.externalDeckUrl`,
+            "opponent externalDeckUrl must be an Algomancer deck link"
+          );
         }
 
         if (opponent?.mvpCardIds) {
@@ -258,6 +264,15 @@ export function validateGameLogData(
           "constructed.externalDeckUrl",
           "externalDeckUrl is invalid"
         );
+      } else if (
+        typeof data.constructed.externalDeckUrl === "string" &&
+        data.constructed.externalDeckUrl.trim() &&
+        !isValidAlgomancerDeckUrl(data.constructed.externalDeckUrl.trim())
+      ) {
+        addFieldError(
+          "constructed.externalDeckUrl",
+          "externalDeckUrl must be an Algomancer deck link"
+        );
       }
       if (
         data.constructed.teammateDeckId &&
@@ -283,6 +298,15 @@ export function validateGameLogData(
         addFieldError(
           "constructed.teammateExternalDeckUrl",
           "teammateExternalDeckUrl is invalid"
+        );
+      } else if (
+        typeof data.constructed.teammateExternalDeckUrl === "string" &&
+        data.constructed.teammateExternalDeckUrl.trim() &&
+        !isValidAlgomancerDeckUrl(data.constructed.teammateExternalDeckUrl.trim())
+      ) {
+        addFieldError(
+          "constructed.teammateExternalDeckUrl",
+          "teammateExternalDeckUrl must be an Algomancer deck link"
         );
       }
     }

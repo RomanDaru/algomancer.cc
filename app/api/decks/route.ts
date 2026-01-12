@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deckService } from '@/app/lib/services/deckService';
+import { achievementService } from "@/app/lib/services/achievementService";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { ObjectId } from 'mongodb';
@@ -59,6 +60,12 @@ export async function POST(request: NextRequest) {
     
     // Create the deck
     const deck = await deckService.createDeck(deckData);
+
+    try {
+      await achievementService.refreshUserXp(session.user.id);
+    } catch (error) {
+      console.error("Error refreshing XP after deck creation:", error);
+    }
     
     return NextResponse.json(deck, { status: 201 });
   } catch (error) {

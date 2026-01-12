@@ -61,13 +61,28 @@ describe("validateGameLogData", () => {
         ...baseLog,
         constructed: {
           deckId: validDeckId,
-          externalDeckUrl: "https://example.com/deck",
+          externalDeckUrl: `https://algomancer.cc/decks/${validDeckId}`,
         },
       },
       { requireAll: true }
     );
     expect(result.isValid).toBe(false);
     expect(result.fieldErrors.constructed?.length).toBeGreaterThan(0);
+  });
+
+  test("rejects non-algomancer external deck url", () => {
+    const result = validateGameLogData(
+      {
+        ...baseLog,
+        constructed: {
+          deckId: undefined,
+          externalDeckUrl: "https://example.com/decks/507f1f77bcf86cd799439011",
+        },
+      },
+      { requireAll: true }
+    );
+    expect(result.isValid).toBe(false);
+    expect(result.fieldErrors["constructed.externalDeckUrl"]?.length).toBeGreaterThan(0);
   });
 
   test("requires live draft elements", () => {

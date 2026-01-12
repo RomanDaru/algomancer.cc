@@ -34,6 +34,10 @@ export const BADGE_TYPE = {
 export const LEVEL_UP_STORAGE_KEY = "algomancy-level-up";
 export const LEVEL_UP_EVENT = "algomancy-level-up";
 
+export const LIKE_XP = 5;
+export const DECK_CREATE_XP = 10;
+export const DECK_CREATE_DAILY_CAP = 50;
+
 // Export types for TypeScript
 export type CompetitionStatus =
   (typeof COMPETITION_STATUS)[keyof typeof COMPETITION_STATUS];

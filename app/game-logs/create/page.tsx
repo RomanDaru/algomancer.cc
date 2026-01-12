@@ -9,6 +9,7 @@ import { BASIC_ELEMENTS } from "@/app/lib/types/card";
 import { getRankForXp } from "@/app/lib/achievements/ranks";
 import { LEVEL_UP_EVENT, LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
 import type { LevelUpPayload } from "@/app/lib/types/levelUp";
+import { isValidAlgomancerDeckUrl } from "@/app/lib/utils/deckUrl";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";
 
@@ -305,14 +306,7 @@ export default function CreateGameLogPage() {
     setMvpCardIds((prev) => prev.filter((id) => id !== cardId));
   };
 
-  const isValidUrl = (value: string) => {
-    try {
-      new URL(value);
-      return true;
-    } catch {
-      return false;
-    }
-  };
+  const isValidUrl = (value: string) => isValidAlgomancerDeckUrl(value);
 
   const validateForm = () => {
     const errors: Record<string, string> = {};
@@ -345,11 +339,12 @@ export default function CreateGameLogPage() {
         errors.constructed = "Choose a deck or provide an external link.";
       }
       if (!deckId && trimmedExternal && !isValidUrl(trimmedExternal)) {
-        errors.externalDeckUrl = "External deck URL is invalid.";
+        errors.externalDeckUrl = "External deck URL must be an Algomancer link.";
       }
       const trimmedMateExternal = teammateExternalDeckUrl.trim();
       if (!teammateDeckId && trimmedMateExternal && !isValidUrl(trimmedMateExternal)) {
-        errors.teammateExternalDeckUrl = "Teammate deck URL is invalid.";
+        errors.teammateExternalDeckUrl =
+          "Teammate deck URL must be an Algomancer link.";
       }
     }
 
@@ -379,7 +374,7 @@ export default function CreateGameLogPage() {
       const opponentUrl = opponent.externalDeckUrl.trim();
       if (opponentUrl && !isValidUrl(opponentUrl)) {
         errors[`opponents.${opponent.id}.externalDeckUrl`] =
-          "Opponent deck URL is invalid.";
+          "Opponent deck URL must be an Algomancer link.";
       }
     });
 

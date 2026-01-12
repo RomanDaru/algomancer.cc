@@ -33,7 +33,20 @@ export default async function Profile() {
 
   let decks: Deck[] = [];
   let likedDecks: LikedDeckItem[] = [];
-  let achievementSnapshot = { achievementXp: 0, achievements: [] as any[] };
+  let achievementSnapshot = {
+    achievementXp: 0,
+    achievements: [] as any[],
+    metrics: {
+      totalLogs: 0,
+      winLogs: 0,
+      constructedLogs: 0,
+      liveDraftLogs: 0,
+      publicLogs: 0,
+      mvpLogs: 0,
+      elementLogs: {},
+      elementWins: {},
+    },
+  };
 
   try {
     const [userDecks, likedDeckItems] = await Promise.all([
@@ -57,9 +70,123 @@ export default async function Profile() {
   const username = session.user.username ?? null;
   const achievementXp = achievementSnapshot.achievementXp ?? 0;
   const rankProgress = getRankProgress(achievementXp);
-  const unlockedCount = achievementSnapshot.achievements.filter(
-    (achievement) => achievement.unlocked
-  ).length;
+  const metrics = achievementSnapshot.metrics;
+
+  const getProgress = (
+    criteria: (typeof achievementSnapshot.achievements)[number]["definition"]["criteria"]
+  ) => {
+    const target = criteria.count;
+    const current = (() => {
+      switch (criteria.type) {
+        case "total_logs":
+          return metrics.totalLogs;
+        case "wins":
+          return metrics.winLogs;
+        case "constructed_logs":
+          return metrics.constructedLogs;
+        case "live_draft_logs":
+          return metrics.liveDraftLogs;
+        case "public_logs":
+          return metrics.publicLogs;
+        case "mvp_logs":
+          return metrics.mvpLogs;
+        case "element_logs":
+          return metrics.elementLogs?.[criteria.element] ?? 0;
+        case "element_wins":
+          return metrics.elementWins?.[criteria.element] ?? 0;
+        default:
+          return 0;
+      }
+    })();
+    return { current, target };
+  };
+
+  const chainGroups = new Map<string, typeof achievementSnapshot.achievements>();
+  const singleAchievements: typeof achievementSnapshot.achievements = [];
+
+  achievementSnapshot.achievements.forEach((achievement) => {
+    const seriesKey = achievement.definition.seriesKey;
+    if (seriesKey) {
+      const group = chainGroups.get(seriesKey) ?? [];
+      group.push(achievement);
+      chainGroups.set(seriesKey, group);
+    } else {
+      singleAchievements.push(achievement);
+    }
+  });
+
+  const activeAchievements: typeof achievementSnapshot.achievements = [];
+  const unlockedAchievements: typeof achievementSnapshot.achievements = [];
+
+  singleAchievements.forEach((achievement) => {
+    if (achievement.unlocked) {
+      unlockedAchievements.push(achievement);
+    } else {
+      activeAchievements.push(achievement);
+    }
+  });
+
+  chainGroups.forEach((group) => {
+    const sorted = group
+      .slice()
+      .sort(
+        (left, right) =>
+          left.definition.criteria.count - right.definition.criteria.count
+      );
+    const unlockedTiers = sorted.filter((entry) => entry.unlocked);
+    const nextTier = sorted.find((entry) => !entry.unlocked);
+
+    if (nextTier) {
+      activeAchievements.push(nextTier);
+    }
+
+    unlockedTiers.forEach((entry) => unlockedAchievements.push(entry));
+  });
+
+  const unlockedCount = unlockedAchievements.length;
+
+  const isElementMastery = (
+    achievement: (typeof achievementSnapshot.achievements)[number]
+  ) => achievement.definition.criteria.type === "element_logs";
+
+  const isElementSupremacy = (
+    achievement: (typeof achievementSnapshot.achievements)[number]
+  ) => achievement.definition.criteria.type === "element_wins";
+
+  const activeElementMastery = activeAchievements.filter(isElementMastery);
+  const activeElementSupremacy = activeAchievements.filter(isElementSupremacy);
+  const activeCore = activeAchievements.filter(
+    (achievement) =>
+      !isElementMastery(achievement) && !isElementSupremacy(achievement)
+  );
+
+  const unlockedElementMastery = unlockedAchievements.filter(isElementMastery);
+  const unlockedElementSupremacy = unlockedAchievements.filter(isElementSupremacy);
+  const unlockedCore = unlockedAchievements.filter(
+    (achievement) =>
+      !isElementMastery(achievement) && !isElementSupremacy(achievement)
+  );
+
+  const sortAchievements = (
+    left: (typeof achievementSnapshot.achievements)[number],
+    right: (typeof achievementSnapshot.achievements)[number]
+  ) => {
+    const seriesLeft = left.definition.seriesKey ?? left.definition.key;
+    const seriesRight = right.definition.seriesKey ?? right.definition.key;
+    if (seriesLeft !== seriesRight) {
+      return seriesLeft.localeCompare(seriesRight);
+    }
+    return left.definition.criteria.count - right.definition.criteria.count;
+  };
+
+  activeAchievements.sort(sortAchievements);
+  unlockedAchievements.sort(sortAchievements);
+  activeElementMastery.sort(sortAchievements);
+  activeElementSupremacy.sort(sortAchievements);
+  activeCore.sort(sortAchievements);
+  unlockedElementMastery.sort(sortAchievements);
+  unlockedElementSupremacy.sort(sortAchievements);
+  unlockedCore.sort(sortAchievements);
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -274,50 +401,363 @@ export default async function Profile() {
                     </p>
                   </div>
                 </div>
-                <div className='space-y-3'>
-                  {achievementSnapshot.achievements.map((achievement) => {
-                    const xp = getAchievementXp(achievement.definition.rarity);
-                    const rarityLabel = getAchievementRarityLabel(
-                      achievement.definition.rarity
-                    );
-
-                    return (
-                      <div
-                        key={achievement.definition.key}
-                        className={`flex items-start gap-3 rounded-lg border px-4 py-3 ${
-                          achievement.unlocked
-                            ? "border-algomancy-purple/30 bg-algomancy-darker/60"
-                            : "border-white/5 bg-algomancy-darker/20 opacity-70"
-                        }`}>
-                        <div
-                          className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
-                          style={{
-                            color: achievement.definition.color,
-                            backgroundColor: `${achievement.definition.color}20`,
-                            border: `1px solid ${achievement.definition.color}`,
-                          }}>
-                          {achievement.definition.icon}
-                        </div>
-                        <div className='flex-1'>
-                          <div className='flex items-center justify-between'>
-                            <p className='text-sm font-semibold text-white'>
-                              {achievement.definition.title}
-                            </p>
-                            <div className='flex items-center gap-2 text-xs text-gray-400'>
-                              <span>{rarityLabel}</span>
-                              <span>+{xp} XP</span>
-                            </div>
-                          </div>
-                          <p className='text-xs text-gray-400'>
-                            {achievement.definition.description}
-                          </p>
-                        </div>
-                        <div className='text-xs text-gray-500'>
-                          {achievement.unlocked ? "Unlocked" : "Locked"}
-                        </div>
+                <div className='space-y-6'>
+                  <div className='space-y-3'>
+                    <div className='flex items-center justify-between'>
+                      <h3 className='text-sm font-semibold text-white'>Active</h3>
+                      <span className='text-xs text-gray-500'>
+                        {activeAchievements.length} active
+                      </span>
+                    </div>
+                    {activeAchievements.length === 0 ? (
+                      <div className='text-xs text-gray-500'>
+                        No active achievements right now.
                       </div>
-                    );
-                  })}
+                    ) : (
+                      <div className='space-y-3'>
+                        {activeCore.length > 0 && (
+                          <div className='space-y-3'>
+                            {activeCore.map((achievement) => {
+                              const xp = getAchievementXp(
+                                achievement.definition.rarity
+                              );
+                              const rarityLabel = getAchievementRarityLabel(
+                                achievement.definition.rarity
+                              );
+                              const progress = getProgress(
+                                achievement.definition.criteria
+                              );
+                              const current = Math.min(
+                                progress.current,
+                                progress.target
+                              );
+
+                              return (
+                                <div
+                                  key={`active-${achievement.definition.key}`}
+                                  className='flex items-start gap-3 rounded-lg border px-4 py-3 border-white/5 bg-algomancy-darker/20 opacity-80'>
+                                  <div
+                                    className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                    style={{
+                                      color: achievement.definition.color,
+                                      backgroundColor: `${achievement.definition.color}20`,
+                                      border: `1px solid ${achievement.definition.color}`,
+                                    }}>
+                                    {achievement.definition.icon}
+                                  </div>
+                                  <div className='flex-1'>
+                                    <div className='flex items-center justify-between'>
+                                      <p className='text-sm font-semibold text-white'>
+                                        {achievement.definition.title}
+                                      </p>
+                                      <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                        <span>{rarityLabel}</span>
+                                        <span>+{xp} XP</span>
+                                      </div>
+                                    </div>
+                                    <p className='text-xs text-gray-400'>
+                                      {achievement.definition.description}
+                                    </p>
+                                    <p className='text-xs text-gray-500 mt-1'>
+                                      Progress: {current} / {progress.target}
+                                    </p>
+                                  </div>
+                                  <div className='text-xs text-gray-500'>
+                                    Locked
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {activeElementMastery.length > 0 && (
+                          <details className='rounded-lg border border-white/5 bg-algomancy-darker/20 px-4 py-3'>
+                            <summary className='cursor-pointer text-sm font-semibold text-white'>
+                              Element Mastery ({activeElementMastery.length})
+                            </summary>
+                            <div className='mt-3 space-y-3'>
+                              {activeElementMastery.map((achievement) => {
+                                const xp = getAchievementXp(
+                                  achievement.definition.rarity
+                                );
+                                const rarityLabel = getAchievementRarityLabel(
+                                  achievement.definition.rarity
+                                );
+                                const progress = getProgress(
+                                  achievement.definition.criteria
+                                );
+                                const current = Math.min(
+                                  progress.current,
+                                  progress.target
+                                );
+
+                                return (
+                                  <div
+                                    key={`active-${achievement.definition.key}`}
+                                    className='flex items-start gap-3 rounded-lg border px-4 py-3 border-white/5 bg-algomancy-darker/20 opacity-80'>
+                                    <div
+                                      className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                      style={{
+                                        color: achievement.definition.color,
+                                        backgroundColor: `${achievement.definition.color}20`,
+                                        border: `1px solid ${achievement.definition.color}`,
+                                      }}>
+                                      {achievement.definition.icon}
+                                    </div>
+                                    <div className='flex-1'>
+                                      <div className='flex items-center justify-between'>
+                                        <p className='text-sm font-semibold text-white'>
+                                          {achievement.definition.title}
+                                        </p>
+                                        <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                          <span>{rarityLabel}</span>
+                                          <span>+{xp} XP</span>
+                                        </div>
+                                      </div>
+                                      <p className='text-xs text-gray-400'>
+                                        {achievement.definition.description}
+                                      </p>
+                                      <p className='text-xs text-gray-500 mt-1'>
+                                        Progress: {current} / {progress.target}
+                                      </p>
+                                    </div>
+                                    <div className='text-xs text-gray-500'>
+                                      Locked
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        )}
+
+                        {activeElementSupremacy.length > 0 && (
+                          <details className='rounded-lg border border-white/5 bg-algomancy-darker/20 px-4 py-3'>
+                            <summary className='cursor-pointer text-sm font-semibold text-white'>
+                              Element Supremacy ({activeElementSupremacy.length})
+                            </summary>
+                            <div className='mt-3 space-y-3'>
+                              {activeElementSupremacy.map((achievement) => {
+                                const xp = getAchievementXp(
+                                  achievement.definition.rarity
+                                );
+                                const rarityLabel = getAchievementRarityLabel(
+                                  achievement.definition.rarity
+                                );
+                                const progress = getProgress(
+                                  achievement.definition.criteria
+                                );
+                                const current = Math.min(
+                                  progress.current,
+                                  progress.target
+                                );
+
+                                return (
+                                  <div
+                                    key={`active-${achievement.definition.key}`}
+                                    className='flex items-start gap-3 rounded-lg border px-4 py-3 border-white/5 bg-algomancy-darker/20 opacity-80'>
+                                    <div
+                                      className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                      style={{
+                                        color: achievement.definition.color,
+                                        backgroundColor: `${achievement.definition.color}20`,
+                                        border: `1px solid ${achievement.definition.color}`,
+                                      }}>
+                                      {achievement.definition.icon}
+                                    </div>
+                                    <div className='flex-1'>
+                                      <div className='flex items-center justify-between'>
+                                        <p className='text-sm font-semibold text-white'>
+                                          {achievement.definition.title}
+                                        </p>
+                                        <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                          <span>{rarityLabel}</span>
+                                          <span>+{xp} XP</span>
+                                        </div>
+                                      </div>
+                                      <p className='text-xs text-gray-400'>
+                                        {achievement.definition.description}
+                                      </p>
+                                      <p className='text-xs text-gray-500 mt-1'>
+                                        Progress: {current} / {progress.target}
+                                      </p>
+                                    </div>
+                                    <div className='text-xs text-gray-500'>
+                                      Locked
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </details>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <details className='rounded-lg border border-white/5 bg-algomancy-darker/20 px-4 py-3'>
+                    <summary className='cursor-pointer text-sm font-semibold text-white'>
+                      Unlocked ({unlockedAchievements.length})
+                    </summary>
+                    <div className='mt-3 space-y-3'>
+                      {unlockedAchievements.length === 0 ? (
+                        <div className='text-xs text-gray-500'>
+                          No unlocked achievements yet.
+                        </div>
+                      ) : (
+                        <div className='space-y-3'>
+                          {unlockedCore.length > 0 && (
+                            <div className='space-y-3'>
+                              {unlockedCore.map((achievement) => {
+                                const xp = getAchievementXp(
+                                  achievement.definition.rarity
+                                );
+                                const rarityLabel = getAchievementRarityLabel(
+                                  achievement.definition.rarity
+                                );
+
+                                return (
+                                  <div
+                                    key={`unlocked-${achievement.definition.key}`}
+                                    className='flex items-start gap-3 rounded-lg border px-4 py-3 border-algomancy-purple/30 bg-algomancy-darker/60'>
+                                    <div
+                                      className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                      style={{
+                                        color: achievement.definition.color,
+                                        backgroundColor: `${achievement.definition.color}20`,
+                                        border: `1px solid ${achievement.definition.color}`,
+                                      }}>
+                                      {achievement.definition.icon}
+                                    </div>
+                                    <div className='flex-1'>
+                                      <div className='flex items-center justify-between'>
+                                        <p className='text-sm font-semibold text-white'>
+                                          {achievement.definition.title}
+                                        </p>
+                                        <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                          <span>{rarityLabel}</span>
+                                          <span>+{xp} XP</span>
+                                        </div>
+                                      </div>
+                                      <p className='text-xs text-gray-400'>
+                                        {achievement.definition.description}
+                                      </p>
+                                    </div>
+                                    <div className='text-xs text-gray-500'>
+                                      Unlocked
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                          {unlockedElementMastery.length > 0 && (
+                            <details className='rounded-lg border border-white/5 bg-algomancy-darker/20 px-4 py-3'>
+                              <summary className='cursor-pointer text-sm font-semibold text-white'>
+                                Element Mastery ({unlockedElementMastery.length})
+                              </summary>
+                              <div className='mt-3 space-y-3'>
+                                {unlockedElementMastery.map((achievement) => {
+                                  const xp = getAchievementXp(
+                                    achievement.definition.rarity
+                                  );
+                                  const rarityLabel = getAchievementRarityLabel(
+                                    achievement.definition.rarity
+                                  );
+
+                                  return (
+                                    <div
+                                      key={`unlocked-${achievement.definition.key}`}
+                                      className='flex items-start gap-3 rounded-lg border px-4 py-3 border-algomancy-purple/30 bg-algomancy-darker/60'>
+                                      <div
+                                        className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                        style={{
+                                          color: achievement.definition.color,
+                                          backgroundColor: `${achievement.definition.color}20`,
+                                          border: `1px solid ${achievement.definition.color}`,
+                                        }}>
+                                        {achievement.definition.icon}
+                                      </div>
+                                      <div className='flex-1'>
+                                        <div className='flex items-center justify-between'>
+                                          <p className='text-sm font-semibold text-white'>
+                                            {achievement.definition.title}
+                                          </p>
+                                          <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                            <span>{rarityLabel}</span>
+                                            <span>+{xp} XP</span>
+                                          </div>
+                                        </div>
+                                        <p className='text-xs text-gray-400'>
+                                          {achievement.definition.description}
+                                        </p>
+                                      </div>
+                                      <div className='text-xs text-gray-500'>
+                                        Unlocked
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </details>
+                          )}
+
+                          {unlockedElementSupremacy.length > 0 && (
+                            <details className='rounded-lg border border-white/5 bg-algomancy-darker/20 px-4 py-3'>
+                              <summary className='cursor-pointer text-sm font-semibold text-white'>
+                                Element Supremacy ({unlockedElementSupremacy.length})
+                              </summary>
+                              <div className='mt-3 space-y-3'>
+                                {unlockedElementSupremacy.map((achievement) => {
+                                  const xp = getAchievementXp(
+                                    achievement.definition.rarity
+                                  );
+                                  const rarityLabel = getAchievementRarityLabel(
+                                    achievement.definition.rarity
+                                  );
+
+                                  return (
+                                    <div
+                                      key={`unlocked-${achievement.definition.key}`}
+                                      className='flex items-start gap-3 rounded-lg border px-4 py-3 border-algomancy-purple/30 bg-algomancy-darker/60'>
+                                      <div
+                                        className='flex h-10 w-10 items-center justify-center rounded-md text-xs font-semibold'
+                                        style={{
+                                          color: achievement.definition.color,
+                                          backgroundColor: `${achievement.definition.color}20`,
+                                          border: `1px solid ${achievement.definition.color}`,
+                                        }}>
+                                        {achievement.definition.icon}
+                                      </div>
+                                      <div className='flex-1'>
+                                        <div className='flex items-center justify-between'>
+                                          <p className='text-sm font-semibold text-white'>
+                                            {achievement.definition.title}
+                                          </p>
+                                          <div className='flex items-center gap-2 text-xs text-gray-400'>
+                                            <span>{rarityLabel}</span>
+                                            <span>+{xp} XP</span>
+                                          </div>
+                                        </div>
+                                        <p className='text-xs text-gray-400'>
+                                          {achievement.definition.description}
+                                        </p>
+                                      </div>
+                                      <div className='text-xs text-gray-500'>
+                                        Unlocked
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </details>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>

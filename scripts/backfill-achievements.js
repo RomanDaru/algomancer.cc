@@ -14,15 +14,61 @@ const RESET = process.argv.includes("--reset");
 const userArg = process.argv.find((arg) => arg.startsWith("--user="));
 const userFilter = userArg ? userArg.split("=")[1] : null;
 
+const RARITY_XP = {
+  common: 5,
+  uncommon: 10,
+  rare: 20,
+  epic: 35,
+  legendary: 50,
+};
+
+const BASIC_ELEMENTS = ["Fire", "Water", "Earth", "Wood", "Metal"];
+const ELEMENT_ICON_PREFIX = {
+  Fire: "Fi",
+  Water: "Wa",
+  Earth: "Ea",
+  Wood: "Wo",
+  Metal: "Me",
+};
+const ELEMENT_TIERS = [
+  { count: 5, label: "I" },
+  { count: 10, label: "II" },
+  { count: 25, label: "III" },
+  { count: 50, label: "IV" },
+];
+
+const buildElementChain = (kind, rarity, titleBase) =>
+  BASIC_ELEMENTS.flatMap((element) =>
+    ELEMENT_TIERS.map((tier, index) => {
+      const suffix = index === 0 ? "" : ` ${tier.label}`;
+      return {
+        key: `${element.toLowerCase()}_${kind === "element_logs" ? "played" : "wins"}_${tier.count}`,
+        title: `${element} ${titleBase}${suffix}`,
+        description:
+          kind === "element_logs"
+            ? `Log ${tier.count} games with ${element}.`
+            : `Win ${tier.count} games with ${element}.`,
+        rarity,
+        icon: `${ELEMENT_ICON_PREFIX[element]}${tier.count}`,
+        color: rarity === "epic" ? "#10B981" : "#F59E0B",
+        criteria: { type: kind, element, count: tier.count },
+        seriesKey: `${kind}_${element.toLowerCase()}`,
+        tier: index + 1,
+      };
+    })
+  );
+
 const ACHIEVEMENTS = [
   {
     key: "first_log",
     title: "First Log",
     description: "Record your first game log.",
-    rarity: "common",
+    rarity: "rare",
     icon: "LOG",
-    color: "#9CA3AF",
+    color: "#F59E0B",
     criteria: { type: "total_logs", count: 1 },
+    seriesKey: "total_logs",
+    tier: 1,
   },
   {
     key: "constructed_debut",
@@ -46,10 +92,56 @@ const ACHIEVEMENTS = [
     key: "first_win",
     title: "First Victory",
     description: "Record your first win.",
-    rarity: "uncommon",
-    icon: "WIN",
-    color: "#A78BFA",
+    rarity: "epic",
+    icon: "W1",
+    color: "#10B981",
     criteria: { type: "wins", count: 1 },
+    seriesKey: "wins",
+    tier: 1,
+  },
+  {
+    key: "wins_5",
+    title: "Winning Streak",
+    description: "Record 5 wins.",
+    rarity: "epic",
+    icon: "W5",
+    color: "#10B981",
+    criteria: { type: "wins", count: 5 },
+    seriesKey: "wins",
+    tier: 2,
+  },
+  {
+    key: "wins_10",
+    title: "Victory Lap",
+    description: "Record 10 wins.",
+    rarity: "epic",
+    icon: "W10",
+    color: "#10B981",
+    criteria: { type: "wins", count: 10 },
+    seriesKey: "wins",
+    tier: 3,
+  },
+  {
+    key: "wins_25",
+    title: "Relentless",
+    description: "Record 25 wins.",
+    rarity: "epic",
+    icon: "W25",
+    color: "#10B981",
+    criteria: { type: "wins", count: 25 },
+    seriesKey: "wins",
+    tier: 4,
+  },
+  {
+    key: "wins_50",
+    title: "Unstoppable",
+    description: "Record 50 wins.",
+    rarity: "epic",
+    icon: "W50",
+    color: "#10B981",
+    criteria: { type: "wins", count: 50 },
+    seriesKey: "wins",
+    tier: 5,
   },
   {
     key: "public_record",
@@ -77,24 +169,64 @@ const ACHIEVEMENTS = [
     icon: "5X",
     color: "#F59E0B",
     criteria: { type: "total_logs", count: 5 },
+    seriesKey: "total_logs",
+    tier: 2,
   },
   {
     key: "chronicler",
     title: "Chronicler",
     description: "Log 10 games.",
-    rarity: "epic",
+    rarity: "rare",
     icon: "10X",
-    color: "#10B981",
+    color: "#F59E0B",
     criteria: { type: "total_logs", count: 10 },
+    seriesKey: "total_logs",
+    tier: 3,
   },
+  {
+    key: "archivist",
+    title: "Archivist",
+    description: "Log 25 games.",
+    rarity: "rare",
+    icon: "25X",
+    color: "#F59E0B",
+    criteria: { type: "total_logs", count: 25 },
+    seriesKey: "total_logs",
+    tier: 4,
+  },
+  {
+    key: "loremaster",
+    title: "Loremaster",
+    description: "Log 50 games.",
+    rarity: "rare",
+    icon: "50X",
+    color: "#F59E0B",
+    criteria: { type: "total_logs", count: 50 },
+    seriesKey: "total_logs",
+    tier: 5,
+  },
+  ...buildElementChain("element_logs", "rare", "Mastery"),
+  ...buildElementChain("element_wins", "epic", "Supremacy"),
 ];
 
-const RARITY_XP = {
-  common: 5,
-  uncommon: 10,
-  rare: 20,
-  epic: 35,
-  legendary: 50,
+const ALLOWED_HOSTS = new Set([
+  "algomancer.cc",
+  "www.algomancer.cc",
+  "algomancer.gg",
+  "www.algomancer.gg",
+]);
+
+const DECK_PATH_REGEX = /^\/decks\/([0-9a-fA-F]{24})(?:\/|$)/;
+
+const parseDeckIdFromUrl = (value) => {
+  try {
+    const url = new URL(value);
+    if (!ALLOWED_HOSTS.has(url.hostname)) return null;
+    const match = url.pathname.match(DECK_PATH_REGEX);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
 };
 
 function meetsCriteria(criteria, metrics) {
@@ -111,6 +243,10 @@ function meetsCriteria(criteria, metrics) {
       return metrics.publicLogs >= criteria.count;
     case "mvp_logs":
       return metrics.mvpLogs >= criteria.count;
+    case "element_logs":
+      return (metrics.elementLogs?.[criteria.element] || 0) >= criteria.count;
+    case "element_wins":
+      return (metrics.elementWins?.[criteria.element] || 0) >= criteria.count;
     default:
       return false;
   }
@@ -200,6 +336,87 @@ async function backfill() {
         }),
       ]);
 
+    const elementLogs = {};
+    const elementWins = {};
+    BASIC_ELEMENTS.forEach((element) => {
+      elementLogs[element] = 0;
+      elementWins[element] = 0;
+    });
+
+    const logs = await gameLogs
+      .find(
+        { userId, seedTag: { $exists: false } },
+        {
+          projection: {
+            outcome: 1,
+            format: 1,
+            "liveDraft.elementsPlayed": 1,
+            "constructed.deckId": 1,
+            "constructed.externalDeckUrl": 1,
+          },
+        }
+      )
+      .toArray();
+
+    const deckIdSet = new Set();
+    logs.forEach((log) => {
+      const deckId = log?.constructed?.deckId?.toString?.();
+      if (deckId) {
+        deckIdSet.add(deckId);
+      }
+      if (typeof log?.constructed?.externalDeckUrl === "string") {
+        const parsed = parseDeckIdFromUrl(log.constructed.externalDeckUrl);
+        if (parsed) {
+          deckIdSet.add(parsed);
+        }
+      }
+    });
+
+    const deckElementsMap = new Map();
+    if (deckIdSet.size > 0) {
+      const deckDocs = await db
+        .collection("decks")
+        .find({ _id: { $in: [...deckIdSet].map((id) => new ObjectId(id)) } })
+        .project({ deckElements: 1 })
+        .toArray();
+      deckDocs.forEach((doc) => {
+        deckElementsMap.set(doc._id.toString(), doc.deckElements || []);
+      });
+    }
+
+    const elementSet = new Set(BASIC_ELEMENTS);
+    logs.forEach((log) => {
+      let elements = [];
+      if (log.format === "live_draft") {
+        elements = Array.isArray(log?.liveDraft?.elementsPlayed)
+          ? log.liveDraft.elementsPlayed
+          : [];
+      } else if (log.format === "constructed") {
+        const deckId = log?.constructed?.deckId?.toString?.();
+        const externalId =
+          typeof log?.constructed?.externalDeckUrl === "string"
+            ? parseDeckIdFromUrl(log.constructed.externalDeckUrl)
+            : null;
+        const lookupId = deckId || externalId;
+        if (lookupId) {
+          elements = deckElementsMap.get(lookupId) || [];
+        }
+      }
+
+      const uniqueElements = Array.from(
+        new Set(elements.filter((element) => elementSet.has(element)))
+      );
+      if (uniqueElements.length === 0) return;
+      const weight = uniqueElements.length >= 2 ? 0.5 : 1;
+
+      uniqueElements.forEach((element) => {
+        elementLogs[element] = (elementLogs[element] || 0) + weight;
+        if (log.outcome === "win") {
+          elementWins[element] = (elementWins[element] || 0) + weight;
+        }
+      });
+    });
+
     const metrics = {
       totalLogs,
       winLogs,
@@ -207,6 +424,8 @@ async function backfill() {
       liveDraftLogs,
       publicLogs,
       mvpLogs,
+      elementLogs,
+      elementWins,
     };
 
     const existing = await userBadges
@@ -239,10 +458,42 @@ async function backfill() {
       await userBadges.insertMany(inserts, { ordered: false });
     }
 
-    const totalXp = ACHIEVEMENTS.reduce((sum, achievement) => {
+    const badgeXp = ACHIEVEMENTS.reduce((sum, achievement) => {
       if (!earnedKeys.has(achievement.key)) return sum;
       return sum + (RARITY_XP[achievement.rarity] || 0);
     }, 0);
+
+    const [likesAgg, deckCounts] = await Promise.all([
+      db
+        .collection("decks")
+        .aggregate([
+          { $match: { userId } },
+          { $group: { _id: null, totalLikes: { $sum: "$likes" } } },
+        ])
+        .toArray(),
+      db
+        .collection("decks")
+        .aggregate([
+          { $match: { userId } },
+          {
+            $group: {
+              _id: { $dateTrunc: { date: "$createdAt", unit: "day" } },
+              count: { $sum: 1 },
+            },
+          },
+        ])
+        .toArray(),
+    ]);
+
+    const totalLikes = likesAgg?.[0]?.totalLikes ?? 0;
+    const likeXp = totalLikes * 5;
+    const maxDecksPerDay = Math.floor(50 / 10);
+    const deckXp = deckCounts.reduce((sum, entry) => {
+      const count = typeof entry?.count === "number" ? entry.count : 0;
+      return sum + Math.min(count, maxDecksPerDay) * 10;
+    }, 0);
+
+    const totalXp = badgeXp + likeXp + deckXp;
 
     if (!DRY_RUN) {
       await users.updateOne(

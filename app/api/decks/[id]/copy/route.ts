@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
 import { deckDbService } from "@/app/lib/db/services/deckDbService";
+import { achievementService } from "@/app/lib/services/achievementService";
 import { ObjectId } from "mongodb";
 
 /**
@@ -61,6 +62,12 @@ export async function POST(
     };
 
     const newDeck = await deckService.createDeck(newDeckPayload);
+
+    try {
+      await achievementService.refreshUserXp(session.user.id);
+    } catch (error) {
+      console.error("Error refreshing XP after deck copy:", error);
+    }
 
     return NextResponse.json({ deckId: newDeck._id.toString() }, { status: 201 });
   } catch (error) {

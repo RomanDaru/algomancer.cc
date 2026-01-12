@@ -1,3 +1,5 @@
+import type { BasicElementType } from "@/app/lib/types/card";
+
 export type AchievementRarity =
   | "common"
   | "uncommon"
@@ -11,7 +13,9 @@ export type AchievementCriteria =
   | { type: "constructed_logs"; count: number }
   | { type: "live_draft_logs"; count: number }
   | { type: "public_logs"; count: number }
-  | { type: "mvp_logs"; count: number };
+  | { type: "mvp_logs"; count: number }
+  | { type: "element_logs"; element: BasicElementType; count: number }
+  | { type: "element_wins"; element: BasicElementType; count: number };
 
 export type AchievementDefinition = {
   key: string;
@@ -21,6 +25,8 @@ export type AchievementDefinition = {
   icon: string;
   color: string;
   criteria: AchievementCriteria;
+  seriesKey?: string;
+  tier?: number;
 };
 
 const RARITY_META: Record<
@@ -43,15 +49,65 @@ export const getAchievementColor = (rarity: AchievementRarity) =>
 export const getAchievementRarityLabel = (rarity: AchievementRarity) =>
   RARITY_META[rarity].label;
 
+const BASIC_ELEMENT_LIST: BasicElementType[] = [
+  "Fire",
+  "Water",
+  "Earth",
+  "Wood",
+  "Metal",
+];
+
+const ELEMENT_ICON_PREFIX: Record<BasicElementType, string> = {
+  Fire: "Fi",
+  Water: "Wa",
+  Earth: "Ea",
+  Wood: "Wo",
+  Metal: "Me",
+};
+
+const ELEMENT_TIERS = [
+  { count: 5, label: "I" },
+  { count: 10, label: "II" },
+  { count: 25, label: "III" },
+  { count: 50, label: "IV" },
+];
+
+const buildElementChain = (
+  kind: "element_logs" | "element_wins",
+  rarity: AchievementRarity,
+  titleBase: string
+) =>
+  BASIC_ELEMENT_LIST.flatMap((element) =>
+    ELEMENT_TIERS.map((tier, index) => {
+      const suffix = index === 0 ? "" : ` ${tier.label}`;
+      return {
+        key: `${element.toLowerCase()}_${kind === "element_logs" ? "played" : "wins"}_${tier.count}`,
+        title: `${element} ${titleBase}${suffix}`,
+        description:
+          kind === "element_logs"
+            ? `Log ${tier.count} games with ${element}.`
+            : `Win ${tier.count} games with ${element}.`,
+        rarity,
+        icon: `${ELEMENT_ICON_PREFIX[element]}${tier.count}`,
+        color: getAchievementColor(rarity),
+        criteria: { type: kind, element, count: tier.count } as AchievementCriteria,
+        seriesKey: `${kind}_${element.toLowerCase()}`,
+        tier: index + 1,
+      };
+    })
+  );
+
 export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     key: "first_log",
     title: "First Log",
     description: "Record your first game log.",
-    rarity: "common",
+    rarity: "rare",
     icon: "LOG",
-    color: getAchievementColor("common"),
+    color: getAchievementColor("rare"),
     criteria: { type: "total_logs", count: 1 },
+    seriesKey: "total_logs",
+    tier: 1,
   },
   {
     key: "constructed_debut",
@@ -75,10 +131,56 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     key: "first_win",
     title: "First Victory",
     description: "Record your first win.",
-    rarity: "uncommon",
-    icon: "WIN",
-    color: getAchievementColor("uncommon"),
+    rarity: "epic",
+    icon: "W1",
+    color: getAchievementColor("epic"),
     criteria: { type: "wins", count: 1 },
+    seriesKey: "wins",
+    tier: 1,
+  },
+  {
+    key: "wins_5",
+    title: "Winning Streak",
+    description: "Record 5 wins.",
+    rarity: "epic",
+    icon: "W5",
+    color: getAchievementColor("epic"),
+    criteria: { type: "wins", count: 5 },
+    seriesKey: "wins",
+    tier: 2,
+  },
+  {
+    key: "wins_10",
+    title: "Victory Lap",
+    description: "Record 10 wins.",
+    rarity: "epic",
+    icon: "W10",
+    color: getAchievementColor("epic"),
+    criteria: { type: "wins", count: 10 },
+    seriesKey: "wins",
+    tier: 3,
+  },
+  {
+    key: "wins_25",
+    title: "Relentless",
+    description: "Record 25 wins.",
+    rarity: "epic",
+    icon: "W25",
+    color: getAchievementColor("epic"),
+    criteria: { type: "wins", count: 25 },
+    seriesKey: "wins",
+    tier: 4,
+  },
+  {
+    key: "wins_50",
+    title: "Unstoppable",
+    description: "Record 50 wins.",
+    rarity: "epic",
+    icon: "W50",
+    color: getAchievementColor("epic"),
+    criteria: { type: "wins", count: 50 },
+    seriesKey: "wins",
+    tier: 5,
   },
   {
     key: "public_record",
@@ -106,15 +208,42 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
     icon: "5X",
     color: getAchievementColor("rare"),
     criteria: { type: "total_logs", count: 5 },
+    seriesKey: "total_logs",
+    tier: 2,
   },
   {
     key: "chronicler",
     title: "Chronicler",
     description: "Log 10 games.",
-    rarity: "epic",
+    rarity: "rare",
     icon: "10X",
-    color: getAchievementColor("epic"),
+    color: getAchievementColor("rare"),
     criteria: { type: "total_logs", count: 10 },
+    seriesKey: "total_logs",
+    tier: 3,
   },
+  {
+    key: "archivist",
+    title: "Archivist",
+    description: "Log 25 games.",
+    rarity: "rare",
+    icon: "25X",
+    color: getAchievementColor("rare"),
+    criteria: { type: "total_logs", count: 25 },
+    seriesKey: "total_logs",
+    tier: 4,
+  },
+  {
+    key: "loremaster",
+    title: "Loremaster",
+    description: "Log 50 games.",
+    rarity: "rare",
+    icon: "50X",
+    color: getAchievementColor("rare"),
+    criteria: { type: "total_logs", count: 50 },
+    seriesKey: "total_logs",
+    tier: 5,
+  },
+  ...buildElementChain("element_logs", "rare", "Mastery"),
+  ...buildElementChain("element_wins", "epic", "Supremacy"),
 ];
-

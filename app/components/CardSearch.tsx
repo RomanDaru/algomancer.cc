@@ -15,47 +15,109 @@ import {
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 
+const ELEMENT_TYPES = Object.values(BASIC_ELEMENTS);
+const ELEMENT_TERM_SET = new Set(
+  ELEMENT_TYPES.map((element) => element.toLowerCase())
+);
+
 interface CardSearchProps {
   cards: Card[];
   onSearchResults: (filteredCards: Card[]) => void;
   onSearchActiveChange?: (isActive: boolean) => void;
+  deckElements?: string[];
 }
 
 export default function CardSearch({
   cards,
   onSearchResults,
   onSearchActiveChange,
+  deckElements,
 }: CardSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
+  const [onlyDeckElements, setOnlyDeckElements] = useState(false);
 
   // Common filter categories
-  const elementTypes = Object.values(BASIC_ELEMENTS);
+  const elementTypes = ELEMENT_TYPES;
   const cardTypes = Object.values(CARD_TYPES);
   const timingTypes = Object.values(TIMING);
   const commonAttributes = ["Flying", "Swift", "Deadly", "Unstable", "Burst"];
   const manaCosts = ["X", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  const normalizedDeckElements = (deckElements ?? [])
+    .map((element) => element.toLowerCase())
+    .filter((element) => ELEMENT_TERM_SET.has(element));
+  const hasDeckElements = normalizedDeckElements.length > 0;
+
+  useEffect(() => {
+    if (!hasDeckElements && onlyDeckElements) {
+      setOnlyDeckElements(false);
+    }
+  }, [hasDeckElements, onlyDeckElements]);
 
   // Perform search whenever the search term changes
   useEffect(() => {
+    const deckElementSet = new Set(normalizedDeckElements);
+    const matchesDeckElements = (card: Card) => {
+      if (!onlyDeckElements || deckElementSet.size === 0) {
+        return true;
+      }
+
+      const cardElements = (card.element?.type || "")
+        .split("/")
+        .map((part) => part.trim().toLowerCase())
+        .filter(Boolean);
+
+      if (cardElements.length === 0) {
+        return false;
+      }
+
+      return cardElements.every((element) => deckElementSet.has(element));
+    };
+
     if (!searchTerm.trim()) {
       // If search is empty, return all cards and clear active keywords
-      onSearchResults(cards);
+      const filteredCards = onlyDeckElements
+        ? cards.filter((card) => matchesDeckElements(card))
+        : cards;
+      onSearchResults(filteredCards);
       setActiveKeywords([]);
       return;
     }
 
     // Parse search terms, preserving quoted phrases
     const searchTerms = parseSearchTerms(searchTerm);
+    const elementTerms = searchTerms.filter((term) =>
+      ELEMENT_TERM_SET.has(term)
+    );
+    const otherTerms = searchTerms.filter(
+      (term) => !ELEMENT_TERM_SET.has(term)
+    );
 
     // Update active keywords
     setActiveKeywords(searchTerms);
 
     const filteredCards = cards.filter((card) => {
-      // Check if the card matches ALL search terms
-      return searchTerms.every((term) => {
+      if (!matchesDeckElements(card)) {
+        return false;
+      }
+
+      if (elementTerms.length > 0) {
+        const cardElements = (card.element?.type || "")
+          .split("/")
+          .map((part) => part.trim().toLowerCase())
+          .filter(Boolean);
+        const matchesElement = elementTerms.some((term) =>
+          cardElements.includes(term)
+        );
+        if (!matchesElement) {
+          return false;
+        }
+      }
+
+      // Check if the card matches ALL non-element search terms
+      return otherTerms.every((term) => {
         // For exact card type matches (multi-word types like "Spell Token" or "Spell Unit")
         if (term.includes(" ")) {
           // Check if the term matches the mainType exactly
@@ -99,9 +161,6 @@ export default function CardSearch({
         // Search by subtype (Beast, Elemental, etc.)
         if (card.typeAndAttributes.subType.toLowerCase().includes(term))
           return true;
-
-        // Search by element type (Fire, Water, etc.)
-        if (card.element.type.toLowerCase().includes(term)) return true;
 
         // Search by timing type (Standard, Haste, Battle, Virus)
         if (term.startsWith("timing:")) {
@@ -171,7 +230,13 @@ export default function CardSearch({
     });
 
     onSearchResults(filteredCards);
-  }, [searchTerm, cards, onSearchResults]);
+  }, [
+    searchTerm,
+    cards,
+    onSearchResults,
+    onlyDeckElements,
+    normalizedDeckElements,
+  ]);
 
   useEffect(() => {
     onSearchActiveChange?.(isSearching);
@@ -298,6 +363,36 @@ export default function CardSearch({
       {/* Quick Filters */}
       {showFilters && (
         <div className='mt-4 p-4 bg-algomancy-darker border border-algomancy-purple/30 rounded-lg'>
+          {deckElements && (
+            <div className='mb-4'>
+              <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+                Deck
+              </h3>
+              <div className='flex flex-wrap items-center gap-2'>
+                <button
+                  type='button'
+                  onClick={() => setOnlyDeckElements((prev) => !prev)}
+                  disabled={!hasDeckElements}
+                  aria-pressed={onlyDeckElements}
+                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                    onlyDeckElements
+                      ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
+                      : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
+                  } ${
+                    hasDeckElements
+                      ? "cursor-pointer"
+                      : "opacity-50 cursor-not-allowed"
+                  }`}>
+                  Elements in deck
+                </button>
+                {!hasDeckElements && (
+                  <span className='text-xs text-gray-500'>
+                    Add cards to enable.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
           <div className='mb-4'>
             <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
               Elements

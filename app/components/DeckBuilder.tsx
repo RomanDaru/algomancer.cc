@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import CardSearch from "./CardSearch";
@@ -14,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { GuestDeckManager } from "@/app/lib/utils/guestDeckManager";
 import { validateAndNormalizeYouTubeUrl } from "@/app/lib/utils/youtube";
 import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { getAllDeckElements } from "@/app/lib/utils/elements";
 
 interface DeckBuilderProps {
   cards: Card[];
@@ -49,6 +50,22 @@ export default function DeckBuilder({
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  const deckElements = useMemo(() => {
+    if (deckCards.length === 0) return [];
+
+    const cardsWithQuantities = deckCards
+      .map((deckCard) => {
+        const card = cards.find((entry) => entry.id === deckCard.cardId);
+        return card ? { card, quantity: deckCard.quantity } : null;
+      })
+      .filter(
+        (entry): entry is { card: Card; quantity: number } => Boolean(entry)
+      );
+
+    return getAllDeckElements(cardsWithQuantities).filter(
+      (element) => element !== "Colorless"
+    );
+  }, [cards, deckCards]);
 
   // Maximum number of copies of a card allowed in a deck
   const MAX_COPIES = 2;
@@ -268,7 +285,11 @@ export default function DeckBuilder({
             Card Browser
           </h3>
 
-          <CardSearch cards={cards} onSearchResults={setFilteredCards} />
+          <CardSearch
+            cards={cards}
+            onSearchResults={setFilteredCards}
+            deckElements={deckElements}
+          />
 
           <div className='mt-4'>
             {filteredCards.length > 0 ? (
@@ -540,7 +561,11 @@ export default function DeckBuilder({
             Card Browser
           </h3>
 
-          <CardSearch cards={cards} onSearchResults={setFilteredCards} />
+          <CardSearch
+            cards={cards}
+            onSearchResults={setFilteredCards}
+            deckElements={deckElements}
+          />
 
           <div className='mt-4'>
             {filteredCards.length > 0 ? (

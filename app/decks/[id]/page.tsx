@@ -16,6 +16,7 @@ import DeckDetailViewer from "@/app/components/DeckDetailViewer";
 import YouTubeEmbed from "@/app/components/YouTubeEmbed";
 import DeckOptionsMenu from "@/app/components/DeckOptionsMenu";
 import UserNameWithRank from "@/app/components/UserNameWithRank";
+import DeckBadge from "@/app/components/DeckBadge";
 import {
   ElementType,
   getAllDeckElements,
@@ -167,6 +168,9 @@ export default function DeckPage({ params }: DeckPageProps) {
               <div className='flex items-center flex-wrap gap-3'>
                 <ElementIcons elements={deckElements} size={24} showTooltips={true} />
                 <h1 className='text-2xl font-bold text-white'>{deck.name}</h1>
+                {deck.deckBadges?.map((badge) => (
+                  <DeckBadge key={badge} badge={badge} />
+                ))}
                 <UserNameWithRank
                   name={user?.name}
                   username={user?.username}

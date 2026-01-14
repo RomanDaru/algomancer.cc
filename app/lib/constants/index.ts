@@ -39,6 +39,16 @@ export const DECK_CREATE_XP = 10;
 export const DECK_CREATE_DAILY_CAP = 50;
 export const LOG_CREATE_XP = 5;
 
+export const DECK_BADGES = {
+  CASUAL: "Casual",
+  COMPETITIVE: "Competitive",
+  FUN: "Fun",
+  AGGRO: "Aggro",
+  MIDRANGE: "Midrange",
+  CONTROL: "Control",
+  COMBO: "Combo",
+} as const;
+
 // Export types for TypeScript
 export type CompetitionStatus =
   (typeof COMPETITION_STATUS)[keyof typeof COMPETITION_STATUS];
@@ -46,9 +56,11 @@ export type CompetitionType =
   (typeof COMPETITION_TYPE)[keyof typeof COMPETITION_TYPE];
 export type WinnerPlace = (typeof WINNER_PLACE)[keyof typeof WINNER_PLACE];
 export type BadgeType = (typeof BADGE_TYPE)[keyof typeof BADGE_TYPE];
+export type DeckBadge = (typeof DECK_BADGES)[keyof typeof DECK_BADGES];
 
 // Arrays for validation and iteration
 export const COMPETITION_STATUS_VALUES = Object.values(COMPETITION_STATUS);
 export const COMPETITION_TYPE_VALUES = Object.values(COMPETITION_TYPE);
 export const WINNER_PLACE_VALUES = Object.values(WINNER_PLACE);
 export const BADGE_TYPE_VALUES = Object.values(BADGE_TYPE);
+export const DECK_BADGE_VALUES = Object.values(DECK_BADGES) as DeckBadge[];

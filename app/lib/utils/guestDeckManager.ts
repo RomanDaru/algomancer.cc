@@ -1,9 +1,11 @@
 import { DeckCard } from "@/app/lib/types/user";
+import { DeckBadge } from "@/app/lib/constants";
 
 export interface GuestDeck {
   id: string;
   name: string;
   description: string;
+  deckBadges?: DeckBadge[];
   cards: DeckCard[];
   isPublic: boolean;
   createdAt: string;
@@ -37,6 +39,7 @@ export class GuestDeckManager {
       id: existingDeck?.id || this.generateId(),
       name: deckData.name,
       description: deckData.description,
+      deckBadges: deckData.deckBadges ?? [],
       cards: deckData.cards,
       isPublic: deckData.isPublic,
       createdAt: existingDeck?.createdAt || now,
@@ -133,12 +136,14 @@ export class GuestDeckManager {
   static prepareForApiSubmission(guestDeck: GuestDeck): {
     name: string;
     description: string;
+    deckBadges?: DeckBadge[];
     cards: DeckCard[];
     isPublic: boolean;
   } {
     return {
       name: guestDeck.name,
       description: guestDeck.description,
+      deckBadges: guestDeck.deckBadges ?? [],
       cards: guestDeck.cards,
       isPublic: guestDeck.isPublic,
     };

@@ -105,6 +105,14 @@ export default function Navbar() {
   const isActiveLink = (href: string) => {
     if (!pathname) return false;
     if (href === "/") return pathname === "/";
+    if (href === "/decks/create") return pathname === "/decks/create";
+    if (href === "/decks") {
+      return (
+        pathname === "/decks" ||
+        (pathname.startsWith("/decks/") &&
+          !pathname.startsWith("/decks/create"))
+      );
+    }
     return pathname === href || pathname.startsWith(`${href}/`);
   };
 
@@ -129,8 +137,8 @@ export default function Navbar() {
       if (!container) return;
 
       const linkCandidates = showCompetitions
-        ? ["/", "/cards", "/decks", "/stats", "/competitions"]
-        : ["/", "/cards", "/decks", "/stats"];
+        ? ["/", "/cards", "/decks/create", "/decks", "/stats", "/competitions"]
+        : ["/", "/cards", "/decks/create", "/decks", "/stats"];
       const activeHref = linkCandidates.find((href) => isActiveLink(href));
 
       if (!activeHref) {
@@ -208,6 +216,20 @@ export default function Navbar() {
                       desktopLinkRefs.current["/cards"] = el;
                     }}>
                     Cards
+                  </Link>
+                </li>
+                <li role='none'>
+                  <Link
+                    href='/decks/create'
+                    className={getDesktopLinkClass("/decks/create")}
+                    role='menuitem'
+                    aria-current={
+                      isActiveLink("/decks/create") ? "page" : undefined
+                    }
+                    ref={(el) => {
+                      desktopLinkRefs.current["/decks/create"] = el;
+                    }}>
+                    Deck Builder
                   </Link>
                 </li>
                 <li role='none'>
@@ -509,6 +531,18 @@ export default function Navbar() {
                     isActiveLink("/cards") ? "page" : undefined
                   }>
                   Cards
+                </Link>
+              </li>
+              <li role='none'>
+                <Link
+                  href='/decks/create'
+                  className={getMobileLinkClass("/decks/create")}
+                  onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
+                  role='menuitem'
+                  aria-current={
+                    isActiveLink("/decks/create") ? "page" : undefined
+                  }>
+                  Deck Builder
                 </Link>
               </li>
               <li role='none'>

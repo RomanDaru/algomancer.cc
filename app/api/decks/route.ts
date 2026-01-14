@@ -4,6 +4,7 @@ import { achievementService } from "@/app/lib/services/achievementService";
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { ObjectId } from 'mongodb';
+import { DECK_BADGES } from "@/app/lib/constants";
 
 /**
  * GET /api/decks
@@ -47,6 +48,23 @@ export async function POST(request: NextRequest) {
     }
     
     const deckData = await request.json();
+    const rawBadges = Array.isArray(deckData?.deckBadges)
+      ? deckData.deckBadges
+      : deckData?.deckBadge
+      ? [deckData.deckBadge]
+      : [];
+    const allowedBadges = new Set(Object.values(DECK_BADGES));
+    const deckBadges = rawBadges
+      .map((badge: unknown) =>
+        typeof badge === "string" ? badge.trim() : ""
+      )
+      .filter((badge: string) => badge && allowedBadges.has(badge))
+      .filter((badge: string, index: number, self: string[]) =>
+        self.indexOf(badge) === index
+      )
+      .slice(0, 2);
+    deckData.deckBadges = deckBadges;
+    delete deckData.deckBadge;
     
     if (!deckData.name) {
       return NextResponse.json(

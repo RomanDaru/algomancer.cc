@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CARD_ATTRIBUTES,
@@ -45,9 +45,13 @@ export default function CardSearch({
   const timingTypes = Object.values(TIMING);
   const commonAttributes = ["Flying", "Swift", "Deadly", "Unstable", "Burst"];
   const manaCosts = ["X", 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-  const normalizedDeckElements = (deckElements ?? [])
-    .map((element) => element.toLowerCase())
-    .filter((element) => ELEMENT_TERM_SET.has(element));
+  const normalizedDeckElements = useMemo(
+    () =>
+      (deckElements ?? [])
+        .map((element) => element.toLowerCase())
+        .filter((element) => ELEMENT_TERM_SET.has(element)),
+    [deckElements]
+  );
   const hasDeckElements = normalizedDeckElements.length > 0;
 
   useEffect(() => {
@@ -82,7 +86,7 @@ export default function CardSearch({
         ? cards.filter((card) => matchesDeckElements(card))
         : cards;
       onSearchResults(filteredCards);
-      setActiveKeywords([]);
+      setActiveKeywords((prev) => (prev.length > 0 ? [] : prev));
       return;
     }
 

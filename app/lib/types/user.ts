@@ -1,5 +1,10 @@
 import { ObjectId } from "mongodb";
-import { CompetitionStatus, CompetitionType, WinnerPlace } from "../constants";
+import {
+  CompetitionStatus,
+  CompetitionType,
+  WinnerPlace,
+  DeckBadge,
+} from "../constants";
 
 export interface User {
   _id: ObjectId;
@@ -25,6 +30,7 @@ export interface Deck {
   name: string;
   description?: string;
   youtubeUrl?: string; // YouTube video URL for deck showcase
+  deckBadges?: DeckBadge[];
   userId: ObjectId;
   cards: DeckCard[];
   deckElements?: string[];

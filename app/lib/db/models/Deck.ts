@@ -22,6 +22,8 @@ const DeckSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String },
     youtubeUrl: { type: String }, // YouTube video URL for deck showcase
+    deckBadge: { type: String, default: null },
+    deckBadges: { type: [String], default: [] },
     userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     cards: { type: [DeckCardSchema], default: [] },
     deckElements: { type: [String], default: ["Colorless"] },
@@ -47,6 +49,14 @@ DeckSchema.index({ isPublic: 1, likes: -1 }); // For most liked decks
 DeckSchema.index({ userId: 1, createdAt: -1 }); // For user decks sorted by date
 DeckSchema.index({ "cards.cardId": 1, isPublic: 1, createdAt: -1 }); // Compound index for card-specific deck queries
 
+// Ensure schema updates are applied during HMR in development
+if (
+  mongoose.models.Deck &&
+  !mongoose.models.Deck.schema.path("deckBadges")
+) {
+  delete mongoose.models.Deck;
+}
+
 // Create and export the model
 export const DeckModel =
   mongoose.models.Deck || mongoose.model<DeckDocument>("Deck", DeckSchema);
@@ -59,6 +69,12 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
     name: deck.name,
     description: deck.description,
     youtubeUrl: deck.youtubeUrl,
+    deckBadges:
+      deck.deckBadges?.length
+        ? deck.deckBadges
+        : deck.deckBadge
+        ? [deck.deckBadge]
+        : [],
     userId: deck.userId,
     cards: deck.cards,
     deckElements: deck.deckElements || [],
@@ -80,6 +96,12 @@ export function convertAggregationToDeck(obj: any): DeckType {
     name: obj.name,
     description: obj.description,
     youtubeUrl: obj.youtubeUrl,
+    deckBadges:
+      Array.isArray(obj.deckBadges) && obj.deckBadges.length > 0
+        ? obj.deckBadges
+        : obj.deckBadge
+        ? [obj.deckBadge]
+        : [],
     userId: obj.userId,
     cards: obj.cards || [],
     deckElements: obj.deckElements || [],
@@ -104,6 +126,12 @@ export function convertToDeck(input: DeckDocument | any): DeckType {
     name: obj.name,
     description: obj.description,
     youtubeUrl: obj.youtubeUrl,
+    deckBadges:
+      Array.isArray(obj.deckBadges) && obj.deckBadges.length > 0
+        ? obj.deckBadges
+        : obj.deckBadge
+        ? [obj.deckBadge]
+        : [],
     userId: obj.userId,
     cards: obj.cards || [],
     deckElements: obj.deckElements || [],
@@ -126,6 +154,7 @@ export function convertDeckToDocument(
     name: deck.name,
     description: deck.description,
     youtubeUrl: deck.youtubeUrl,
+    deckBadges: deck.deckBadges,
     userId: deck.userId,
     cards: deck.cards,
     isPublic: deck.isPublic,

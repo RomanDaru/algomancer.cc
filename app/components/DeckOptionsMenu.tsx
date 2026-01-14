@@ -97,6 +97,7 @@ export default function DeckOptionsMenu({
         name: `${deck.name} (Copy)`,
         description: deck.description || "",
         youtubeUrl: deck.youtubeUrl || "",
+        deckBadges: deck.deckBadges ?? [],
         cards: deck.cards,
         isPublic: false,
       };

@@ -55,6 +55,7 @@ export async function POST(
     const newDeckPayload = {
       name: `${sourceDeck.name} (Copy from ${ownerAttribution})`,
       description: sourceDeck.description || "",
+      deckBadges: sourceDeck.deckBadges ?? [],
       // youtubeUrl intentionally cleared
       userId: new ObjectId(session.user.id),
       cards: sourceDeck.cards.map((c) => ({ cardId: c.cardId, quantity: c.quantity })),

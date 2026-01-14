@@ -321,16 +321,19 @@ export const deckDbService = {
       const updateData = convertDeckToDocument(deck);
       const cardsToUpdate = Array.isArray(deck.cards) ? deck.cards : null;
 
-      if (cardsToUpdate !== null) {
-        const summary = await computeDeckSummary(cardsToUpdate);
-        updateData.cards = cardsToUpdate;
-        updateData.deckElements = summary.deckElements;
-        updateData.totalCards = summary.totalCards;
-      } else {
-        delete updateData.cards;
-        delete updateData.deckElements;
-        delete updateData.totalCards;
-      }
+        if (cardsToUpdate !== null) {
+          const summary = await computeDeckSummary(cardsToUpdate);
+          updateData.cards = cardsToUpdate;
+          updateData.deckElements = summary.deckElements;
+          updateData.totalCards = summary.totalCards;
+        } else {
+          delete updateData.cards;
+          delete updateData.deckElements;
+          delete updateData.totalCards;
+        }
+        if (deck.deckBadges === undefined) {
+          delete updateData.deckBadges;
+        }
 
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(id),

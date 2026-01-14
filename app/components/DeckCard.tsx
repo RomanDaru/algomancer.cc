@@ -7,6 +7,7 @@ import { formatDistanceToNow } from "date-fns";
 import { PlayIcon } from "@heroicons/react/24/solid";
 import ElementIcons from "./ElementIcons";
 import LikeButton from "./LikeButton";
+import DeckBadge from "./DeckBadge";
 import {
   ElementType,
   generateElementGradient,
@@ -137,8 +138,17 @@ export default function DeckCard({
         <div className='relative p-5 z-10 h-full flex flex-col'>
           {/* Top section */}
           <div>
-            <div className='flex justify-between items-start'>
-              <h2 className='text-white text-lg font-medium'>{deck.name}</h2>
+            <div className='flex justify-between items-start gap-3'>
+              <div className='min-w-0'>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <h2 className='text-white text-lg font-medium'>
+                    {deck.name}
+                  </h2>
+                  {deck.deckBadges?.map((badge) => (
+                    <DeckBadge key={badge} badge={badge} />
+                  ))}
+                </div>
+              </div>
               <ElementIcons
                 elements={deckElements}
                 size={20}

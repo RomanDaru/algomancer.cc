@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
+import { DECK_BADGE_VALUES, DeckBadge } from "@/app/lib/constants";
 import CardSearch from "./CardSearch";
 import CardGrid from "./CardGrid";
 import DeckViewer from "./DeckViewer";
@@ -23,6 +24,7 @@ interface DeckBuilderProps {
   initialYouTubeUrl?: string;
   initialDeckCards?: DeckCard[];
   initialIsPublic?: boolean;
+  initialDeckBadges?: DeckBadge[];
   deckId?: string;
   isEditing?: boolean;
   isGuestMode?: boolean;
@@ -35,6 +37,7 @@ export default function DeckBuilder({
   initialYouTubeUrl = "",
   initialDeckCards = [],
   initialIsPublic = true,
+  initialDeckBadges = [],
   deckId,
   isEditing = false,
   isGuestMode = false,
@@ -46,6 +49,9 @@ export default function DeckBuilder({
   );
   const [youtubeUrl, setYoutubeUrl] = useState(initialYouTubeUrl);
   const [deckCards, setDeckCards] = useState<DeckCard[]>(initialDeckCards);
+  const [deckBadges, setDeckBadges] = useState<DeckBadge[]>(
+    initialDeckBadges
+  );
   const [filteredCards, setFilteredCards] = useState<Card[]>(cards);
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [isSaving, setIsSaving] = useState(false);
@@ -69,6 +75,20 @@ export default function DeckBuilder({
 
   // Maximum number of copies of a card allowed in a deck
   const MAX_COPIES = 2;
+  const deckBadgeOptions = DECK_BADGE_VALUES;
+  const maxDeckBadges = 2;
+
+  const toggleDeckBadge = (badge: DeckBadge) => {
+    setDeckBadges((prev) => {
+      if (prev.includes(badge)) {
+        return prev.filter((item) => item !== badge);
+      }
+      if (prev.length >= maxDeckBadges) {
+        return prev;
+      }
+      return [...prev, badge];
+    });
+  };
 
   // Load guest deck data on mount if in guest mode
   useEffect(() => {
@@ -77,6 +97,7 @@ export default function DeckBuilder({
       if (guestDeck) {
         setDeckName(guestDeck.name);
         setDeckDescription(guestDeck.description);
+        setDeckBadges(guestDeck.deckBadges ?? []);
         setDeckCards(guestDeck.cards);
         setIsPublic(guestDeck.isPublic);
       }
@@ -95,6 +116,7 @@ export default function DeckBuilder({
           GuestDeckManager.saveGuestDeck({
             name: deckName || "Untitled Deck",
             description: deckDescription,
+            deckBadges,
             cards: deckCards,
             isPublic,
           });
@@ -105,7 +127,15 @@ export default function DeckBuilder({
 
       return () => clearTimeout(timeoutId);
     }
-  }, [deckName, deckDescription, deckCards, isPublic, isGuestMode, isEditing]);
+  }, [
+    deckName,
+    deckDescription,
+    deckBadges,
+    deckCards,
+    isPublic,
+    isGuestMode,
+    isEditing,
+  ]);
 
   // Handle adding a card to the deck
   const handleAddCard = (cardId: string) => {
@@ -201,6 +231,7 @@ export default function DeckBuilder({
         name: deckName,
         description: deckDescription,
         youtubeUrl: normalizedYouTubeUrl,
+        deckBadges,
         cards: deckCards,
         isPublic,
       };
@@ -390,6 +421,46 @@ export default function DeckBuilder({
             </div>
 
             <div>
+              <label className='block text-sm font-medium text-gray-300 mb-1'>
+                Deck Badges
+              </label>
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  type='button'
+                  onClick={() => setDeckBadges([])}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    deckBadges.length === 0
+                      ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
+                      : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
+                  }`}>
+                  Clear
+                </button>
+                {deckBadgeOptions.map((badge) => {
+                  const isActive = deckBadges.includes(badge);
+                  const isDisabled =
+                    !isActive && deckBadges.length >= maxDeckBadges;
+                  return (
+                    <button
+                      key={badge}
+                      type='button'
+                      onClick={() => toggleDeckBadge(badge)}
+                      disabled={isDisabled}
+                      className={`px-3 py-1 text-xs rounded-full border ${
+                        isActive
+                          ? "bg-algomancy-purple/50 border-algomancy-purple text-white"
+                          : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                      } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+                      {badge}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className='text-xs text-gray-400 mt-1'>
+                Pick up to {maxDeckBadges} badges to show on your deck.
+              </p>
+            </div>
+
+            <div>
               <label
                 htmlFor='deckDescription-mobile'
                 className='block text-sm font-medium text-gray-300 mb-1'>
@@ -482,6 +553,46 @@ export default function DeckBuilder({
                 className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
                 placeholder='Enter deck name'
               />
+            </div>
+
+            <div>
+              <label className='block text-sm font-medium text-gray-300 mb-1'>
+                Deck Badges
+              </label>
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  type='button'
+                  onClick={() => setDeckBadges([])}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    deckBadges.length === 0
+                      ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
+                      : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
+                  }`}>
+                  Clear
+                </button>
+                {deckBadgeOptions.map((badge) => {
+                  const isActive = deckBadges.includes(badge);
+                  const isDisabled =
+                    !isActive && deckBadges.length >= maxDeckBadges;
+                  return (
+                    <button
+                      key={badge}
+                      type='button'
+                      onClick={() => toggleDeckBadge(badge)}
+                      disabled={isDisabled}
+                      className={`px-3 py-1 text-xs rounded-full border ${
+                        isActive
+                          ? "bg-algomancy-purple/50 border-algomancy-purple text-white"
+                          : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                      } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+                      {badge}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className='text-xs text-gray-400 mt-1'>
+                Pick up to {maxDeckBadges} badges to show on your deck.
+              </p>
             </div>
 
             <div>

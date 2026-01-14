@@ -33,13 +33,26 @@ export async function POST(
     const minAccountAgeMs = 24 * 60 * 60 * 1000;
     await connectToDatabase();
     const userDoc = await UserModel.findById(userId, { createdAt: 1 });
+    const createdAt =
+      userDoc?.createdAt instanceof Date
+        ? userDoc.createdAt
+        : userId.getTimestamp();
+
     if (!userDoc?.createdAt) {
-      return NextResponse.json(
-        { error: "Unable to verify account age" },
-        { status: 403 }
-      );
+      try {
+        await UserModel.updateOne(
+          {
+            _id: userId,
+            $or: [{ createdAt: { $exists: false } }, { createdAt: null }],
+          },
+          { $set: { createdAt, updatedAt: new Date() } }
+        );
+      } catch (error) {
+        console.warn("Unable to backfill createdAt:", error);
+      }
     }
-    const accountAgeMs = Date.now() - new Date(userDoc.createdAt).getTime();
+
+    const accountAgeMs = Date.now() - createdAt.getTime();
     if (accountAgeMs < minAccountAgeMs) {
       return NextResponse.json(
         { error: "Account must be at least 24 hours old to like decks" },

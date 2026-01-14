@@ -210,6 +210,32 @@ const authOptions = {
         }
       }
 
+      if (user.email) {
+        try {
+          const connection = await connectToDatabase();
+          const db = connection.db;
+          const fallbackCreatedAt =
+            user.id && ObjectId.isValid(user.id)
+              ? new ObjectId(user.id).getTimestamp()
+              : new Date();
+
+          await db.collection("users").updateOne(
+            {
+              email: user.email,
+              $or: [{ createdAt: { $exists: false } }, { createdAt: null }],
+            },
+            {
+              $set: {
+                createdAt: fallbackCreatedAt,
+                updatedAt: new Date(),
+              },
+            }
+          );
+        } catch (error) {
+          console.error("Error backfilling createdAt:", error);
+        }
+      }
+
       return true;
     },
     async session({ session, token }: { session: Session; token: JWT }) {

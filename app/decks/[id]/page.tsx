@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
@@ -30,6 +30,7 @@ export default function DeckPage({ params }: DeckPageProps) {
   const [deckId, setDeckId] = useState<string | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
+  const exportTargetRef = useRef<HTMLDivElement | null>(null);
 
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
@@ -200,7 +201,13 @@ export default function DeckPage({ params }: DeckPageProps) {
                 </span>
                 <div className='ml-2'>
                   {deckId && (
-                    <DeckOptionsMenu deck={deck} cards={cards} deckId={deckId} isOwner={isOwner} />
+                    <DeckOptionsMenu
+                      deck={deck}
+                      cards={cards}
+                      deckId={deckId}
+                      isOwner={isOwner}
+                      exportTargetRef={exportTargetRef}
+                    />
                   )}
                 </div>
               </div>
@@ -216,7 +223,13 @@ export default function DeckPage({ params }: DeckPageProps) {
           </div>
 
           <div className='lg:col-span-2'>
-            <DeckDetailViewer cards={cards} groupedCards={groupedCards} totalCards={totalCards} />
+            <div ref={exportTargetRef}>
+              <DeckDetailViewer
+                cards={cards}
+                groupedCards={groupedCards}
+                totalCards={totalCards}
+              />
+            </div>
           </div>
         </div>
 

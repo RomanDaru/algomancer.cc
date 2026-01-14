@@ -72,7 +72,7 @@ export default function DeckDetailViewer({
 
   return (
     <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-      <div className='flex flex-col space-y-3 mb-4'>
+      <div className='flex flex-col space-y-3 mb-4' data-export-hide='true'>
         <div className='flex justify-between items-center'>
           <h2 className='text-lg font-semibold text-white'>
             Cards ({totalCards})

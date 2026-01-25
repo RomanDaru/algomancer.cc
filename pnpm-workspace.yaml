@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - bcrypt
+  - mongodb-memory-server
+  - sharp
+  - unrs-resolver

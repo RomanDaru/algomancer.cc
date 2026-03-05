@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cardDbService } from "@/app/lib/db/services/cardDbService";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * GET /api/cards/[id]
@@ -36,6 +38,22 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.isAdmin) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
     // In Next.js 14, we need to await the params object
     const resolvedParams = await params;
     const cardId = resolvedParams.id;
@@ -72,6 +90,22 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.isAdmin) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
     // In Next.js 14, we need to await the params object
     const resolvedParams = await params;
     const cardId = resolvedParams.id;

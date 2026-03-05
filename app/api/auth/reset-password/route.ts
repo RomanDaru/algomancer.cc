@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import mongoose from "@/app/lib/db/mongodb";
 import { validatePassword } from "@/app/lib/utils/validation";
 import bcrypt from "bcrypt";
+import { hashToken } from "@/app/lib/utils/tokenHash";
 
 export async function POST(request: Request) {
   try {
@@ -18,10 +19,12 @@ export async function POST(request: Request) {
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
       return NextResponse.json(
-        { error: passwordValidation.error || "Invalid password" },
+        { error: passwordValidation.feedback[0] || "Invalid password" },
         { status: 400 }
       );
     }
+
+    const tokenHash = hashToken(token);
 
     // Connect to database
     if (mongoose.connection.readyState !== 1) {
@@ -32,7 +35,7 @@ export async function POST(request: Request) {
 
     // Find user with valid reset token
     const user = await db.collection("users").findOne({
-      resetToken: token,
+      resetTokenHash: tokenHash,
       resetTokenExpiry: { $gt: new Date() }, // Token must not be expired
     });
 
@@ -55,7 +58,7 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         },
         $unset: {
-          resetToken: "",
+          resetTokenHash: "",
           resetTokenExpiry: "",
         },
       }
@@ -87,6 +90,8 @@ export async function GET(request: Request) {
       );
     }
 
+    const tokenHash = hashToken(token);
+
     // Connect to database
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGODB_URI || "");
@@ -96,7 +101,7 @@ export async function GET(request: Request) {
 
     // Check if token is valid and not expired
     const user = await db.collection("users").findOne({
-      resetToken: token,
+      resetTokenHash: tokenHash,
       resetTokenExpiry: { $gt: new Date() },
     });
 
@@ -109,7 +114,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       valid: true,
-      email: user.email, // Return email for display purposes
     });
 
   } catch (error) {

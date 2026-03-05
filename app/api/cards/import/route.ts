@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cardDbService } from '@/app/lib/db/services/cardDbService';
 import { Card } from '@/app/lib/types/card';
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 /**
  * POST /api/cards/import
@@ -8,6 +10,22 @@ import { Card } from '@/app/lib/types/card';
  */
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    if (!session.user.isAdmin) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
     const cards = await request.json() as Card[];
     
     if (!Array.isArray(cards) || cards.length === 0) {

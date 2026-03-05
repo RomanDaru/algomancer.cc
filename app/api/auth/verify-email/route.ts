@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import mongoose from "@/app/lib/db/mongodb";
+import { hashToken } from "@/app/lib/utils/tokenHash";
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,8 @@ export async function GET(request: Request) {
       );
     }
 
+    const tokenHash = hashToken(token);
+
     if (mongoose.connection.readyState !== 1) {
       await mongoose.connect(process.env.MONGODB_URI || "");
     }
@@ -20,7 +23,7 @@ export async function GET(request: Request) {
     const db = mongoose.connection.db;
 
     const user = await db.collection("users").findOne({
-      emailVerificationToken: token,
+      emailVerificationTokenHash: tokenHash,
     });
 
     if (!user) {
@@ -52,7 +55,7 @@ export async function GET(request: Request) {
           updatedAt: new Date(),
         },
         $unset: {
-          emailVerificationToken: "",
+          emailVerificationTokenHash: "",
           emailVerificationTokenExpiry: "",
         },
       }

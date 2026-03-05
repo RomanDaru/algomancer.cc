@@ -17,7 +17,6 @@ function ResetPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
-  const [userEmail, setUserEmail] = useState("");
 
   // Verify token on component mount
   useEffect(() => {
@@ -34,7 +33,6 @@ function ResetPasswordForm() {
 
         if (response.ok) {
           setTokenValid(true);
-          setUserEmail(data.email);
         } else {
           setError(data.error || "Invalid or expired reset token");
         }
@@ -57,7 +55,7 @@ function ResetPasswordForm() {
     // Validate password
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
-      setError(passwordValidation.error || "Invalid password");
+      setError(passwordValidation.feedback[0] || "Invalid password");
       return;
     }
 
@@ -151,9 +149,7 @@ function ResetPasswordForm() {
       <div className='w-full max-w-md p-8 space-y-8 bg-algomancy-darker border border-algomancy-purple/30 rounded-lg'>
         <div className='text-center'>
           <h1 className='text-2xl font-bold text-white'>Reset Password</h1>
-          <p className='mt-2 text-gray-400'>
-            Enter a new password for {userEmail}
-          </p>
+          <p className='mt-2 text-gray-400'>Enter a new password for your account</p>
         </div>
 
         {success ? (

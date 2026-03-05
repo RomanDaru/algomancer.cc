@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { validateEmail } from "@/app/lib/utils/validation";
-import emailjs from "@emailjs/browser";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -39,22 +38,6 @@ export default function ForgotPassword() {
       if (!response.ok) {
         setError(data.error || "Something went wrong");
         return;
-      }
-
-      // If we have email data, send the reset email via EmailJS
-      if (data.emailData) {
-        try {
-          await emailjs.send(
-            "service_cxh2b2a", // Your EmailJS service ID
-            "template_dx9xbk6", // Your action email template ID
-            data.emailData,
-            "bwTGKiVLZWWg4QG2M" // Your EmailJS public key
-          );
-          console.log("Password reset email sent successfully");
-        } catch (emailError) {
-          console.error("Failed to send reset email:", emailError);
-          // Still show success to user to prevent email enumeration
-        }
       }
 
       setSuccess(data.message);

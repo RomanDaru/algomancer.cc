@@ -11,6 +11,8 @@ import {
   containsSuspiciousContent,
 } from "@/app/lib/utils/sanitization";
 import crypto from "crypto";
+import { sendActionEmail } from "@/app/lib/emailjs";
+import { hashToken } from "@/app/lib/utils/tokenHash";
 
 export async function POST(request: Request) {
   try {
@@ -114,6 +116,7 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
+    const verificationTokenHash = hashToken(verificationToken);
     const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     // Create user
@@ -128,7 +131,7 @@ export async function POST(request: Request) {
       includePrivateLogsInCommunityStats: false,
       achievementXp: 0,
       emailVerified: null,
-      emailVerificationToken: verificationToken,
+      emailVerificationTokenHash: verificationTokenHash,
       emailVerificationTokenExpiry: verificationTokenExpiry,
     });
 
@@ -136,25 +139,25 @@ export async function POST(request: Request) {
       process.env.NEXTAUTH_URL || "http://localhost:3000"
     }/auth/verify-email?token=${verificationToken}`;
 
+    await sendActionEmail({
+      to_email: finalEmail,
+      subject: "Confirm your Algomancer.cc account",
+      heading: "Confirm your email",
+      user_name: sanitized.name,
+      message:
+        "Thanks for registering. Please confirm your email to activate your account.",
+      action_text: "Confirm email",
+      action_url: verificationUrl,
+      expiry_text: "This link will expire in 24 hours.",
+      footer:
+        "If you did not create this account, you can ignore this email.<br>This email was sent from <strong>Algomancer.cc</strong>",
+    });
+
     return NextResponse.json(
       {
         id: result.insertedId,
-        name: sanitized.name,
-        username: sanitized.username || null,
-        email: finalEmail,
-        emailData: {
-          to_email: finalEmail,
-          subject: "Confirm your Algomancer.cc account",
-          heading: "Confirm your email",
-          user_name: sanitized.name,
-          message:
-            "Thanks for registering. Please confirm your email to activate your account.",
-          action_text: "Confirm email",
-          action_url: verificationUrl,
-          expiry_text: "This link will expire in 24 hours.",
-          footer:
-            "If you did not create this account, you can ignore this email.<br>This email was sent from <strong>Algomancer.cc</strong>",
-        },
+        message:
+          "Account created. Please check your email to confirm your account.",
       },
       { status: 201 }
     );

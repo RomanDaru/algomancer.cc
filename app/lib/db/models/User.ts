@@ -17,10 +17,10 @@ const UserSchema = new Schema(
     isAdmin: { type: Boolean, default: false },
     includePrivateLogsInCommunityStats: { type: Boolean, default: false },
     achievementXp: { type: Number, default: 0 },
-    resetToken: { type: String },
+    resetTokenHash: { type: String },
     resetTokenExpiry: { type: Date },
     emailVerified: { type: Date }, // For NextAuth compatibility
-    emailVerificationToken: { type: String },
+    emailVerificationTokenHash: { type: String },
     emailVerificationTokenExpiry: { type: Date },
   },
   {
@@ -51,10 +51,10 @@ export function convertDocumentToUser(doc: UserDocument): UserType {
     achievementXp: typeof user.achievementXp === "number" ? user.achievementXp : 0,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
-    resetToken: user.resetToken,
+    resetTokenHash: user.resetTokenHash,
     resetTokenExpiry: user.resetTokenExpiry,
     emailVerified: user.emailVerified,
-    emailVerificationToken: user.emailVerificationToken,
+    emailVerificationTokenHash: user.emailVerificationTokenHash,
     emailVerificationTokenExpiry: user.emailVerificationTokenExpiry,
   };
 }
@@ -72,10 +72,10 @@ export function convertUserToDocument(
     isAdmin: user.isAdmin,
     includePrivateLogsInCommunityStats: user.includePrivateLogsInCommunityStats,
     achievementXp: user.achievementXp,
-    resetToken: user.resetToken,
+    resetTokenHash: user.resetTokenHash,
     resetTokenExpiry: user.resetTokenExpiry,
     emailVerified: user.emailVerified,
-    emailVerificationToken: user.emailVerificationToken,
+    emailVerificationTokenHash: user.emailVerificationTokenHash,
     emailVerificationTokenExpiry: user.emailVerificationTokenExpiry,
   };
 }

@@ -9,7 +9,6 @@ import {
   validateEmail,
   validateUsername,
 } from "@/app/lib/utils/validation";
-import emailjs from "@emailjs/browser";
 
 export default function SignUp() {
   const [name, setName] = useState("");
@@ -102,22 +101,9 @@ export default function SignUp() {
         return;
       }
 
-      if (data.emailData) {
-        try {
-          await emailjs.send(
-            "service_cxh2b2a",
-            "template_dx9xbk6",
-            data.emailData,
-            "bwTGKiVLZWWg4QG2M"
-          );
-          console.log("Verification email sent successfully");
-        } catch (emailError) {
-          console.error("Failed to send verification email:", emailError);
-        }
-      }
-
         setSuccess(
-          "Account created. Please check your email to confirm your account."
+          data.message ||
+            "Account created. Please check your email to confirm your account."
         );
         setName("");
         setUsername("");

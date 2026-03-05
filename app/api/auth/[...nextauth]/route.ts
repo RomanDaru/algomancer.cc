@@ -94,7 +94,7 @@ const authOptions = {
           }
 
           const requiresEmailVerification = Boolean(
-            user.emailVerificationToken || user.emailVerificationTokenExpiry
+            user.emailVerificationTokenHash || user.emailVerificationTokenExpiry
           );
 
           if (requiresEmailVerification && !user.emailVerified) {

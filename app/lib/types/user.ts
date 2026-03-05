@@ -18,10 +18,10 @@ export interface User {
   achievementXp?: number;
   createdAt: Date;
   updatedAt: Date;
-  resetToken?: string; // Password reset token
+  resetTokenHash?: string; // Password reset token hash
   resetTokenExpiry?: Date; // Password reset token expiry
   emailVerified?: Date; // Email verification date
-  emailVerificationToken?: string; // Email verification token
+  emailVerificationTokenHash?: string; // Email verification token hash
   emailVerificationTokenExpiry?: Date; // Email verification token expiry
 }
 

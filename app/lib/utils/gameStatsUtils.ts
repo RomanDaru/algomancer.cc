@@ -2,6 +2,8 @@ import type { StatsBreakdown, StatsRankedList } from "../types/gameStats";
 
 export const DEFAULT_MIN_SAMPLE_SIZE = 5;
 export const DEFAULT_MAX_RANKED = 10;
+export const PUBLIC_META_CARD_MIN_SAMPLE_SIZE = 10;
+export const PUBLIC_META_DECK_MIN_SAMPLE_SIZE = 15;
 
 export const computeWinRate = (wins: number, losses: number) => {
   const total = wins + losses;

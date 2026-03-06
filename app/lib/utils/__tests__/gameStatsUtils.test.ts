@@ -34,4 +34,17 @@ describe("gameStatsUtils", () => {
     expect(result.highestWinRate.map((item) => item.cardId)).toEqual(["a", "c"]);
     expect(result.minSampleSize).toBe(5);
   });
+
+  test("buildRankedLists can hide highest win-rate rows until threshold is met", () => {
+    const items = [
+      { total: 9, wins: 8, losses: 1, draws: 0, winRate: 0, cardId: "a" },
+      { total: 10, wins: 6, losses: 4, draws: 0, winRate: 0, cardId: "b" },
+    ];
+
+    const result = buildRankedLists(items, { minSampleSize: 10, maxResults: 5 });
+
+    expect(result.mostPlayed.map((item) => item.cardId)).toEqual(["b", "a"]);
+    expect(result.highestWinRate.map((item) => item.cardId)).toEqual(["b"]);
+    expect(result.minSampleSize).toBe(10);
+  });
 });

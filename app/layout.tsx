@@ -121,7 +121,7 @@ export default async function RootLayout({
             __html: `
             /* Critical styles for immediate rendering */
             body {
-              background-color: #0a0a0a;
+              background-color: #0f1218;
               color: #ededed;
               margin: 0;
               font-family: var(--font-geist-sans), system-ui, sans-serif;
@@ -129,13 +129,15 @@ export default async function RootLayout({
             .min-h-screen { min-height: 100vh; }
             .flex { display: flex; }
             .flex-col { flex-direction: column; }
+            .flex-1 { flex: 1 1 0%; }
             .items-center { align-items: center; }
             .justify-center { justify-content: center; }
             .text-center { text-align: center; }
             .font-bold { font-weight: 700; }
             .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
-            .from-algomancy-dark { --tw-gradient-from: #0a0a0a; --tw-gradient-to: rgb(10 10 10 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-            .to-black { --tw-gradient-to: #000; }
+            .from-algomancy-dark { --tw-gradient-from: #151a22; --tw-gradient-to: rgb(21 26 34 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+            .to-algomancy-darker { --tw-gradient-to: #0f1218; }
+            .bg-background { background-color: #0f1218; }
           `,
           }}
         />
@@ -144,7 +146,7 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
         <AuthProvider session={session}>
           <Navbar />
-          <main className='flex-1'>{children}</main>
+          <main className='flex-1 bg-background'>{children}</main>
           <Footer />
         </AuthProvider>
         <Analytics />

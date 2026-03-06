@@ -4,11 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import CardHoverPreview from "@/app/components/CardHoverPreview";
+import ElementIcons from "@/app/components/ElementIcons";
 import type {
   CardPreview,
   GameStatsResponse,
   StatsScope,
 } from "@/app/lib/types/gameStats";
+import {
+  ElementType,
+  generateElementGradient,
+} from "@/app/lib/utils/elements";
 
 const RANGE_OPTIONS = [
   { value: "all", label: "All time" },
@@ -16,6 +21,36 @@ const RANGE_OPTIONS = [
   { value: "90", label: "Last 90 days" },
   { value: "custom", label: "Custom range" },
 ];
+
+const SCOPE_OPTIONS: Array<{
+  value: StatsScope;
+  label: string;
+  description: string;
+  activeClassName: string;
+}> = [
+  {
+    value: "my",
+    label: "My Stats",
+    description: "Based only on your own match logs.",
+    activeClassName: "bg-algomancy-purple text-white",
+  },
+  {
+    value: "publicMeta",
+    label: "Public Meta",
+    description: "Based only on public match logs and public decks.",
+    activeClassName: "bg-algomancy-gold text-black",
+  },
+  {
+    value: "communitySnapshot",
+    label: "Community Snapshot",
+    description:
+      "Based on public logs plus anonymous private logs shared for aggregate community stats.",
+    activeClassName: "bg-algomancy-teal text-black",
+  },
+];
+
+const SHOW_COMMUNITY_SNAPSHOT = false;
+const SHOW_LEGACY_STATS_SECTIONS = false;
 
 type SortKey = "total" | "winRate";
 type SortDirection = "asc" | "desc";
@@ -32,6 +67,12 @@ interface StatsTableRow {
   losses: number;
   draws: number;
   winRate: number;
+}
+
+interface PublicMetaDeckCardData extends StatsTableRow {
+  deckId: string;
+  deckElements: ElementType[];
+  metaShare: number;
 }
 
 const EyeIcon = () => (
@@ -108,6 +149,109 @@ const sortRows = (rows: StatsTableRow[], config: SortConfig) => {
 const getSortIndicator = (config: SortConfig, key: SortKey) => {
   if (config.key !== key) return "";
   return config.direction === "asc" ? "^" : "v";
+};
+
+const getDeckQualificationLabel = (total: number, minSampleSize: number) =>
+  total >= minSampleSize ? "WR qualified" : "Small sample";
+
+const PublicMetaDeckCard = ({
+  deck,
+  index,
+  minSampleSize,
+}: {
+  deck: PublicMetaDeckCardData;
+  index: number;
+  minSampleSize: number;
+}) => {
+  const rankColors = [
+    "text-algomancy-gold",
+    "text-algomancy-purple-light",
+    "text-algomancy-teal",
+    "text-algomancy-blue",
+  ];
+  const rankColor = rankColors[index % rankColors.length];
+  const gradientStyle = {
+    background: generateElementGradient(deck.deckElements, "135deg", false),
+  };
+  const qualificationLabel = getDeckQualificationLabel(deck.total, minSampleSize);
+
+  return (
+    <Link href={`/decks/${deck.deckId}`} className='block h-full'>
+      <div className='relative rounded-lg overflow-hidden h-full min-h-[280px] bg-algomancy-darker border border-algomancy-purple/30 hover:border-algomancy-purple transition-colors group'>
+        <div
+          className='absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity'
+          style={gradientStyle}
+        />
+
+        <div className='relative z-10 h-full flex flex-col'>
+          <div className='flex min-h-[156px] flex-1 flex-col justify-between bg-gradient-to-t from-black/85 via-black/35 to-transparent p-5'>
+            <div className='flex items-start justify-between gap-4'>
+              <p className={`text-[11px] uppercase tracking-[0.2em] ${rankColor}`}>
+                Public Meta #{index + 1}
+              </p>
+              <ElementIcons
+                elements={deck.deckElements}
+                size={18}
+                showTooltips={true}
+              />
+            </div>
+
+            <div className='flex items-end justify-between gap-4'>
+              <div className='min-w-0'>
+                <h3 className='text-2xl font-semibold text-white line-clamp-2'>
+                  {deck.name}
+                </h3>
+                <p className='mt-2 text-sm text-gray-300'>
+                  {deck.total} public matches in range
+                </p>
+              </div>
+              <div className='text-right'>
+                <p className='text-[11px] uppercase tracking-wide text-gray-400'>
+                  Win Rate
+                </p>
+                <p className='mt-1 text-2xl font-semibold text-white'>
+                  {formatPercent(deck.winRate)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className='border-t border-white/10 bg-black/55 px-5 py-4'>
+            <div className='flex items-start justify-between gap-4'>
+              <div>
+                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                  Meta Share
+                </p>
+                <p className='mt-1 text-2xl font-semibold text-white'>
+                  {formatPercent(deck.metaShare)}
+                </p>
+              </div>
+              <div className='text-right'>
+                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                  Record
+                </p>
+                <p className='mt-1 text-lg font-semibold text-white'>
+                  {deck.wins}-{deck.losses}
+                </p>
+                <p className='text-xs text-gray-400'>{deck.draws} draws</p>
+              </div>
+            </div>
+
+            <div className='mt-4 flex items-center justify-between gap-4 text-sm'>
+              <div>
+                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                  Leaderboard Status
+                </p>
+                <p className='mt-1 text-white'>{qualificationLabel}</p>
+              </div>
+              <p className='text-right text-gray-400'>Min {minSampleSize} matches for WR</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
 };
 
 const StatsTable = ({
@@ -212,7 +356,7 @@ const MvpTable = ({
         <thead className='text-xs uppercase text-gray-500'>
           <tr className='border-b border-white/10'>
             <th className='px-3 py-2 text-left font-medium'>Card</th>
-            <th className='px-3 py-2 text-right font-medium'>Played</th>
+            <th className='px-3 py-2 text-right font-medium'>Mentions</th>
             <th className='px-3 py-2 text-right font-medium'>WR</th>
             <th className='px-3 py-2 text-right font-medium'>View</th>
           </tr>
@@ -259,8 +403,8 @@ const MvpTable = ({
 };
 
 export default function StatsPage() {
-  const { data: session, status } = useSession();
-  const [scope, setScope] = useState<StatsScope>("my");
+  const { status } = useSession();
+  const [scope, setScope] = useState<StatsScope>("publicMeta");
   const [range, setRange] = useState("all");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -279,18 +423,32 @@ export default function StatsPage() {
     key: "total",
     direction: "desc",
   }));
-  const [deckSort, setDeckSort] = useState<SortConfig>(() => ({
+  const [deckMostPlayedSort, setDeckMostPlayedSort] = useState<SortConfig>(() => ({
     key: "total",
     direction: "desc",
   }));
-  const cardLookup: Record<string, CardPreview> = stats?.cardLookup ?? {};
-  const deckLookup: Record<string, string> = stats?.deckLookup ?? {};
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      setScope("community");
-    }
-  }, [status]);
+  const [deckHighestWinRateSort, setDeckHighestWinRateSort] = useState<SortConfig>(() => ({
+    key: "winRate",
+    direction: "desc",
+  }));
+  const cardLookup = useMemo<Record<string, CardPreview>>(
+    () => stats?.cardLookup ?? {},
+    [stats?.cardLookup]
+  );
+  const deckLookup = useMemo<Record<string, string>>(
+    () => stats?.deckLookup ?? {},
+    [stats?.deckLookup]
+  );
+  const deckPreviewLookup = useMemo<
+    Record<string, { name: string; deckElements: string[] }>
+  >(() => stats?.deckPreviewLookup ?? {}, [stats?.deckPreviewLookup]);
+  const visibleScopeOptions = useMemo(
+    () =>
+      SHOW_COMMUNITY_SNAPSHOT
+        ? SCOPE_OPTIONS
+        : SCOPE_OPTIONS.filter((option) => option.value !== "communitySnapshot"),
+    []
+  );
 
   const dateRange = useMemo(() => {
     if (range === "all") {
@@ -381,16 +539,22 @@ export default function StatsPage() {
     }));
   }, [stats]);
 
-  const deckRows = useMemo<StatsTableRow[]>(() => {
+  const deckMostPlayedRows = useMemo<StatsTableRow[]>(() => {
     if (!stats) return [];
-    const combined = new Map(
-      [...stats.decks.mostPlayed, ...stats.decks.highestWinRate].map((item) => [
-        item.deckId,
-        item,
-      ])
-    );
-    return Array.from(combined.values()).map((item) => ({
-      name: deckLookup[item.deckId] || "Unknown deck",
+    return stats.decks.mostPlayed.map((item) => ({
+      name: deckLookup[item.deckId] || "Unnamed public deck",
+      total: item.total,
+      wins: item.wins,
+      losses: item.losses,
+      draws: item.draws,
+      winRate: item.winRate,
+    }));
+  }, [stats, deckLookup]);
+
+  const deckHighestWinRateRows = useMemo<StatsTableRow[]>(() => {
+    if (!stats) return [];
+    return stats.decks.highestWinRate.map((item) => ({
+      name: deckLookup[item.deckId] || "Unnamed public deck",
       total: item.total,
       wins: item.wins,
       losses: item.losses,
@@ -442,6 +606,40 @@ export default function StatsPage() {
   };
 
   const showSignInPrompt = scope === "my" && status === "unauthenticated";
+  const showMetaLeaderboards = scope !== "communitySnapshot";
+  const showLegacyStatsSections = SHOW_LEGACY_STATS_SECTIONS || scope === "my";
+  const constructedSummary = stats?.byFormat.find((item) => item.format === "constructed");
+  const publicMetaDeckCards = useMemo<PublicMetaDeckCardData[]>(() => {
+    if (
+      scope !== "publicMeta" ||
+      !stats ||
+      !constructedSummary ||
+      constructedSummary.total === 0
+    ) {
+      return [];
+    }
+
+    return stats.decks.mostPlayed.slice(0, 9).map((deck) => ({
+      deckId: deck.deckId,
+      name: deckPreviewLookup[deck.deckId]?.name || deckLookup[deck.deckId] || "Unnamed public deck",
+      total: deck.total,
+      wins: deck.wins,
+      losses: deck.losses,
+      draws: deck.draws,
+      winRate: deck.winRate,
+      deckElements: ((deckPreviewLookup[deck.deckId]?.deckElements?.length
+        ? deckPreviewLookup[deck.deckId].deckElements
+        : ["Colorless"]) as ElementType[]),
+      metaShare: deck.total / constructedSummary.total,
+    }));
+  }, [scope, stats, constructedSummary, deckLookup, deckPreviewLookup]);
+  const featuredPublicDeck = publicMetaDeckCards[0];
+  const secondaryPublicMetaDeckCards = publicMetaDeckCards.slice(1);
+  const featuredDeckGradientStyle = featuredPublicDeck
+    ? {
+        background: generateElementGradient(featuredPublicDeck.deckElements, "135deg", false),
+      }
+    : undefined;
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -450,33 +648,26 @@ export default function StatsPage() {
           <div>
             <h1 className='text-3xl font-bold text-white'>Stats</h1>
             <p className='text-gray-300'>
-              Track performance trends for you and the community.
+              Compare your own logs with the public meta.
             </p>
           </div>
         </div>
 
         <div className='flex flex-wrap items-center gap-3 text-sm'>
           <div className='flex items-center gap-2 rounded-full border border-white/10 p-1'>
-            <button
-              type='button'
-              onClick={() => setScope("my")}
-              className={`rounded-full px-4 py-2 transition-colors ${
-                scope === "my"
-                  ? "bg-algomancy-purple text-white"
-                  : "text-gray-300 hover:text-white"
-              }`}>
-              My Stats
-            </button>
-            <button
-              type='button'
-              onClick={() => setScope("community")}
-              className={`rounded-full px-4 py-2 transition-colors ${
-                scope === "community"
-                  ? "bg-algomancy-gold text-black"
-                  : "text-gray-300 hover:text-white"
-              }`}>
-              Community Stats
-            </button>
+            {visibleScopeOptions.map((option) => (
+              <button
+                key={option.value}
+                type='button'
+                onClick={() => setScope(option.value)}
+                className={`rounded-full px-4 py-2 transition-colors ${
+                  scope === option.value
+                    ? option.activeClassName
+                    : "text-gray-300 hover:text-white"
+                }`}>
+                {option.label}
+              </button>
+            ))}
           </div>
 
           <div className='ml-auto flex flex-wrap items-center gap-3'>
@@ -533,189 +724,404 @@ export default function StatsPage() {
           </div>
         ) : !stats ? null : (
           <div className='space-y-10'>
-            <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-              <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>
-                  Total Logs
-                </p>
-                <p className='text-2xl font-semibold text-white'>
-                  {stats.summary.total}
-                </p>
-              </div>
-              <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>
-                  Win Rate
-                </p>
-                <p className='text-2xl font-semibold text-white'>
-                  {formatPercent(stats.summary.winRate)}
-                </p>
-                <p className='text-xs text-gray-400 mt-1'>
-                  {stats.summary.wins}W · {stats.summary.losses}L
-                </p>
-              </div>
-              <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>
-                  Avg Duration
-                </p>
-                <p className='text-2xl font-semibold text-white'>
-                  {Math.round(stats.summary.avgDurationMinutes)}m
-                </p>
-              </div>
-              <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
-                <p className='text-xs uppercase tracking-wide text-gray-500'>
-                  Draws
-                </p>
-                <p className='text-2xl font-semibold text-white'>
-                  {stats.summary.draws}
-                </p>
-              </div>
-            </div>
-
-            <div className='grid gap-6 lg:grid-cols-2'>
-              <div className='space-y-4'>
-                <h2 className='text-lg font-semibold text-white'>Formats</h2>
-                <StatsTable
-                  rows={formatRows}
-                  nameLabel='Format'
-                  emptyMessage='No format data yet.'
-                  sortConfig={formatSort}
-                  onSortChange={setFormatSort}
-                />
-              </div>
-
-              <div className='space-y-4'>
-                <h2 className='text-lg font-semibold text-white'>Match Types</h2>
-                <StatsTable
-                  rows={matchRows}
-                  nameLabel='Match Type'
-                  emptyMessage='No match type data yet.'
-                  sortConfig={matchSort}
-                  onSortChange={setMatchSort}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-6 lg:grid-cols-2'>
-              <div className='space-y-4'>
-                <h2 className='text-lg font-semibold text-white'>
-                  Live Draft Elements
-                </h2>
-                <StatsTable
-                  rows={elementRows}
-                  nameLabel='Element'
-                  emptyMessage='No element data yet.'
-                  sortConfig={elementSort}
-                  onSortChange={setElementSort}
-                />
-              </div>
-
-              <div className='space-y-4'>
-                <h2 className='text-lg font-semibold text-white'>
-                  Constructed Decks
-                </h2>
-                <StatsTable
-                  rows={deckRows}
-                  nameLabel='Deck'
-                  emptyMessage='No deck data yet.'
-                  sortConfig={deckSort}
-                  onSortChange={setDeckSort}
-                />
-              </div>
-            </div>
-
-            <div className='grid gap-6 lg:grid-cols-2'>
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <h2 className='text-lg font-semibold text-white'>
-                    MVP Cards (Most Played)
-                  </h2>
-                  <span className='text-xs text-gray-400'>Top 9</span>
-                </div>
-                {stats.mvpCards.mostPlayed.length === 0 ? (
-                  <p className='text-sm text-gray-400'>No MVP cards yet.</p>
-                ) : (
-                  <MvpTable
-                    rows={stats.mvpCards.mostPlayed.slice(0, 9)}
-                    cardLookup={cardLookup}
-                    emptyMessage='No MVP cards yet.'
-                  />
-                )}
-              </div>
-
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <h2 className='text-lg font-semibold text-white'>
-                    MVP Cards (Highest WR)
-                  </h2>
-                  <span className='text-xs text-gray-400'>Top 9</span>
-                </div>
-                {stats.mvpCards.highestWinRate.length === 0 ? (
-                  <p className='text-sm text-gray-400'>
-                    Not enough samples yet (min {stats.mvpCards.minSampleSize}).
+            {scope === "publicMeta" && (
+              <section className='space-y-6'>
+                <div className='space-y-2 text-left'>
+                  <div>
+                    <p className='text-xs uppercase tracking-[0.2em] text-algomancy-gold/70'>
+                      Public Deck Meta
+                    </p>
+                    <h2 className='mt-2 text-2xl font-semibold text-white'>
+                      Public decks are the core of this view
+                    </h2>
+                    <p className='mt-2 max-w-3xl text-sm text-gray-300'>
+                      Use Public Meta to see which named decks are actually showing up in public
+                      constructed matches, how often they appear, and which ones have enough sample
+                      size to qualify for win-rate leaderboards.
+                    </p>
+                  </div>
+                  <p className='text-sm text-algomancy-gold-light'>
+                    {constructedSummary?.total ?? 0} public constructed matches in range
                   </p>
-                ) : (
-                  <MvpTable
-                    rows={stats.mvpCards.highestWinRate.slice(0, 9)}
-                    cardLookup={cardLookup}
-                    emptyMessage='Not enough MVP data yet.'
-                  />
-                )}
-              </div>
-            </div>
+                </div>
 
-            <div className='space-y-4'>
-              <div className='flex flex-col items-center gap-1 text-center'>
-
-                <h2 className='text-lg font-semibold text-white'>Log Activity</h2>
-                <span className='text-xs text-gray-400'>Last 12 weeks</span>
-              </div>
-              {stats.timeSeries.length === 0 ? (
-                <p className='text-sm text-gray-400 text-center'>No data yet.</p>
-              ) : (
-                <div className='flex justify-center'>
-                  <div className='flex items-start gap-3'>
-                    <div className='hidden sm:grid grid-rows-7 gap-1 pt-1 text-[11px] text-gray-500'>
-                      <span>Mon</span>
-                      <span className='text-transparent'>Tue</span>
-                      <span>Wed</span>
-                      <span className='text-transparent'>Thu</span>
-                      <span>Fri</span>
-                      <span className='text-transparent'>Sat</span>
-                      <span className='text-transparent'>Sun</span>
-                    </div>
-                    <div className='flex gap-2 overflow-x-auto pb-1'>
-                      {heatmapWeeks.map((week, weekIndex) => (
-                        <div key={`week-${weekIndex}`} className='flex flex-col gap-1'>
-                          {week.map((day) => {
-                            const key = toUtcDateKey(day);
-                            const total = heatmapLookup[key] || 0;
-                            const level = getHeatmapLevel(total);
-                            const isFuture = day > todayUtc;
-                            const label = day.toLocaleDateString(undefined, {
-                              month: "short",
-                              day: "numeric",
-                              year: "numeric",
-                              timeZone: "UTC",
-                            });
-                            return (
-                              <div
-                                key={key}
-                                title={`${label}: ${total} log${total === 1 ? "" : "s"}`}
-                                className={`h-3 w-3 rounded-sm transition-transform duration-150 ease-out hover:scale-110 hover:ring-1 hover:ring-white/40 ${
-                                  isFuture
-                                    ? "bg-white/5 opacity-30"
-                                    : heatmapLevels[level]
-                                }`}
+                {featuredPublicDeck ? (
+                  <div className='grid gap-6 xl:grid-cols-[1.4fr_0.9fr]'>
+                    <Link
+                      href={`/decks/${featuredPublicDeck.deckId}`}
+                      className='block h-full'>
+                      <div className='relative rounded-lg overflow-hidden h-full bg-algomancy-darker border border-algomancy-purple/30 hover:border-algomancy-purple transition-colors group'>
+                        {featuredDeckGradientStyle && (
+                          <div
+                            className='absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity'
+                            style={featuredDeckGradientStyle}
+                          />
+                        )}
+                        <div className='relative h-full flex flex-col'>
+                          <div className='flex min-h-[240px] flex-1 flex-col justify-between bg-gradient-to-t from-black/85 via-black/35 to-transparent p-6'>
+                            <div className='flex items-start justify-between gap-4'>
+                              <p className='text-xs uppercase tracking-[0.24em] text-algomancy-gold/75'>
+                                Featured Public Deck
+                              </p>
+                              <ElementIcons
+                                elements={featuredPublicDeck.deckElements}
+                                size={20}
+                                showTooltips={true}
                               />
-                            );
-                          })}
+                            </div>
+
+                            <div className='flex items-end justify-between gap-6'>
+                              <div>
+                                <h3 className='text-3xl font-semibold text-white'>
+                                  {featuredPublicDeck.name}
+                                </h3>
+                                <p className='mt-3 max-w-2xl text-sm text-gray-300'>
+                                  Most represented named deck in the current public-meta range.
+                                </p>
+                              </div>
+                              <div className='text-right'>
+                                <p className='text-[11px] uppercase tracking-wide text-gray-400'>
+                                  Win Rate
+                                </p>
+                                <p className='mt-1 text-4xl font-semibold text-white'>
+                                  {formatPercent(featuredPublicDeck.winRate)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className='border-t border-white/10 bg-black/55 px-6 py-5'>
+                            <div className='grid gap-5 sm:grid-cols-3'>
+                              <div>
+                                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                                  Matches
+                                </p>
+                                <p className='mt-1 text-3xl font-semibold text-white'>
+                                  {featuredPublicDeck.total}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                                  Meta Share
+                                </p>
+                                <p className='mt-1 text-3xl font-semibold text-white'>
+                                  {formatPercent(featuredPublicDeck.metaShare)}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                                  Record
+                                </p>
+                                <p className='mt-1 text-3xl font-semibold text-white'>
+                                  {featuredPublicDeck.wins}-{featuredPublicDeck.losses}
+                                </p>
+                                <p className='text-xs text-gray-400'>
+                                  {featuredPublicDeck.draws} draws
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className='mt-5 flex items-center justify-between gap-4 text-sm'>
+                              <div>
+                                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
+                                  Leaderboard Status
+                                </p>
+                                <p className='mt-1 text-white'>
+                                  {getDeckQualificationLabel(
+                                    featuredPublicDeck.total,
+                                    stats.decks.minSampleSize
+                                  )}
+                                </p>
+                              </div>
+                              <p className='text-right text-gray-400'>
+                                Min {stats.decks.minSampleSize} matches for WR
+                              </p>
+                            </div>
+                          </div>
                         </div>
-                      ))}
+                      </div>
+                    </Link>
+
+                    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
+                      <div className='rounded-lg border border-algomancy-purple/30 bg-algomancy-darker p-5'>
+                        <p className='text-xs uppercase tracking-[0.18em] text-gray-500'>
+                          WR Qualification
+                        </p>
+                        <p className='mt-3 text-3xl font-semibold text-white'>
+                          {stats.decks.highestWinRate.length}
+                        </p>
+                        <p className='mt-2 text-sm text-gray-300'>
+                          public decks currently meet the minimum of {stats.decks.minSampleSize}{" "}
+                          matches for the highest win-rate leaderboard.
+                        </p>
+                      </div>
+                      <div className='rounded-lg border border-algomancy-purple/30 bg-algomancy-darker p-5'>
+                        <p className='text-xs uppercase tracking-[0.18em] text-gray-500'>
+                          Named Deck Coverage
+                        </p>
+                        <p className='mt-3 text-3xl font-semibold text-white'>
+                          {deckMostPlayedRows.length}
+                        </p>
+                        <p className='mt-2 text-sm text-gray-300'>
+                          named public decks appeared in public constructed matches for this range.
+                        </p>
+                      </div>
                     </div>
                   </div>
+                ) : (
+                  <div className='rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-gray-400'>
+                    No public constructed deck data is available for this range yet.
+                  </div>
+                )}
+
+                {secondaryPublicMetaDeckCards.length > 0 && (
+                  <div className='grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-8'>
+                    {secondaryPublicMetaDeckCards.map((deck, index) => (
+                      <PublicMetaDeckCard
+                        key={`${deck.name}-${deck.total}-${index}`}
+                        deck={deck}
+                        index={index + 1}
+                        minSampleSize={stats.decks.minSampleSize}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {showLegacyStatsSections && (
+              <>
+                <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+                  <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
+                    <p className='text-xs uppercase tracking-wide text-gray-500'>
+                      Total Matches
+                    </p>
+                    <p className='text-2xl font-semibold text-white'>
+                      {stats.summary.total}
+                    </p>
+                  </div>
+                  <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
+                    <p className='text-xs uppercase tracking-wide text-gray-500'>
+                      Win Rate
+                    </p>
+                    <p className='text-2xl font-semibold text-white'>
+                      {formatPercent(stats.summary.winRate)}
+                    </p>
+                    <p className='text-xs text-gray-400 mt-1'>
+                      {stats.summary.wins}W / {stats.summary.losses}L
+                    </p>
+                  </div>
+                  <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
+                    <p className='text-xs uppercase tracking-wide text-gray-500'>
+                      Avg Logged Duration
+                    </p>
+                    <p className='text-2xl font-semibold text-white'>
+                      {Math.round(stats.summary.avgDurationMinutes)}m
+                    </p>
+                  </div>
+                  <div className='rounded-lg border border-white/10 bg-black/30 p-4'>
+                    <p className='text-xs uppercase tracking-wide text-gray-500'>
+                      Draws
+                    </p>
+                    <p className='text-2xl font-semibold text-white'>
+                      {stats.summary.draws}
+                    </p>
+                  </div>
                 </div>
-              )}
-            </div>
+
+                <div className='grid gap-6 lg:grid-cols-2'>
+                  <div className='space-y-4'>
+                    <h2 className='text-lg font-semibold text-white'>Formats</h2>
+                    <StatsTable
+                      rows={formatRows}
+                      nameLabel='Format'
+                      emptyMessage='No format data yet.'
+                      sortConfig={formatSort}
+                      onSortChange={setFormatSort}
+                    />
+                  </div>
+
+                  <div className='space-y-4'>
+                    <h2 className='text-lg font-semibold text-white'>Match Types</h2>
+                    <StatsTable
+                      rows={matchRows}
+                      nameLabel='Match Type'
+                      emptyMessage='No match type data yet.'
+                      sortConfig={matchSort}
+                      onSortChange={setMatchSort}
+                    />
+                  </div>
+                </div>
+
+                <div className='grid gap-6 lg:grid-cols-2'>
+                  <div className='space-y-4'>
+                    <h2 className='text-lg font-semibold text-white'>
+                      Live Draft Elements
+                    </h2>
+                    <StatsTable
+                      rows={elementRows}
+                      nameLabel='Element'
+                      emptyMessage='No element data yet.'
+                      sortConfig={elementSort}
+                      onSortChange={setElementSort}
+                    />
+                  </div>
+
+                  {showMetaLeaderboards ? (
+                    <div className='space-y-4'>
+                      <div className='flex items-center justify-between'>
+                        <h2 className='text-lg font-semibold text-white'>
+                          Constructed Decks (Most Played)
+                        </h2>
+                        <span className='text-xs text-gray-400'>Top 10</span>
+                      </div>
+                      <StatsTable
+                        rows={deckMostPlayedRows}
+                        nameLabel='Deck'
+                        emptyMessage='No constructed deck data yet.'
+                        sortConfig={deckMostPlayedSort}
+                        onSortChange={setDeckMostPlayedSort}
+                      />
+                    </div>
+                  ) : (
+                    <div className='rounded-lg border border-dashed border-white/10 bg-black/20 p-4 text-sm text-gray-400'>
+                      Community Snapshot hides named deck leaderboards and card leaderboards so this view stays aggregate-only.
+                    </div>
+                  )}
+                </div>
+
+                {showMetaLeaderboards && (
+                  <div className='space-y-6'>
+                    <div className='grid gap-6 lg:grid-cols-2'>
+                      <div className='space-y-4'>
+                        <div className='flex items-center justify-between'>
+                          <h2 className='text-lg font-semibold text-white'>
+                            Constructed Decks (Highest WR)
+                          </h2>
+                          <span className='text-xs text-gray-400'>
+                            Min {stats.decks.minSampleSize} matches
+                          </span>
+                        </div>
+                        {deckHighestWinRateRows.length === 0 ? (
+                          <p className='text-sm text-gray-400'>
+                            Not enough deck samples yet (min {stats.decks.minSampleSize} matches).
+                          </p>
+                        ) : (
+                          <StatsTable
+                            rows={deckHighestWinRateRows}
+                            nameLabel='Deck'
+                            emptyMessage='Not enough deck samples yet.'
+                            sortConfig={deckHighestWinRateSort}
+                            onSortChange={setDeckHighestWinRateSort}
+                          />
+                        )}
+                      </div>
+
+                      <div className='space-y-4'>
+                        <div className='flex items-center justify-between'>
+                          <h2 className='text-lg font-semibold text-white'>
+                            Logged MVP Mentions (Most Mentioned)
+                          </h2>
+                          <span className='text-xs text-gray-400'>Top 9</span>
+                        </div>
+                        <p className='text-sm text-gray-400'>
+                          Experimental. Based on MVP card fields recorded in logs.
+                        </p>
+                        {stats.mvpCards.mostPlayed.length === 0 ? (
+                          <p className='text-sm text-gray-400'>No MVP mentions yet.</p>
+                        ) : (
+                          <MvpTable
+                            rows={stats.mvpCards.mostPlayed.slice(0, 9)}
+                            cardLookup={cardLookup}
+                            emptyMessage='No MVP mentions yet.'
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div className='grid gap-6 lg:grid-cols-2'>
+                      <div className='space-y-4'>
+                        <div className='flex items-center justify-between'>
+                          <h2 className='text-lg font-semibold text-white'>
+                            Logged MVP Mentions (Highest WR)
+                          </h2>
+                          <span className='text-xs text-gray-400'>
+                            Min {stats.mvpCards.minSampleSize} logs
+                          </span>
+                        </div>
+                        <p className='text-sm text-gray-400'>
+                          Experimental. Based on logs where the card was mentioned as an MVP.
+                        </p>
+                        {stats.mvpCards.highestWinRate.length === 0 ? (
+                          <p className='text-sm text-gray-400'>
+                            Not enough MVP samples yet (min {stats.mvpCards.minSampleSize} logs).
+                          </p>
+                        ) : (
+                          <MvpTable
+                            rows={stats.mvpCards.highestWinRate.slice(0, 9)}
+                            cardLookup={cardLookup}
+                            emptyMessage='Not enough MVP data yet.'
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className='space-y-4'>
+                  <div className='flex flex-col items-center gap-1 text-center'>
+                    <h2 className='text-lg font-semibold text-white'>Log Activity</h2>
+                    <span className='text-xs text-gray-400'>Last 12 weeks</span>
+                  </div>
+                  {stats.timeSeries.length === 0 ? (
+                    <p className='text-sm text-gray-400 text-center'>No data yet.</p>
+                  ) : (
+                    <div className='flex justify-center'>
+                      <div className='flex items-start gap-3'>
+                        <div className='hidden sm:grid grid-rows-7 gap-1 pt-1 text-[11px] text-gray-500'>
+                          <span>Mon</span>
+                          <span className='text-transparent'>Tue</span>
+                          <span>Wed</span>
+                          <span className='text-transparent'>Thu</span>
+                          <span>Fri</span>
+                          <span className='text-transparent'>Sat</span>
+                          <span className='text-transparent'>Sun</span>
+                        </div>
+                        <div className='flex gap-2 overflow-x-auto pb-1'>
+                          {heatmapWeeks.map((week, weekIndex) => (
+                            <div key={`week-${weekIndex}`} className='flex flex-col gap-1'>
+                              {week.map((day) => {
+                                const key = toUtcDateKey(day);
+                                const total = heatmapLookup[key] || 0;
+                                const level = getHeatmapLevel(total);
+                                const isFuture = day > todayUtc;
+                                const label = day.toLocaleDateString(undefined, {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  timeZone: "UTC",
+                                });
+                                return (
+                                  <div
+                                    key={key}
+                                    title={`${label}: ${total} log${total === 1 ? "" : "s"}`}
+                                    className={`h-3 w-3 rounded-sm transition-transform duration-150 ease-out hover:scale-110 hover:ring-1 hover:ring-white/40 ${
+                                      isFuture
+                                        ? "bg-white/5 opacity-30"
+                                        : heatmapLevels[level]
+                                    }`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>

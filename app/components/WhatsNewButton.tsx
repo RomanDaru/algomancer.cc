@@ -12,7 +12,7 @@ export default function WhatsNewButton() {
         type='button'
         onClick={() => setIsOpen(true)}
         className='inline-flex items-center px-4 py-2 rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark text-white font-medium transition-colors'>
-        What's New
+        What&apos;s New
       </button>
 
       {isOpen && (
@@ -70,7 +70,7 @@ export default function WhatsNewButton() {
                 <ul className='mt-2 space-y-2 text-gray-300'>
                   <li>
                     New <span className='text-white'>/stats</span> page with My
-                    Stats and Community Stats tabs.
+                    Stats, Public Meta, and Community Snapshot tabs.
                   </li>
                   <li>
                     Time-range filters for win rate, total games, time played,

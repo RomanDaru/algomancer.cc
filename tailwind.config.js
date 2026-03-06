@@ -11,8 +11,9 @@ module.exports = {
         // Algomancy color palette
         algomancy: {
           // Dark backgrounds
-          dark: "#0a0a0a",
-          darker: "#050505",
+          // Previous values: dark #0a0a0a, darker #050505
+          dark: "#151a22",
+          darker: "#0f1218",
 
           // Accent colors from the game art
           purple: {
@@ -46,7 +47,7 @@ module.exports = {
         secondary: "#5390d9",
         accent: "#f9c74f",
         highlight: "#56cfe1",
-        background: "#0a0a0a",
+        background: "#0f1218",
         foreground: "#ededed",
       },
       animation: {

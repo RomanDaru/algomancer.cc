@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightIcon, GlobeAltIcon } from "@heroicons/react/24/outline";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 import StructuredData from "./components/StructuredData";
 import WhatsNewButton from "./components/WhatsNewButton";
 import { Metadata } from "next";
@@ -43,7 +43,7 @@ export default async function Home() {
     <>
       <StructuredData type='website' data={{}} />
       <StructuredData type='organization' data={{}} />
-      <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-black'>
+      <div className='min-h-[calc(100vh-64px)] flex flex-col items-center justify-center px-6 py-12 bg-gradient-to-b from-algomancy-dark to-algomancy-darker'>
         <div className='max-w-3xl w-full text-center'>
           <h1 className='text-4xl md:text-6xl font-bold mb-4 md:mb-6 bg-gradient-to-r from-algomancy-gold via-algomancy-purple to-algomancy-blue bg-clip-text text-transparent'>
             Algomancer.cc
@@ -70,7 +70,7 @@ export default async function Home() {
 
         <div
           className={`grid grid-cols-1 md:grid-cols-2 ${
-            showCompetitions ? "lg:grid-cols-4" : "lg:grid-cols-3"
+            showCompetitions ? "lg:grid-cols-5" : "lg:grid-cols-4"
           } gap-4 md:gap-6 w-full max-w-6xl`}>
           <Link
             href='/decks/create'
@@ -161,6 +161,36 @@ export default async function Home() {
             </p>
             <span className='hidden md:flex items-center text-algomancy-gold text-sm font-medium'>
               Browse{" "}
+              <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
+            </span>
+          </Link>
+
+          <Link
+            href='/stats'
+            className='group flex flex-col items-center p-4 md:p-6 rounded-lg bg-gradient-to-br from-algomancy-darker to-algomancy-dark border border-algomancy-teal/30 hover:border-algomancy-teal/70 transition-all duration-300 hover:shadow-md hover:shadow-algomancy-teal/20 cursor-pointer'>
+            <div className='w-12 h-12 md:w-12 md:h-12 mb-2 md:mb-4 rounded-full bg-algomancy-teal/20 flex items-center justify-center group-hover:bg-algomancy-teal/30 transition-all'>
+              <svg
+                xmlns='http://www.w3.org/2000/svg'
+                className='h-6 w-6 md:h-6 md:w-6 text-algomancy-teal'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'>
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={1.5}
+                  d='M4 19h16M7 15l3-3 3 2 4-6'
+                />
+              </svg>
+            </div>
+            <h2 className='text-lg md:text-xl font-bold text-white group-hover:text-algomancy-teal transition-colors'>
+              Meta
+            </h2>
+            <p className='hidden md:block text-gray-400 text-center text-sm mb-3 px-2'>
+              Explore public meta trends and featured decks
+            </p>
+            <span className='hidden md:flex items-center text-algomancy-teal text-sm font-medium'>
+              Explore{" "}
               <ArrowRightIcon className='w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform' />
             </span>
           </Link>

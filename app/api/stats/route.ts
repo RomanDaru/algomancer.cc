@@ -7,8 +7,10 @@ import { DeckModel } from "@/app/lib/db/models/Deck";
 import type {
   CardPreview,
   GameStatsResponse,
+  StatsDeckPreview,
   StatsFormatBreakdown,
   StatsMatchTypeBreakdown,
+  StatsRankedList,
   StatsScope,
 } from "@/app/lib/types/gameStats";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
@@ -16,11 +18,19 @@ import { ObjectId } from "mongodb";
 import {
   buildRankedLists,
   normalizeBreakdown,
+  PUBLIC_META_CARD_MIN_SAMPLE_SIZE,
+  PUBLIC_META_DECK_MIN_SAMPLE_SIZE,
 } from "@/app/lib/utils/gameStatsUtils";
 
 const FORMAT_KEYS = ["constructed", "live_draft"] as const;
 const MATCH_TYPE_KEYS = ["1v1", "2v2", "ffa", "custom"] as const;
 const ELEMENT_KEYS = Object.values(BASIC_ELEMENTS);
+
+const createEmptyRankedList = <T,>(minSampleSize: number): StatsRankedList<T> => ({
+  mostPlayed: [],
+  highestWinRate: [],
+  minSampleSize,
+});
 
 const parseDateParam = (value: string | null, isEnd: boolean) => {
   if (!value) return undefined;
@@ -40,9 +50,13 @@ const parseDateParam = (value: string | null, isEnd: boolean) => {
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const scopeParam = (searchParams.get("scope") || "my") as StatsScope;
+    const scopeParam = (searchParams.get("scope") || "publicMeta") as StatsScope;
 
-    if (scopeParam !== "my" && scopeParam !== "community") {
+    if (
+      scopeParam !== "my" &&
+      scopeParam !== "publicMeta" &&
+      scopeParam !== "communitySnapshot"
+    ) {
       return NextResponse.json({ error: "Invalid scope" }, { status: 400 });
     }
 
@@ -143,30 +157,45 @@ export async function GET(request: NextRequest) {
       return normalizeBreakdown(base);
     });
 
-    const mvpCards = buildRankedLists(
-      aggregate.mvpCards.map((entry) => ({
-        cardId: entry._id,
-        total: entry.total,
-        wins: entry.wins,
-        losses: entry.losses,
-        draws: entry.draws,
-        winRate: 0,
-      }))
-    );
+    const mvpCards =
+      scopeParam === "communitySnapshot"
+        ? createEmptyRankedList(PUBLIC_META_CARD_MIN_SAMPLE_SIZE)
+        : buildRankedLists(
+            aggregate.mvpCards.map((entry) => ({
+              cardId: entry._id,
+              total: entry.total,
+              wins: entry.wins,
+              losses: entry.losses,
+              draws: entry.draws,
+              winRate: 0,
+            })),
+            {
+              minSampleSize:
+                scopeParam === "publicMeta" ? PUBLIC_META_CARD_MIN_SAMPLE_SIZE : undefined,
+            }
+          );
 
-    const decks = buildRankedLists(
-      aggregate.decks.map((entry) => ({
-        deckId: entry._id.toString(),
-        total: entry.total,
-        wins: entry.wins,
-        losses: entry.losses,
-        draws: entry.draws,
-        winRate: 0,
-      }))
-    );
+    const decks =
+      scopeParam === "communitySnapshot"
+        ? createEmptyRankedList(PUBLIC_META_DECK_MIN_SAMPLE_SIZE)
+        : buildRankedLists(
+            aggregate.decks.map((entry) => ({
+              deckId: entry._id.toString(),
+              total: entry.total,
+              wins: entry.wins,
+              losses: entry.losses,
+              draws: entry.draws,
+              winRate: 0,
+            })),
+            {
+              minSampleSize:
+                scopeParam === "publicMeta" ? PUBLIC_META_DECK_MIN_SAMPLE_SIZE : undefined,
+            }
+          );
 
     const cardLookup: Record<string, CardPreview> = {};
     const deckLookup: Record<string, string> = {};
+    const deckPreviewLookup: Record<string, StatsDeckPreview> = {};
     const cardIds = Array.from(
       new Set(
         [...mvpCards.mostPlayed, ...mvpCards.highestWinRate].map(
@@ -204,15 +233,19 @@ export async function GET(request: NextRequest) {
         .filter((id) => ObjectId.isValid(id))
         .map((id) => new ObjectId(id));
       if (deckObjectIds.length > 0) {
-        const deckQuery: Record<string, any> = {
+        const deckQuery: { _id: { $in: ObjectId[] }; isPublic?: boolean } = {
           _id: { $in: deckObjectIds },
         };
-        if (scopeParam === "community") {
+        if (scopeParam === "publicMeta") {
           deckQuery.isPublic = true;
         }
-        const deckDocs = await DeckModel.find(deckQuery, "name").lean();
+        const deckDocs = await DeckModel.find(deckQuery, "name deckElements").lean();
         deckDocs.forEach((deck) => {
           deckLookup[deck._id.toString()] = deck.name || "Deck";
+          deckPreviewLookup[deck._id.toString()] = {
+            name: deck.name || "Deck",
+            deckElements: Array.isArray(deck.deckElements) ? deck.deckElements : [],
+          };
         });
       }
     }
@@ -232,6 +265,7 @@ export async function GET(request: NextRequest) {
       decks,
       cardLookup,
       deckLookup,
+      deckPreviewLookup,
     };
 
     return NextResponse.json(response);

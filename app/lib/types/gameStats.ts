@@ -1,4 +1,4 @@
-export type StatsScope = "my" | "community";
+export type StatsScope = "my" | "publicMeta" | "communitySnapshot";
 
 export interface StatsRange {
   from?: string;
@@ -52,6 +52,11 @@ export interface CardPreview {
   imageUrl: string;
 }
 
+export interface StatsDeckPreview {
+  name: string;
+  deckElements: string[];
+}
+
 export interface StatsRankedList<T> {
   mostPlayed: T[];
   highestWinRate: T[];
@@ -70,4 +75,5 @@ export interface GameStatsResponse {
   decks: StatsRankedList<StatsDeckBreakdown>;
   cardLookup: Record<string, CardPreview>;
   deckLookup: Record<string, string>;
+  deckPreviewLookup: Record<string, StatsDeckPreview>;
 }

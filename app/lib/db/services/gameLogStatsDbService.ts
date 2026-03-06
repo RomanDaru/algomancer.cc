@@ -63,7 +63,7 @@ export interface GameLogStatsAggregate {
   }>;
 }
 
-let dbConnection: any = null;
+let dbConnection: Awaited<ReturnType<typeof connectToDatabase>> | null = null;
 
 async function ensureDbConnection() {
   if (!dbConnection) {
@@ -78,32 +78,123 @@ const sumIfOutcome = (outcome: string) => ({
   },
 });
 
+const buildEmptyFacet = () => [{ $match: { _id: null } }];
+
+const buildMvpCardsFacet = (scope: StatsScope) => {
+  if (scope === "communitySnapshot") {
+    return buildEmptyFacet();
+  }
+
+  return [
+    {
+      $project: {
+        outcome: 1,
+        mvpCards: {
+          $setUnion: [
+            { $ifNull: ["$liveDraft.mvpCardIds", []] },
+            {
+              $reduce: {
+                input: { $ifNull: ["$opponents", []] },
+                initialValue: [],
+                in: {
+                  $setUnion: ["$$value", { $ifNull: ["$$this.mvpCardIds", []] }],
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+    { $match: { "mvpCards.0": { $exists: true } } },
+    { $unwind: "$mvpCards" },
+    {
+      $group: {
+        _id: "$mvpCards",
+        total: { $sum: 1 },
+        wins: sumIfOutcome("win"),
+        losses: sumIfOutcome("loss"),
+        draws: sumIfOutcome("draw"),
+      },
+    },
+    { $sort: { total: -1 } },
+  ];
+};
+
+const buildDeckFacet = (scope: StatsScope) => {
+  if (scope === "communitySnapshot") {
+    return buildEmptyFacet();
+  }
+
+  const facet: Array<Record<string, unknown>> = [
+    {
+      $match: {
+        format: "constructed",
+        "constructed.deckId": { $exists: true, $ne: null },
+      },
+    },
+  ];
+
+  if (scope === "publicMeta") {
+    facet.push(
+      {
+        $lookup: {
+          from: "decks",
+          localField: "constructed.deckId",
+          foreignField: "_id",
+          as: "deck",
+        },
+      },
+      { $unwind: "$deck" },
+      { $match: { "deck.isPublic": true } }
+    );
+  }
+
+  facet.push(
+    {
+      $group: {
+        _id: "$constructed.deckId",
+        total: { $sum: 1 },
+        wins: sumIfOutcome("win"),
+        losses: sumIfOutcome("loss"),
+        draws: sumIfOutcome("draw"),
+      },
+    },
+    { $sort: { total: -1 } }
+  );
+
+  return facet;
+};
+
 export const gameLogStatsDbService = {
   async getGameLogStatsAggregate(
     query: GameLogStatsQuery
   ): Promise<GameLogStatsAggregate> {
     await ensureDbConnection();
 
-    const match: Record<string, any> = {};
-    match.seedTag = { $exists: false };
+    const match: Record<string, unknown> = {
+      seedTag: { $exists: false },
+    };
 
     if (query.scope === "my") {
       if (!query.userId) {
         throw new Error("userId is required for my stats");
       }
       match.userId = new ObjectId(query.userId);
+    } else if (query.scope === "publicMeta") {
+      match.isPublic = true;
     } else {
       match.$or = [{ isPublic: true }, { includeInCommunityStats: true }];
     }
 
     if (query.from || query.to) {
-      match.playedAt = {};
+      const playedAt: Record<string, Date> = {};
       if (query.from) {
-        match.playedAt.$gte = query.from;
+        playedAt.$gte = query.from;
       }
       if (query.to) {
-        match.playedAt.$lte = query.to;
+        playedAt.$lte = query.to;
       }
+      match.playedAt = playedAt;
     }
 
     const [result] = await GameLogModel.aggregate([
@@ -180,60 +271,8 @@ export const gameLogStatsDbService = {
             },
             { $sort: { total: -1 } },
           ],
-          mvpCards: [
-            {
-              $project: {
-                outcome: 1,
-                mvpCards: {
-                  $setUnion: [
-                    { $ifNull: ["$liveDraft.mvpCardIds", []] },
-                    {
-                      $reduce: {
-                        input: { $ifNull: ["$opponents", []] },
-                        initialValue: [],
-                        in: {
-                          $setUnion: [
-                            "$$value",
-                            { $ifNull: ["$$this.mvpCardIds", []] },
-                          ],
-                        },
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-            { $match: { "mvpCards.0": { $exists: true } } },
-            { $unwind: "$mvpCards" },
-            {
-              $group: {
-                _id: "$mvpCards",
-                total: { $sum: 1 },
-                wins: sumIfOutcome("win"),
-                losses: sumIfOutcome("loss"),
-                draws: sumIfOutcome("draw"),
-              },
-            },
-            { $sort: { total: -1 } },
-          ],
-          decks: [
-            {
-              $match: {
-                format: "constructed",
-                "constructed.deckId": { $exists: true, $ne: null },
-              },
-            },
-            {
-              $group: {
-                _id: "$constructed.deckId",
-                total: { $sum: 1 },
-                wins: sumIfOutcome("win"),
-                losses: sumIfOutcome("loss"),
-                draws: sumIfOutcome("draw"),
-              },
-            },
-            { $sort: { total: -1 } },
-          ],
+          mvpCards: buildMvpCardsFacet(query.scope),
+          decks: buildDeckFacet(query.scope),
         },
       },
     ]);

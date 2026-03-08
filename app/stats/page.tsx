@@ -151,17 +151,12 @@ const getSortIndicator = (config: SortConfig, key: SortKey) => {
   return config.direction === "asc" ? "^" : "v";
 };
 
-const getDeckQualificationLabel = (total: number, minSampleSize: number) =>
-  total >= minSampleSize ? "WR qualified" : "Small sample";
-
 const PublicMetaDeckCard = ({
   deck,
   index,
-  minSampleSize,
 }: {
   deck: PublicMetaDeckCardData;
   index: number;
-  minSampleSize: number;
 }) => {
   const rankColors = [
     "text-algomancy-gold",
@@ -173,7 +168,6 @@ const PublicMetaDeckCard = ({
   const gradientStyle = {
     background: generateElementGradient(deck.deckElements, "135deg", false),
   };
-  const qualificationLabel = getDeckQualificationLabel(deck.total, minSampleSize);
 
   return (
     <Link href={`/decks/${deck.deckId}`} className='block h-full'>
@@ -202,7 +196,7 @@ const PublicMetaDeckCard = ({
                   {deck.name}
                 </h3>
                 <p className='mt-2 text-sm text-gray-300'>
-                  {deck.total} public matches in range
+                  {deck.total} public matches
                 </p>
               </div>
               <div className='text-right'>
@@ -236,17 +230,6 @@ const PublicMetaDeckCard = ({
                 <p className='text-xs text-gray-400'>{deck.draws} draws</p>
               </div>
             </div>
-
-            <div className='mt-4 flex items-center justify-between gap-4 text-sm'>
-              <div>
-                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
-                  Leaderboard Status
-                </p>
-                <p className='mt-1 text-white'>{qualificationLabel}</p>
-              </div>
-              <p className='text-right text-gray-400'>Min {minSampleSize} matches for WR</p>
-            </div>
-
           </div>
         </div>
       </div>
@@ -735,18 +718,17 @@ export default function StatsPage() {
                       Public decks are the core of this view
                     </h2>
                     <p className='mt-2 max-w-3xl text-sm text-gray-300'>
-                      Use Public Meta to see which named decks are actually showing up in public
-                      constructed matches, how often they appear, and which ones have enough sample
-                      size to qualify for win-rate leaderboards.
+                      Use Public Meta to see which public decks are showing up, how often they
+                      are played, and how they are performing.
                     </p>
                   </div>
                   <p className='text-sm text-algomancy-gold-light'>
-                    {constructedSummary?.total ?? 0} public constructed matches in range
+                    {constructedSummary?.total ?? 0} public constructed matches
                   </p>
                 </div>
 
                 {featuredPublicDeck ? (
-                  <div className='grid gap-6 xl:grid-cols-[1.4fr_0.9fr]'>
+                  <div className='xl:max-w-[38%]'>
                     <Link
                       href={`/decks/${featuredPublicDeck.deckId}`}
                       className='block h-full'>
@@ -820,53 +802,10 @@ export default function StatsPage() {
                                 </p>
                               </div>
                             </div>
-
-                            <div className='mt-5 flex items-center justify-between gap-4 text-sm'>
-                              <div>
-                                <p className='text-[11px] uppercase tracking-wide text-gray-500'>
-                                  Leaderboard Status
-                                </p>
-                                <p className='mt-1 text-white'>
-                                  {getDeckQualificationLabel(
-                                    featuredPublicDeck.total,
-                                    stats.decks.minSampleSize
-                                  )}
-                                </p>
-                              </div>
-                              <p className='text-right text-gray-400'>
-                                Min {stats.decks.minSampleSize} matches for WR
-                              </p>
-                            </div>
                           </div>
                         </div>
                       </div>
                     </Link>
-
-                    <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
-                      <div className='rounded-lg border border-algomancy-purple/30 bg-algomancy-darker p-5'>
-                        <p className='text-xs uppercase tracking-[0.18em] text-gray-500'>
-                          WR Qualification
-                        </p>
-                        <p className='mt-3 text-3xl font-semibold text-white'>
-                          {stats.decks.highestWinRate.length}
-                        </p>
-                        <p className='mt-2 text-sm text-gray-300'>
-                          public decks currently meet the minimum of {stats.decks.minSampleSize}{" "}
-                          matches for the highest win-rate leaderboard.
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-algomancy-purple/30 bg-algomancy-darker p-5'>
-                        <p className='text-xs uppercase tracking-[0.18em] text-gray-500'>
-                          Named Deck Coverage
-                        </p>
-                        <p className='mt-3 text-3xl font-semibold text-white'>
-                          {deckMostPlayedRows.length}
-                        </p>
-                        <p className='mt-2 text-sm text-gray-300'>
-                          named public decks appeared in public constructed matches for this range.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 ) : (
                   <div className='rounded-2xl border border-dashed border-white/10 bg-black/20 p-6 text-sm text-gray-400'>
@@ -881,7 +820,6 @@ export default function StatsPage() {
                         key={`${deck.name}-${deck.total}-${index}`}
                         deck={deck}
                         index={index + 1}
-                        minSampleSize={stats.decks.minSampleSize}
                       />
                     ))}
                   </div>

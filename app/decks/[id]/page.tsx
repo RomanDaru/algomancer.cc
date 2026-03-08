@@ -155,7 +155,8 @@ export default function DeckPage({ params }: DeckPageProps) {
   };
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='min-h-full bg-background'>
+      <div className='container mx-auto px-4 py-8'>
       <Toaster position='top-right' />
       <div className='max-w-7xl mx-auto'>
         {/* Deck header with gradient background */}
@@ -245,6 +246,7 @@ export default function DeckPage({ params }: DeckPageProps) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

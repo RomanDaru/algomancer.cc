@@ -121,7 +121,7 @@ export default async function RootLayout({
             __html: `
             /* Critical styles for immediate rendering */
             body {
-              background-color: #0f1218;
+              background-color: #171d28;
               color: #ededed;
               margin: 0;
               font-family: var(--font-geist-sans), system-ui, sans-serif;
@@ -135,9 +135,9 @@ export default async function RootLayout({
             .text-center { text-align: center; }
             .font-bold { font-weight: 700; }
             .bg-gradient-to-b { background-image: linear-gradient(to bottom, var(--tw-gradient-stops)); }
-            .from-algomancy-dark { --tw-gradient-from: #151a22; --tw-gradient-to: rgb(21 26 34 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
-            .to-algomancy-darker { --tw-gradient-to: #0f1218; }
-            .bg-background { background-color: #0f1218; }
+            .from-algomancy-dark { --tw-gradient-from: #202938; --tw-gradient-to: rgb(32 41 56 / 0); --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to); }
+            .to-algomancy-darker { --tw-gradient-to: #171d28; }
+            .bg-background { background-color: #171d28; }
           `,
           }}
         />

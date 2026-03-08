@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
       | "newest"
       | "liked"
       | null;
+    const searchQuery = searchParams.get("q")?.trim() || undefined;
     const limitParam = searchParams.get("limit");
     const skipParam = searchParams.get("skip");
 
@@ -39,7 +40,8 @@ export async function GET(request: NextRequest) {
       validSortBy,
       limit,
       skip,
-      currentUserId
+      currentUserId,
+      searchQuery
     );
     return NextResponse.json(decksWithUserInfo);
   } catch (error) {

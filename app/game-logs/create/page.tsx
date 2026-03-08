@@ -7,10 +7,11 @@ import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
 import { getRankForXp } from "@/app/lib/achievements/ranks";
-import { LEVEL_UP_EVENT, LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
+import { LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
 import type { GameLog } from "@/app/lib/types/gameLog";
 import type { LevelUpPayload } from "@/app/lib/types/levelUp";
 import { isValidAlgomancerDeckUrl } from "@/app/lib/utils/deckUrl";
+import GameLogPrivacyInfoButton from "@/app/components/GameLogPrivacyInfoButton";
 import {
   clearGameLogDraft,
   loadGameLogDraft,
@@ -560,7 +561,7 @@ export default function CreateGameLogPage() {
         {opponents.map((opponent) => (
           <div
             key={opponent.id}
-            className='rounded-lg border border-white/10 bg-black/30 p-4 space-y-3'>
+            className='rounded-lg border border-white/10 bg-algomancy-dark/70 p-4 space-y-3'>
             {opponents.length > 1 && (
               <div className='flex items-center justify-end'>
                 <button
@@ -799,7 +800,7 @@ export default function CreateGameLogPage() {
           )}
         </div>
         {mvpCardIds.length > 0 && (
-          <div className='rounded-md border border-white/10 bg-black/30 p-3'>
+          <div className='rounded-md border border-white/10 bg-algomancy-dark/70 p-3'>
             <div className='text-xs text-gray-400 mb-2'>
               Selected MVP cards
             </div>
@@ -924,8 +925,14 @@ export default function CreateGameLogPage() {
         throw new Error(message);
       }
 
-      setSubmitSuccess("Game log saved.");
       const savedLog = data?.log ?? data;
+      const targetLogUrl = savedLog?._id ? `/game-logs/${savedLog._id}` : null;
+
+      if (targetLogUrl) {
+        clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
+        router.replace(targetLogUrl);
+      }
+
       const unlocked = Array.isArray(data?.achievementsUnlocked)
         ? data.achievementsUnlocked
         : [];
@@ -957,9 +964,6 @@ export default function CreateGameLogPage() {
               LEVEL_UP_STORAGE_KEY,
               JSON.stringify(payload)
             );
-            window.dispatchEvent(
-              new CustomEvent(LEVEL_UP_EVENT, { detail: payload })
-            );
           } catch (storageError) {
             console.error(
               "Unable to store level-up modal payload:",
@@ -967,16 +971,15 @@ export default function CreateGameLogPage() {
             );
           }
         }
-        update?.({
+        void update?.({
           user: {
             achievementXp: data.achievementXp,
           },
         });
       }
 
-      if (savedLog?._id) {
-        clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
-        router.push(`/game-logs/${savedLog._id}`);
+      if (!targetLogUrl) {
+        setSubmitSuccess("Game log saved.");
       }
     } catch (error) {
       setSubmitError(
@@ -996,7 +999,8 @@ export default function CreateGameLogPage() {
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='min-h-full bg-background'>
+      <div className='container mx-auto px-4 py-8'>
       <div className='max-w-4xl mx-auto space-y-6'>
         <div className='space-y-2'>
           <h1 className='text-3xl font-bold text-white'>New Game Log</h1>
@@ -1159,9 +1163,12 @@ export default function CreateGameLogPage() {
                   onChange={(event) => setIsPublic(event.target.checked)}
                   className='h-4 w-4 accent-algomancy-gold'
                 />
-                <label htmlFor='isPublic' className='text-sm text-gray-300'>
-                  Make this log public
-                </label>
+                <div className='flex items-center gap-2'>
+                  <label htmlFor='isPublic' className='text-sm text-gray-300'>
+                    Share this log publicly
+                  </label>
+                  <GameLogPrivacyInfoButton />
+                </div>
               </div>
             </div>
           </div>
@@ -1179,7 +1186,7 @@ export default function CreateGameLogPage() {
                 </div>
 
                 {!isAuthenticated && (
-                  <div className='rounded-md border border-white/10 bg-black/30 p-4 text-sm text-gray-300'>
+                  <div className='rounded-md border border-white/10 bg-algomancy-dark/70 p-4 text-sm text-gray-300'>
                     Sign in to load your decks.
                   </div>
                 )}
@@ -1373,6 +1380,7 @@ export default function CreateGameLogPage() {
             </div>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import {
   Card,
-  CARD_ATTRIBUTES,
   CARD_TYPES,
   BASIC_ELEMENTS,
   SPECIAL_ELEMENTS,
@@ -33,9 +32,12 @@ export default function CardSearch({
   onSearchActiveChange,
   deckElements,
 }: CardSearchProps) {
+  const [elementMatchMode, setElementMatchMode] = useState<
+    "any" | "all" | "exact"
+  >("any");
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
   const [onlyDeckElements, setOnlyDeckElements] = useState(false);
 
@@ -112,9 +114,21 @@ export default function CardSearch({
           .split("/")
           .map((part) => part.trim().toLowerCase())
           .filter(Boolean);
-        const matchesElement = elementTerms.some((term) =>
-          cardElements.includes(term)
-        );
+        const uniqueElementTerms = Array.from(new Set(elementTerms));
+        const uniqueCardElements = Array.from(new Set(cardElements));
+        const matchesElement =
+          elementMatchMode === "all"
+            ? uniqueElementTerms.every((term) =>
+                uniqueCardElements.includes(term)
+              )
+            : elementMatchMode === "exact"
+            ? uniqueElementTerms.length === uniqueCardElements.length &&
+              uniqueElementTerms.every((term) =>
+                uniqueCardElements.includes(term)
+              )
+            : uniqueElementTerms.some((term) =>
+                uniqueCardElements.includes(term)
+              );
         if (!matchesElement) {
           return false;
         }
@@ -240,6 +254,7 @@ export default function CardSearch({
     onSearchResults,
     onlyDeckElements,
     normalizedDeckElements,
+    elementMatchMode,
   ]);
 
   useEffect(() => {
@@ -296,10 +311,6 @@ export default function CardSearch({
   };
 
   const applyFilter = (filter: string) => {
-    // Special handling for multi-word filters
-    const isMultiWord = filter.includes(" ");
-    const filterToApply = isMultiWord ? `"${filter}"` : filter;
-
     // Get current search terms, preserving phrases
     const currentTerms = parseSearchTerms(searchTerm);
 
@@ -378,7 +389,7 @@ export default function CardSearch({
                   onClick={() => setOnlyDeckElements((prev) => !prev)}
                   disabled={!hasDeckElements}
                   aria-pressed={onlyDeckElements}
-                  className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md border transition-colors ${
                     onlyDeckElements
                       ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
                       : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
@@ -398,7 +409,7 @@ export default function CardSearch({
             </div>
           )}
           <div className='mb-4'>
-            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+            <h3 className='mb-2 text-base font-semibold text-algomancy-gold'>
               Elements
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -410,7 +421,7 @@ export default function CardSearch({
                   <button
                     key={element}
                     onClick={() => applyFilter(element)}
-                    className={`px-3 py-1 text-xs rounded-full border cursor-pointer ${
+                    className={`px-3 py-1 text-sm rounded-md border cursor-pointer ${
                       isActive
                         ? "bg-algomancy-blue/40 border-algomancy-blue text-white"
                         : "bg-algomancy-dark border-algomancy-blue/30 hover:bg-algomancy-blue/20"
@@ -420,10 +431,37 @@ export default function CardSearch({
                 );
               })}
             </div>
+            {activeKeywords.filter((keyword) => ELEMENT_TERM_SET.has(keyword)).length >
+              1 && (
+              <div className='mt-3 flex flex-wrap items-center gap-3'>
+                <label className='flex items-center gap-2 text-sm text-gray-400'>
+                  <span>Match</span>
+                  <select
+                    value={elementMatchMode}
+                    onChange={(e) =>
+                      setElementMatchMode(
+                        e.target.value as "any" | "all" | "exact"
+                      )
+                    }
+                    className='rounded-md border border-white/10 bg-algomancy-dark px-3 py-1 text-sm text-white focus:border-algomancy-purple focus:outline-none'>
+                    <option value='any'>Any of these</option>
+                    <option value='all'>All of these</option>
+                    <option value='exact'>Exactly these</option>
+                  </select>
+                </label>
+                <p className='text-sm text-gray-500'>
+                  {elementMatchMode === "all"
+                    ? "Cards must include every selected element, but can include more."
+                    : elementMatchMode === "exact"
+                    ? "Cards must match only the selected elements and nothing else."
+                    : "Cards can include any selected element."}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className='mb-4'>
-            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+            <h3 className='mb-2 text-base font-semibold text-algomancy-gold'>
               Card Types
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -435,7 +473,7 @@ export default function CardSearch({
                   <button
                     key={type}
                     onClick={() => applyFilter(type)}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
                         : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
@@ -448,7 +486,7 @@ export default function CardSearch({
           </div>
 
           <div className='mb-4'>
-            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+            <h3 className='mb-2 text-base font-semibold text-algomancy-gold'>
               Timing
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -461,7 +499,7 @@ export default function CardSearch({
                   <button
                     key={timing}
                     onClick={() => applyFilter(timingString)}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-cosmic/40 border-algomancy-cosmic text-white"
                         : "bg-algomancy-dark border-algomancy-cosmic/30 hover:bg-algomancy-cosmic/20"
@@ -474,7 +512,7 @@ export default function CardSearch({
           </div>
 
           <div className='mb-4'>
-            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+            <h3 className='mb-2 text-base font-semibold text-algomancy-gold'>
               Common Attributes
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -486,7 +524,7 @@ export default function CardSearch({
                   <button
                     key={attr}
                     onClick={() => applyFilter(attr)}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-teal/40 border-algomancy-teal text-white"
                         : "bg-algomancy-dark border-algomancy-teal/30 hover:bg-algomancy-teal/20"
@@ -499,7 +537,7 @@ export default function CardSearch({
           </div>
 
           <div>
-            <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
+            <h3 className='mb-2 text-base font-semibold text-algomancy-gold'>
               Mana Cost
             </h3>
             <div className='flex flex-wrap gap-2'>
@@ -512,7 +550,7 @@ export default function CardSearch({
                   <button
                     key={typeof cost === "number" ? cost : cost}
                     onClick={() => applyFilter(costString)}
-                    className={`px-3 py-1 text-xs rounded-full border ${
+                    className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
                         : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
@@ -523,7 +561,7 @@ export default function CardSearch({
               })}
               <button
                 onClick={() => applyFilter("mana:10+")}
-                className={`px-3 py-1 text-xs rounded-full border ${
+                className={`px-3 py-1 text-sm rounded-md border ${
                   activeKeywords.some((k) => k === "mana:10+")
                     ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
                     : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"

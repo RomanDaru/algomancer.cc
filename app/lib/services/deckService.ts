@@ -5,7 +5,8 @@ import { Card } from "../types/card";
 import { getAllDeckElements } from "../utils/elements";
 
 // Cache for decks
-let cachedUserDecks: Record<string, { decks: Deck[]; timestamp: number }> = {};
+const cachedUserDecks: Record<string, { decks: Deck[]; timestamp: number }> =
+  {};
 const CACHE_TTL = 60 * 1000; // 1 minute
 
 async function addDeckElementsToDecks(decks: Deck[]): Promise<Deck[]> {
@@ -225,7 +226,8 @@ export const deckService = {
     sortBy: "popular" | "newest" | "liked" = "newest",
     limit?: number,
     skip?: number,
-    currentUserId?: string
+    currentUserId?: string,
+    searchQuery?: string
   ): Promise<
     {
       deck: Deck;
@@ -235,11 +237,14 @@ export const deckService = {
     }[]
   > {
     try {
+      const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
+      const shouldSearch = Boolean(normalizedSearchQuery);
+
       // Use the optimized aggregation method from deckDbService
       const results = await deckDbService.getPublicDecksWithUserInfo(
         sortBy,
-        limit,
-        skip,
+        shouldSearch ? undefined : limit,
+        shouldSearch ? undefined : skip,
         currentUserId
       );
 
@@ -264,7 +269,7 @@ export const deckService = {
       const cards = await cardService.getCardsByIds([...uniqueCardIds]);
       const cardMap = new Map(cards.map((card) => [card.id, card]));
 
-      return results.map((item) => {
+      const hydratedResults = results.map((item) => {
         const cardsWithQuantities = (item.deck.cards || [])
           .map((deckCard) => {
             const card = cardMap.get(deckCard.cardId);
@@ -283,6 +288,30 @@ export const deckService = {
           deckElements,
         };
       });
+
+      if (!shouldSearch || !normalizedSearchQuery) {
+        return hydratedResults;
+      }
+
+      const filteredResults = hydratedResults.filter((item) => {
+        const deckName = item.deck.name?.toLowerCase() || "";
+        const userName = item.user.name?.toLowerCase() || "";
+        const username = item.user.username?.toLowerCase() || "";
+        const cardNames = (item.deck.cards || [])
+          .map((deckCard) => cardMap.get(deckCard.cardId)?.name?.toLowerCase() || "")
+          .filter(Boolean);
+
+        return (
+          deckName.includes(normalizedSearchQuery) ||
+          userName.includes(normalizedSearchQuery) ||
+          username.includes(normalizedSearchQuery) ||
+          cardNames.some((cardName) => cardName.includes(normalizedSearchQuery))
+        );
+      });
+
+      const start = skip || 0;
+      const end = limit !== undefined ? start + limit : undefined;
+      return filteredResults.slice(start, end);
     } catch (error) {
       console.error("Error getting public decks with user info:", error);
       throw error;

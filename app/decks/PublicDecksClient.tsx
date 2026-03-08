@@ -1,12 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import DeckBadge from "@/app/components/DeckBadge";
 import DeckGrid from "@/app/components/DeckGrid";
-import ElementFilter from "@/app/components/ElementFilter";
+import { DECK_BADGE_VALUES, type DeckBadge as DeckBadgeType } from "@/app/lib/constants";
+import ElementIcon from "@/app/components/ElementIcon";
 import { ElementType } from "@/app/lib/utils/elements";
 import { Card } from "@/app/lib/types/card";
 import { Deck } from "@/app/lib/types/user";
+import {
+  ChevronDownIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/outline";
 
 type DeckWithUserInfo = {
   deck: Deck;
@@ -17,6 +23,15 @@ type DeckWithUserInfo = {
 
 const INITIAL_VISIBLE = 12;
 const LOAD_MORE_STEP = 12;
+const BASIC_ELEMENTS: ElementType[] = [
+  "Fire",
+  "Water",
+  "Earth",
+  "Wood",
+  "Metal",
+  "Dark",
+  "Light",
+];
 
 interface Props {
   initialDecks: DeckWithUserInfo[];
@@ -29,12 +44,21 @@ export default function PublicDecksClient({
   filteredCard,
   isAuthenticated,
 }: Props) {
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchedDecks, setSearchedDecks] = useState<DeckWithUserInfo[] | null>(
+    null
+  );
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "popular" | "liked">(
     "newest"
   );
   const [sortTransition, setSortTransition] = useState(false);
   const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
+  const [selectedBadges, setSelectedBadges] = useState<DeckBadgeType[]>([]);
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [openMenu, setOpenMenu] = useState<"elements" | "badges" | null>(null);
 
   const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
     if (newSortBy === sortBy) return;
@@ -44,13 +68,144 @@ export default function PublicDecksClient({
   };
 
   const decks = useMemo(() => initialDecks, [initialDecks]);
+  const activeDecks = useMemo(
+    () => (searchQuery.trim() ? searchedDecks ?? decks : decks),
+    [decks, searchQuery, searchedDecks]
+  );
+  const availableBadges = useMemo(() => {
+    const usedBadges = new Set<DeckBadgeType>();
+
+    activeDecks.forEach((item) => {
+      item.deck.deckBadges?.forEach((badge) => {
+        usedBadges.add(badge);
+      });
+    });
+
+    return DECK_BADGE_VALUES.filter((badge) => usedBadges.has(badge));
+  }, [activeDecks]);
 
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE);
-  }, [sortBy, selectedElements, filteredCard?.id, initialDecks.length]);
+  }, [
+    sortBy,
+    selectedBadges,
+    selectedElements,
+    filteredCard?.id,
+    initialDecks.length,
+    searchQuery,
+    searchedDecks?.length,
+  ]);
+
+  useEffect(() => {
+    if (filteredCard) return;
+
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) {
+      setSearchedDecks(null);
+      setSearchError("");
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        setIsSearching(true);
+        setSearchError("");
+
+        const params = new URLSearchParams({
+          q: trimmedQuery,
+          sort: sortBy,
+          limit: "100",
+        });
+        const response = await fetch(`/api/decks/public?${params.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to search decks");
+        }
+
+        const data = (await response.json()) as DeckWithUserInfo[];
+        setSearchedDecks(data);
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+
+        console.error("Failed to search public decks:", error);
+        setSearchError("Search is temporarily unavailable.");
+        setSearchedDecks([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
+  }, [filteredCard, searchQuery, sortBy]);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (
+        toolbarRef.current &&
+        !toolbarRef.current.contains(event.target as Node)
+      ) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutsideClick, true);
+    return () =>
+      document.removeEventListener("mousedown", handleOutsideClick, true);
+  }, []);
+
+  const toggleElement = (element: ElementType) => {
+    setSelectedElements((prev) =>
+      prev.includes(element)
+        ? prev.filter((item) => item !== element)
+        : [...prev, element]
+    );
+  };
+
+  const clearAllElements = () => {
+    setSelectedElements([]);
+  };
+
+  const toggleBadge = (badge: DeckBadgeType) => {
+    setSelectedBadges((prev) =>
+      prev.includes(badge)
+        ? prev.filter((item) => item !== badge)
+        : [...prev, badge]
+    );
+  };
+
+  const clearAllBadges = () => {
+    setSelectedBadges([]);
+  };
+
+  const elementFilterLabel =
+    selectedElements.length === 0
+      ? "Elements"
+      : selectedElements.length === 1
+      ? selectedElements[0]
+      : `Elements (${selectedElements.length})`;
+
+  const badgeFilterLabel =
+    selectedBadges.length === 0
+      ? "Deck Type"
+      : selectedBadges.length === 1
+      ? selectedBadges[0]
+      : `Deck Type (${selectedBadges.length})`;
 
   const filteredAndSorted = useMemo(() => {
     let list = decks;
+    if (searchQuery.trim()) {
+      list = searchedDecks ?? decks;
+    }
 
     if (selectedElements.length > 0) {
       list = list.filter((item) => {
@@ -59,6 +214,13 @@ export default function PublicDecksClient({
           []) as ElementType[];
         if (elems.length === 0) return false;
         return selectedElements.every((e) => elems.includes(e));
+      });
+    }
+
+    if (selectedBadges.length > 0) {
+      list = list.filter((item) => {
+        const deckBadges = item.deck.deckBadges || [];
+        return selectedBadges.every((badge) => deckBadges.includes(badge));
       });
     }
 
@@ -76,13 +238,13 @@ export default function PublicDecksClient({
     });
 
     return sorted;
-  }, [decks, selectedElements, sortBy]);
+  }, [decks, searchQuery, searchedDecks, selectedBadges, selectedElements, sortBy]);
 
   const displayedDecks = filteredAndSorted.slice(0, visibleCount);
   const canLoadMore = filteredAndSorted.length > visibleCount;
 
   return (
-    <div className='mx-auto px-6 py-8 max-w-[95%]'>
+    <div className='mx-auto max-w-[95%] bg-background px-6 py-8'>
       <div className='mb-6'>
         {filteredCard ? (
           <div className='flex items-center'>
@@ -100,39 +262,137 @@ export default function PublicDecksClient({
             <div>
               <h1 className='text-2xl font-bold text-white'>Public Decks</h1>
             </div>
-            <div className='mt-4 md:flex md:justify-between md:items-center gap-4 w-full'>
-              <ElementFilter onElementsChange={setSelectedElements} />
-              <div className='flex items-center space-x-2'>
-                <span className='text-gray-400 text-sm'>Sort:</span>
+            <div
+              ref={toolbarRef}
+              className='mt-4 flex items-center gap-3'>
+              <div className='relative min-w-[280px] flex-1'>
+                <MagnifyingGlassIcon className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
+                <input
+                  type='search'
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder='Search by deck, author, or card'
+                  className='w-full rounded-md border border-algomancy-purple/30 bg-algomancy-dark py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-500'
+                />
+              </div>
+
+              <div className='relative shrink-0'>
                 <button
-                  className={`text-sm px-2 py-1 rounded cursor-pointer ${
-                    sortBy === "newest"
-                      ? "text-algomancy-purple"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                  onClick={() => handleSortChange("newest")}>
-                  Newest
+                  type='button'
+                  onClick={() =>
+                    setOpenMenu((prev) => (prev === "elements" ? null : "elements"))
+                  }
+                  className='inline-flex min-w-[170px] items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                  <span className='truncate'>{elementFilterLabel}</span>
+                  <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
                 </button>
-                <button
-                  className={`text-sm px-2 py-1 rounded cursor-pointer ${
-                    sortBy === "popular"
-                      ? "text-algomancy-purple"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                  onClick={() => handleSortChange("popular")}>
-                  Popular
-                </button>
-                <button
-                  className={`text-sm px-2 py-1 rounded cursor-pointer ${
-                    sortBy === "liked"
-                      ? "text-algomancy-purple"
-                      : "text-gray-400 hover:text-white"
-                  }`}
-                  onClick={() => handleSortChange("liked")}>
-                  Most Liked
-                </button>
+                {openMenu === "elements" && (
+                  <div className='absolute left-0 top-full z-20 mt-2 w-[220px] rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl'>
+                    <div className='space-y-2'>
+                      {BASIC_ELEMENTS.map((element) => {
+                        const isSelected = selectedElements.includes(element);
+                        return (
+                          <button
+                            key={element}
+                            type='button'
+                            onClick={() => toggleElement(element)}
+                            className={`flex w-full items-center justify-between rounded-lg px-2 py-2 text-sm transition-colors ${
+                              isSelected
+                                ? "bg-algomancy-purple/20 text-white"
+                                : "text-gray-300 hover:bg-white/5"
+                            }`}>
+                            <span className='flex items-center gap-2'>
+                              <ElementIcon element={element} size={20} showTooltip={false} />
+                              {element}
+                            </span>
+                            {isSelected && <span className='text-xs text-algomancy-gold'>Selected</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedElements.length > 0 && (
+                      <button
+                        type='button'
+                        onClick={clearAllElements}
+                        className='mt-3 text-xs text-algomancy-purple transition-colors hover:text-algomancy-gold'>
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {availableBadges.length > 0 && (
+                <div className='relative shrink-0'>
+                  <button
+                    type='button'
+                    onClick={() =>
+                      setOpenMenu((prev) => (prev === "badges" ? null : "badges"))
+                    }
+                    className='inline-flex min-w-[170px] items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                    <span className='truncate'>{badgeFilterLabel}</span>
+                    <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
+                  </button>
+                  {openMenu === "badges" && (
+                    <div className='absolute left-0 top-full z-20 mt-2 w-[240px] rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl'>
+                      <div className='flex flex-wrap gap-2'>
+                        {availableBadges.map((badge) => {
+                          const isSelected = selectedBadges.includes(badge);
+                          return (
+                            <button
+                              key={badge}
+                              type='button'
+                              onClick={() => toggleBadge(badge)}
+                              className={`rounded-full transition-opacity ${
+                                isSelected
+                                  ? "opacity-100"
+                                  : "opacity-65 hover:opacity-100"
+                              }`}
+                              aria-pressed={isSelected}>
+                              <DeckBadge badge={badge} />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedBadges.length > 0 && (
+                        <button
+                          type='button'
+                          onClick={clearAllBadges}
+                          className='mt-3 text-xs text-algomancy-purple transition-colors hover:text-algomancy-gold'>
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className='ml-auto shrink-0'>
+                <select
+                  value={sortBy}
+                  onChange={(event) =>
+                    handleSortChange(
+                      event.target.value as "newest" | "popular" | "liked"
+                    )
+                  }
+                  className='min-w-[170px] rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                  <option value='newest'>Sort: Newest</option>
+                  <option value='popular'>Sort: Popular</option>
+                  <option value='liked'>Sort: Most Liked</option>
+                </select>
               </div>
             </div>
+
+            {(isSearching || searchError) && (
+              <div className='mt-3 text-sm'>
+                {isSearching && (
+                  <p className='text-gray-400'>Searching public decks...</p>
+                )}
+                {!isSearching && searchError && (
+                  <p className='text-red-400'>{searchError}</p>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
@@ -169,8 +429,10 @@ export default function PublicDecksClient({
           emptyMessage={
             filteredCard
               ? `No decks found containing ${filteredCard.name}`
-              : selectedElements.length > 0
-              ? `No decks found with ${selectedElements.join(", ")} elements`
+              : searchQuery.trim()
+              ? "No public decks matched your search"
+              : selectedElements.length > 0 || selectedBadges.length > 0
+              ? "No decks match the current filters"
               : "No Public Decks Yet"
           }
           emptyAction={

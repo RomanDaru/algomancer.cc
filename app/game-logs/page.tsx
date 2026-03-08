@@ -57,7 +57,7 @@ const OUTCOME_TEXT: Record<string, string> = {
 };
 
 export default function GameLogsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [logs, setLogs] = useState<GameLogListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +126,7 @@ export default function GameLogsPage() {
       return Array.from({ length: totalPages }, (_, index) => index + 1);
     }
     let start = Math.max(1, page - 2);
-    let end = Math.min(totalPages, start + maxButtons - 1);
+    const end = Math.min(totalPages, start + maxButtons - 1);
     if (end - start < maxButtons - 1) {
       start = Math.max(1, end - maxButtons + 1);
     }
@@ -145,7 +145,8 @@ export default function GameLogsPage() {
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='min-h-full bg-background'>
+      <div className='container mx-auto px-4 py-8'>
       <div className='max-w-6xl mx-auto space-y-6'>
         <div className='flex items-center justify-between gap-4'>
           <div>
@@ -234,7 +235,7 @@ export default function GameLogsPage() {
             {Array.from({ length: skeletonCount }).map((_, index) => (
               <div
                 key={`skeleton-${index}`}
-                className='relative overflow-hidden rounded-lg border border-white/10 bg-black/20'>
+                className='relative overflow-hidden rounded-lg border border-white/10 bg-algomancy-darker/90'>
                 <div className='absolute inset-x-0 top-0 h-1.5 bg-white/10' />
                 <div className='p-4 space-y-3 animate-pulse'>
                   <div className='h-5 w-3/4 rounded bg-white/10' />
@@ -283,7 +284,7 @@ export default function GameLogsPage() {
                 <Link
                   key={log._id.toString()}
                   href={`/game-logs/${log._id}`}
-                  className='group relative h-[190px] overflow-hidden rounded-lg border border-white/10 bg-black/30 transition-colors'>
+                  className='group relative h-[190px] overflow-hidden rounded-lg border border-white/10 bg-algomancy-darker/90 transition-colors'>
                   <div className='absolute inset-0 opacity-70' style={glowStyle} />
                   <div
                     className='absolute inset-0 opacity-0 transition-opacity group-hover:opacity-100'
@@ -369,6 +370,7 @@ export default function GameLogsPage() {
             <div className='hidden sm:block' />
           </div>
         )}
+      </div>
       </div>
     </div>
   );

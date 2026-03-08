@@ -685,7 +685,7 @@ export default function EditGameLogPage() {
         {opponents.map((opponent) => (
           <div
             key={opponent.id}
-            className='rounded-lg border border-white/10 bg-black/30 p-4 space-y-3'>
+            className='rounded-lg border border-white/10 bg-algomancy-dark/70 p-4 space-y-3'>
             {opponents.length > 1 && (
               <div className='flex items-center justify-end'>
                 <button
@@ -924,7 +924,7 @@ export default function EditGameLogPage() {
           )}
         </div>
         {mvpCardIds.length > 0 && (
-          <div className='rounded-md border border-white/10 bg-black/30 p-3'>
+          <div className='rounded-md border border-white/10 bg-algomancy-dark/70 p-3'>
             <div className='text-xs text-gray-400 mb-2'>
               Selected MVP cards
             </div>
@@ -1071,7 +1071,8 @@ export default function EditGameLogPage() {
 
   if (logError || permissionError) {
     return (
-      <div className='container mx-auto px-4 py-8'>
+      <div className='min-h-full bg-background'>
+        <div className='container mx-auto px-4 py-8'>
         <div className='max-w-4xl mx-auto space-y-4'>
           <p className='text-red-300'>{permissionError || logError}</p>
           <Link
@@ -1080,12 +1081,14 @@ export default function EditGameLogPage() {
             Back to log
           </Link>
         </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='min-h-full bg-background'>
+      <div className='container mx-auto px-4 py-8'>
       <div className='max-w-4xl mx-auto space-y-6'>
         <div className='space-y-2'>
           <Link
@@ -1280,7 +1283,7 @@ export default function EditGameLogPage() {
                 </div>
 
                 {!isAuthenticated && (
-                  <div className='rounded-md border border-white/10 bg-black/30 p-4 text-sm text-gray-300'>
+                  <div className='rounded-md border border-white/10 bg-algomancy-dark/70 p-4 text-sm text-gray-300'>
                     Sign in to load your decks.
                   </div>
                 )}
@@ -1476,6 +1479,7 @@ export default function EditGameLogPage() {
             </div>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

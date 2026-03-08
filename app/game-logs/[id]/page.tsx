@@ -212,7 +212,8 @@ export default function GameLogDetailPage() {
 
   if (error) {
     return (
-      <div className='container mx-auto px-4 py-8'>
+      <div className='min-h-full bg-background'>
+        <div className='container mx-auto px-4 py-8'>
         <div className='max-w-5xl mx-auto space-y-4'>
           <p className='text-red-300'>{error}</p>
           <button
@@ -222,6 +223,7 @@ export default function GameLogDetailPage() {
             Back to logs
           </button>
         </div>
+        </div>
       </div>
     );
   }
@@ -230,7 +232,7 @@ export default function GameLogDetailPage() {
 
   const isOwner = session?.user?.id === log.userId.toString();
   const sectionClass =
-    "rounded-xl border border-algomancy-purple/20 bg-gradient-to-br from-algomancy-purple/20 via-algomancy-darker/70 to-black/30 p-6";
+    "rounded-xl border border-algomancy-purple/20 bg-gradient-to-br from-algomancy-purple/20 via-algomancy-darker/80 to-algomancy-dark/70 p-6";
   const outcomeClass =
     log.outcome === "win"
       ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-200"
@@ -239,7 +241,8 @@ export default function GameLogDetailPage() {
         : "border-amber-400/40 bg-amber-500/20 text-amber-200";
 
   return (
-    <div className='container mx-auto px-4 py-8'>
+    <div className='min-h-full bg-background'>
+      <div className='container mx-auto px-4 py-8'>
       <div className='max-w-5xl mx-auto space-y-8'>
         <div className='space-y-3'>
           <Link
@@ -406,7 +409,7 @@ export default function GameLogDetailPage() {
                 <div className='flex flex-wrap gap-3'>
                   {log.liveDraft.mvpCardIds.map((cardId) => (
                     <div key={cardId} className='relative group'>
-                      <div className='rounded-lg overflow-hidden border border-white/10 bg-black/30'>
+                      <div className='rounded-lg overflow-hidden border border-white/10 bg-algomancy-dark/70'>
                         {cardLookup[cardId]?.imageUrl ? (
                           <img
                             src={cardLookup[cardId]?.imageUrl}
@@ -420,7 +423,7 @@ export default function GameLogDetailPage() {
                           </div>
                         )}
                       </div>
-                      <div className='pointer-events-none absolute left-1/2 top-0 z-20 w-56 -translate-x-1/2 -translate-y-[110%] rounded-xl border border-white/20 bg-black/90 opacity-0 shadow-xl transition duration-150 group-hover:opacity-100'>
+                      <div className='pointer-events-none absolute left-1/2 top-0 z-20 w-56 -translate-x-1/2 -translate-y-[110%] rounded-xl border border-white/20 bg-algomancy-darker/95 opacity-0 shadow-xl transition duration-150 group-hover:opacity-100'>
                         {cardLookup[cardId]?.imageUrl ? (
                           <img
                             src={cardLookup[cardId]?.imageUrl}
@@ -504,7 +507,7 @@ export default function GameLogDetailPage() {
                     <div className='flex flex-wrap gap-3'>
                       {opponent.mvpCardIds.map((cardId) => (
                         <div key={`${opponent.name}-${cardId}`} className='relative group'>
-                          <div className='rounded-lg overflow-hidden border border-white/10 bg-black/30'>
+                          <div className='rounded-lg overflow-hidden border border-white/10 bg-algomancy-dark/70'>
                             {cardLookup[cardId]?.imageUrl ? (
                               <img
                                 src={cardLookup[cardId]?.imageUrl}
@@ -518,7 +521,7 @@ export default function GameLogDetailPage() {
                               </div>
                             )}
                           </div>
-                          <div className='pointer-events-none absolute left-1/2 top-0 z-20 w-52 -translate-x-1/2 -translate-y-[110%] rounded-xl border border-white/20 bg-black/90 opacity-0 shadow-xl transition duration-150 group-hover:opacity-100'>
+                          <div className='pointer-events-none absolute left-1/2 top-0 z-20 w-52 -translate-x-1/2 -translate-y-[110%] rounded-xl border border-white/20 bg-algomancy-darker/95 opacity-0 shadow-xl transition duration-150 group-hover:opacity-100'>
                             {cardLookup[cardId]?.imageUrl ? (
                               <img
                                 src={cardLookup[cardId]?.imageUrl}
@@ -566,6 +569,7 @@ export default function GameLogDetailPage() {
           </div>
         )}
 
+      </div>
       </div>
     </div>
   );

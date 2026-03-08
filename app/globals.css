@@ -3,8 +3,8 @@
 @theme {
   /* Algomancy color palette */
   /* Previous dark tokens: #0a0a0a / #050505 */
-  --color-algomancy-dark: #151a22;
-  --color-algomancy-darker: #0f1218;
+  --color-algomancy-dark: #202938;
+  --color-algomancy-darker: #171d28;
 
   /* Purple variants */
   --color-algomancy-purple-light: #9d4edd;
@@ -36,7 +36,7 @@
   --color-secondary: #5390d9;
   --color-accent: #f9c74f;
   --color-highlight: #56cfe1;
-  --color-background: #0f1218;
+  --color-background: #171d28;
   --color-foreground: #ededed;
 }
 

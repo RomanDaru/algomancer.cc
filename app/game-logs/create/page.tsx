@@ -7,10 +7,11 @@ import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
 import { getRankForXp } from "@/app/lib/achievements/ranks";
-import { LEVEL_UP_EVENT, LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
+import { LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
 import type { GameLog } from "@/app/lib/types/gameLog";
 import type { LevelUpPayload } from "@/app/lib/types/levelUp";
 import { isValidAlgomancerDeckUrl } from "@/app/lib/utils/deckUrl";
+import GameLogPrivacyInfoButton from "@/app/components/GameLogPrivacyInfoButton";
 import {
   clearGameLogDraft,
   loadGameLogDraft,
@@ -924,8 +925,14 @@ export default function CreateGameLogPage() {
         throw new Error(message);
       }
 
-      setSubmitSuccess("Game log saved.");
       const savedLog = data?.log ?? data;
+      const targetLogUrl = savedLog?._id ? `/game-logs/${savedLog._id}` : null;
+
+      if (targetLogUrl) {
+        clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
+        router.replace(targetLogUrl);
+      }
+
       const unlocked = Array.isArray(data?.achievementsUnlocked)
         ? data.achievementsUnlocked
         : [];
@@ -957,9 +964,6 @@ export default function CreateGameLogPage() {
               LEVEL_UP_STORAGE_KEY,
               JSON.stringify(payload)
             );
-            window.dispatchEvent(
-              new CustomEvent(LEVEL_UP_EVENT, { detail: payload })
-            );
           } catch (storageError) {
             console.error(
               "Unable to store level-up modal payload:",
@@ -967,16 +971,15 @@ export default function CreateGameLogPage() {
             );
           }
         }
-        update?.({
+        void update?.({
           user: {
             achievementXp: data.achievementXp,
           },
         });
       }
 
-      if (savedLog?._id) {
-        clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
-        router.push(`/game-logs/${savedLog._id}`);
+      if (!targetLogUrl) {
+        setSubmitSuccess("Game log saved.");
       }
     } catch (error) {
       setSubmitError(
@@ -1159,9 +1162,12 @@ export default function CreateGameLogPage() {
                   onChange={(event) => setIsPublic(event.target.checked)}
                   className='h-4 w-4 accent-algomancy-gold'
                 />
-                <label htmlFor='isPublic' className='text-sm text-gray-300'>
-                  Make this log public
-                </label>
+                <div className='flex items-center gap-2'>
+                  <label htmlFor='isPublic' className='text-sm text-gray-300'>
+                    Share this log publicly
+                  </label>
+                  <GameLogPrivacyInfoButton />
+                </div>
               </div>
             </div>
           </div>

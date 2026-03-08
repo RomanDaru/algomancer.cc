@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
+import GameLogPrivacyInfoButton from "@/app/components/GameLogPrivacyInfoButton";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
 import type { GameLog } from "@/app/lib/types/gameLog";
 import {
@@ -1256,9 +1257,12 @@ export default function EditGameLogPage() {
                   onChange={(event) => setIsPublic(event.target.checked)}
                   className='h-4 w-4 accent-algomancy-gold'
                 />
-                <label htmlFor='isPublic' className='text-sm text-gray-300'>
-                  Make this log public
-                </label>
+                <div className='flex items-center gap-2'>
+                  <label htmlFor='isPublic' className='text-sm text-gray-300'>
+                    Share this log publicly
+                  </label>
+                  <GameLogPrivacyInfoButton />
+                </div>
               </div>
             </div>
           </div>

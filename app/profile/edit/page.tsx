@@ -230,12 +230,12 @@ export default function EditProfile() {
                     className='mt-1 h-4 w-4 accent-algomancy-gold'
                   />
                   <span>
-                    Include my private logs in anonymous community stats.
+                    Contribute my private logs to anonymous stats.
                   </span>
                 </label>
                 <p className='text-xs text-gray-400 mt-2'>
-                  This only affects aggregated stats and never exposes your
-                  private logs directly.
+                  This improves aggregate community stats without exposing the
+                  log itself.
                 </p>
               </div>
 

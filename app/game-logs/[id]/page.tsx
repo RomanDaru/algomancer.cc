@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { LinkIcon } from "@heroicons/react/24/outline";
+import GameLogShareButton from "@/app/components/GameLogShareButton";
 import type { Card } from "@/app/lib/types/card";
 import type { GameLog } from "@/app/lib/types/gameLog";
 import type { ElementType } from "@/app/lib/utils/elements";
@@ -258,13 +259,16 @@ export default function GameLogDetailPage() {
                 {log.isPublic ? "Public" : "Private"}
               </span>
             </div>
-            {isOwner && (
-              <Link
-                href={`/game-logs/${logId}/edit`}
-                className='inline-flex items-center justify-center rounded-md bg-algomancy-purple px-4 py-2 text-sm text-white hover:bg-algomancy-purple-dark transition-colors'>
-                Edit Log
-              </Link>
-            )}
+            <div className='flex flex-wrap items-center gap-3'>
+              {log.isPublic && <GameLogShareButton logTitle={log.title} />}
+              {isOwner && (
+                <Link
+                  href={`/game-logs/${logId}/edit`}
+                  className='inline-flex items-center justify-center rounded-md bg-algomancy-purple px-4 py-2 text-sm text-white hover:bg-algomancy-purple-dark transition-colors'>
+                  Edit Log
+                </Link>
+              )}
+            </div>
           </div>
           <p className='text-sm text-gray-400'>{formatPlayedAt(log.playedAt)}</p>
         </div>

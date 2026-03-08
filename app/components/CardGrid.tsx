@@ -52,7 +52,15 @@ const EXCLUDED_SUBTYPES = new Set([
   "Stolen Card !Resource",
   "Effect !Resource",
 ]);
-const BASE_ELEMENT_PRIORITY = ["Fire", "Water", "Earth", "Wood", "Metal"];
+const BASE_ELEMENT_PRIORITY = [
+  "Fire",
+  "Water",
+  "Earth",
+  "Wood",
+  "Metal",
+  "Dark",
+  "Light",
+];
 
 const cycleSortDirection = (
   direction: SortDirection | null

@@ -7,7 +7,7 @@ import {
 } from "../models/Card";
 
 // Single database connection instance
-let dbConnection: any = null;
+let dbConnection: Awaited<ReturnType<typeof connectToDatabase>> | null = null;
 
 /**
  * Ensure database connection is established
@@ -31,7 +31,9 @@ export const cardDbService = {
   async getAllCards(): Promise<Card[]> {
     try {
       await ensureDbConnection();
-      const cardDocs = await CardModel.find().sort({ currentIndex: 1 });
+      const cardDocs = await CardModel.find()
+        .collation({ locale: "en", strength: 1 })
+        .sort({ name: 1, currentIndex: 1 });
       return cardDocs.map(convertDocumentToCard);
     } catch (error) {
       console.error("Error getting all cards:", error);

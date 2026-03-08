@@ -5,8 +5,8 @@ import {
   Card,
   CARD_ATTRIBUTES,
   CARD_TYPES,
-  ELEMENTS,
   BASIC_ELEMENTS,
+  SPECIAL_ELEMENTS,
   TIMING,
 } from "@/app/lib/types/card";
 import {
@@ -15,7 +15,7 @@ import {
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 
-const ELEMENT_TYPES = Object.values(BASIC_ELEMENTS);
+const ELEMENT_TYPES = [...Object.values(BASIC_ELEMENTS), ...Object.values(SPECIAL_ELEMENTS)];
 const ELEMENT_TERM_SET = new Set(
   ELEMENT_TYPES.map((element) => element.toLowerCase())
 );

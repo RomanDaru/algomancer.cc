@@ -3,31 +3,15 @@
 // Basic elements
 export type BasicElementType = "Fire" | "Water" | "Earth" | "Wood" | "Metal";
 
+// Expansion-aligned primary elements
+export type SpecialElementType = "Dark" | "Light";
+export type PrimaryElementType = BasicElementType | SpecialElementType;
+
 // Hybrid elements (all possible combinations of two basic elements)
-export type HybridElementType =
-  | "Fire/Water"
-  | "Water/Fire"
-  | "Fire/Earth"
-  | "Earth/Fire"
-  | "Fire/Wood"
-  | "Wood/Fire"
-  | "Fire/Metal"
-  | "Metal/Fire"
-  | "Water/Earth"
-  | "Earth/Water"
-  | "Water/Wood"
-  | "Wood/Water"
-  | "Water/Metal"
-  | "Metal/Water"
-  | "Earth/Wood"
-  | "Wood/Earth"
-  | "Earth/Metal"
-  | "Metal/Earth"
-  | "Wood/Metal"
-  | "Metal/Wood";
+export type HybridElementType = `${PrimaryElementType}/${PrimaryElementType}`;
 
 // Combined element type (either basic or hybrid)
-export type ElementType = BasicElementType | HybridElementType;
+export type ElementType = PrimaryElementType | HybridElementType;
 export type TimingType = "Standard" | "Haste" | "Battle" | "Virus";
 export type CardType =
   | "Unit"
@@ -159,6 +143,11 @@ export const BASIC_ELEMENTS: Record<string, BasicElementType> = {
   METAL: "Metal",
 };
 
+export const SPECIAL_ELEMENTS: Record<string, SpecialElementType> = {
+  DARK: "Dark",
+  LIGHT: "Light",
+};
+
 // Hybrid elements
 export const HYBRID_ELEMENTS: Record<string, HybridElementType> = {
   FIRE_WATER: "Fire/Water",
@@ -186,6 +175,7 @@ export const HYBRID_ELEMENTS: Record<string, HybridElementType> = {
 // Combined elements (both basic and hybrid)
 export const ELEMENTS: Record<string, ElementType> = {
   ...BASIC_ELEMENTS,
+  ...SPECIAL_ELEMENTS,
   ...HYBRID_ELEMENTS,
 };
 

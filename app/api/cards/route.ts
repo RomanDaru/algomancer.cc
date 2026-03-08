@@ -24,11 +24,8 @@ export async function GET(request: NextRequest) {
 
     const response = NextResponse.json(cards);
 
-    // Add aggressive caching for cards (they rarely change)
-    response.headers.set(
-      "Cache-Control",
-      "public, s-maxage=600, stale-while-revalidate=1800"
-    );
+    // Card data changes through imports and admin edits; keep responses fresh.
+    response.headers.set("Cache-Control", "no-store, max-age=0");
     response.headers.set("Content-Type", "application/json; charset=utf-8");
 
     return response;

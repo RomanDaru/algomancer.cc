@@ -3,6 +3,13 @@
 # dependencies
 /node_modules
 /scripts/node_modules
+/scripts/algomancy-extractor/node_modules/
+/scripts/algomancy-extractor/new_cards.json
+/scripts/algomancy-extractor/manual-overrides.json
+/scripts/algomancy-extractor/manual-overrides.template.json
+/scripts/algomancy-extractor/extract_stdout.log
+/scripts/algomancy-extractor/extract_stderr.log
+/algomancy-extractor/
 /.pnp
 .pnp.*
 .yarn/*
@@ -105,6 +112,5 @@ Thumbs.db
 
 *.md
 app/cards/AlgomancyCards.json
-app/cards/ConvertedCards.json
 scripts/upload-new-card-images.js
 scripts/update-card-urls-bulk.js

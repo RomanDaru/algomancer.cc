@@ -37,7 +37,9 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
     async function fetchData() {
       try {
         // Fetch all cards
-        const cardsResponse = await fetch("/api/cards");
+        const cardsResponse = await fetch("/api/cards?clearCache=true", {
+          cache: "no-store",
+        });
         if (!cardsResponse.ok) {
           throw new Error("Failed to fetch cards");
         }

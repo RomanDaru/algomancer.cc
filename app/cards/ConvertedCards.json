@@ -12471,5 +12471,5312 @@
     },
     "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747595000/algomancy/cards/algomancy_xenopod-progenitor.jpg",
     "currentIndex": 353
+  },
+  {
+    "id": "afflicting-anima",
+    "name": "Afflicting Anima",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907898/afflicting-anima_bwd1xk.png",
+    "currentIndex": 354
+  },
+  {
+    "id": "blightmound",
+    "name": "Blightmound",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906335/blightmound_igzjdw.png",
+    "currentIndex": 355
+  },
+  {
+    "id": "blight-s-end",
+    "name": "Blight's End",
+    "manaCost": 0,
+    "element": {
+      "type": "Dark/Wood",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "wood": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906386/blights-end_c59kfc.png",
+    "currentIndex": 356
+  },
+  {
+    "id": "blightsea-polyp",
+    "name": "Blightsea Polyp",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Water",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 2,
+      "affinity": {
+        "water": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906360/blightsea-polyp_vwkdar.png",
+    "currentIndex": 357
+  },
+  {
+    "id": "blightwalker",
+    "name": "Blightwalker",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906412/blightwalker_epkasu.png",
+    "currentIndex": 358
+  },
+  {
+    "id": "buffer-overflow",
+    "name": "Buffer Overflow",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark/Metal",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "metal": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Technology",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906438/buffer-overflow_f4bz1n.png",
+    "currentIndex": 359
+  },
+  {
+    "id": "burn-the-blight",
+    "name": "Burn the Blight",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906465/burn-the-blight_tlinzw.png",
+    "currentIndex": 360
+  },
+  {
+    "id": "cadaverous-cultivator",
+    "name": "Cadaverous Cultivator",
+    "manaCost": 6,
+    "element": {
+      "type": "Dark/Wood",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "wood": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Mystic Flower",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906492/cadaverous-cultivator_mi2yrm.png",
+    "currentIndex": 361
+  },
+  {
+    "id": "capture",
+    "name": "Capture",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark/Water",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "water": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Mystic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906518/capture_ectuxl.png",
+    "currentIndex": 362
+  },
+  {
+    "id": "cerebrox",
+    "name": "Cerebrox",
+    "manaCost": 5,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906543/cerebrox_x8jpkv.png",
+    "currentIndex": 363
+  },
+  {
+    "id": "chombot",
+    "name": "Chombot",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark/Metal",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 5,
+      "affinity": {
+        "metal": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Structure",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907020/chombot_b0dxng.png",
+    "currentIndex": 364
+  },
+  {
+    "id": "collect-remains",
+    "name": "Collect Remains",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906570/collect-remains_dois65.png",
+    "currentIndex": 365
+  },
+  {
+    "id": "combustible-bogwalker",
+    "name": "Combustible Bogwalker",
+    "manaCost": 6,
+    "element": {
+      "type": "Dark/Fire",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 7,
+      "affinity": {
+        "fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906596/combustible-bogwalker_mkspg1.png",
+    "currentIndex": 366
+  },
+  {
+    "id": "cosmic-devourer",
+    "name": "Cosmic Devourer",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906624/cosmic-devourer_jwlsr2.png",
+    "currentIndex": 367
+  },
+  {
+    "id": "counter-theif",
+    "name": "Counter Theif",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark/Metal",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 5,
+      "affinity": {
+        "metal": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Infection",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906650/counter-theif_ha1abp.png",
+    "currentIndex": 368
+  },
+  {
+    "id": "cthyrian-culler",
+    "name": "Cthyrian Culler",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 5,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906674/cthyrian-culler_q3ugb0.png",
+    "currentIndex": 369
+  },
+  {
+    "id": "cthyrian-rector",
+    "name": "Cthyrian Rector",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906675/cthyrian-rector_nliusp.png",
+    "currentIndex": 370
+  },
+  {
+    "id": "cull",
+    "name": "Cull",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906676/cull_qe6wnc.png",
+    "currentIndex": 371
+  },
+  {
+    "id": "darkblast",
+    "name": "Darkblast",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark/Fire",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "fire": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Arcane",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906675/darkblast_tclodv.png",
+    "currentIndex": 372
+  },
+  {
+    "id": "dream-lapse",
+    "name": "Dream Lapse",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Water",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "water": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Mystic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906679/dream-lapse_swwwbq.png",
+    "currentIndex": 373
+  },
+  {
+    "id": "dropslime",
+    "name": "Dropslime",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906703/dropslime_omzqxb.png",
+    "currentIndex": 374
+  },
+  {
+    "id": "entropic-entity",
+    "name": "Entropic Entity",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906730/entropic-entity_mcrh9s.png",
+    "currentIndex": 375
+  },
+  {
+    "id": "exhume",
+    "name": "Exhume",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906756/exhume_e0ercu.png",
+    "currentIndex": 376
+  },
+  {
+    "id": "fester",
+    "name": "Fester",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906780/fester_r84c8m.png",
+    "currentIndex": 377
+  },
+  {
+    "id": "finality",
+    "name": "Finality",
+    "manaCost": 5,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906808/finality_olb6vj.png",
+    "currentIndex": 378
+  },
+  {
+    "id": "glook",
+    "name": "Glook",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Fungus",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906834/glook_tvua9s.png",
+    "currentIndex": 379
+  },
+  {
+    "id": "gridxlan",
+    "name": "Gridxlan",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark/Earth",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {
+        "earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Structure",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906861/gridxlan_sytdao.png",
+    "currentIndex": 380
+  },
+  {
+    "id": "grim-bargain",
+    "name": "Grim Bargain",
+    "manaCost": 0,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906887/grim-bargain_tuvnww.png",
+    "currentIndex": 381
+  },
+  {
+    "id": "grox",
+    "name": "Grox",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906913/grox_psesqk.png",
+    "currentIndex": 382
+  },
+  {
+    "id": "gublin",
+    "name": "Gublin",
+    "manaCost": 9,
+    "element": {
+      "type": "Dark/Earth",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/metal.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 4,
+      "affinity": {
+        "earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Lethal Insect",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906940/gublin_du39am.png",
+    "currentIndex": 383
+  },
+  {
+    "id": "gzxyclop",
+    "name": "Gzxyclop",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906966/gzxyclop_n2nyle.png",
+    "currentIndex": 384
+  },
+  {
+    "id": "hooba-mon",
+    "name": "Hooba-Mon",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Occult Hooba",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906993/hooba-mon_uxmnqp.png",
+    "currentIndex": 385
+  },
+  {
+    "id": "inexorable-miasma",
+    "name": "Inexorable Miasma",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark/Wood",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "wood": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907047/inexorable-miasma_zbaocp.png",
+    "currentIndex": 386
+  },
+  {
+    "id": "its-dark-bubb",
+    "name": "Its Dark Bubb",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 6,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Inverted Slime",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907073/its-dark-bubb_gcgqc1.png",
+    "currentIndex": 387
+  },
+  {
+    "id": "leave-none-pure",
+    "name": "Leave None Pure",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907100/leave-none-pure_wk3gom.png",
+    "currentIndex": 388
+  },
+  {
+    "id": "legion-of-the-depths",
+    "name": "Legion of the Depths",
+    "manaCost": 8,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 8,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907125/legion-of-the-depths_vck9io.png",
+    "currentIndex": 389
+  },
+  {
+    "id": "lilbot",
+    "name": "Lilbot",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Metal",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "metal": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Occult Technology",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907152/lilbot_jfn4n7.png",
+    "currentIndex": 390
+  },
+  {
+    "id": "lurking-dread",
+    "name": "Lurking Dread",
+    "manaCost": 8,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 8,
+      "defense": 8,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907178/lurking-dread_d6k4tj.png",
+    "currentIndex": 391
+  },
+  {
+    "id": "maw-of-despair",
+    "name": "Maw of Despair",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Bedlam Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907206/maw-of-despair_aykvql.png",
+    "currentIndex": 392
+  },
+  {
+    "id": "mindburn",
+    "name": "Mindburn",
+    "manaCost": 0,
+    "element": {
+      "type": "Dark/Fire",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "fire": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Mystic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907232/mindburn_wxk5rw.png",
+    "currentIndex": 393
+  },
+  {
+    "id": "mobius-s-corruption",
+    "name": "Möbius's Corruption",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907258/mobiuss-corruption_weqpk1.png",
+    "currentIndex": 394
+  },
+  {
+    "id": "muck-rummager",
+    "name": "Muck Rummager",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907286/muck-rummager_hp5vmj.png",
+    "currentIndex": 395
+  },
+  {
+    "id": "murkdrop-distiller",
+    "name": "Murkdrop Distiller",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907313/murkdrop-distiller_mnppkb.png",
+    "currentIndex": 396
+  },
+  {
+    "id": "necromantic-rebuke",
+    "name": "Necromantic Rebuke",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907340/necromantic-rebuke_bynvsl.png",
+    "currentIndex": 397
+  },
+  {
+    "id": "necromorph",
+    "name": "Necromorph",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907368/necromorph_gd4dul.png",
+    "currentIndex": 398
+  },
+  {
+    "id": "no-hand-killer",
+    "name": "No Hand Killer",
+    "manaCost": 6,
+    "element": {
+      "type": "Dark/Fire",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 6,
+      "defense": 8,
+      "affinity": {
+        "fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Bedlam Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907395/no-hand-killer_tkppdo.png",
+    "currentIndex": 399
+  },
+  {
+    "id": "nothyr",
+    "name": "Nothyr",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907421/nothyr_nrot2c.png",
+    "currentIndex": 400
+  },
+  {
+    "id": "palewing",
+    "name": "Palewing",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907447/palewing_urthiy.png",
+    "currentIndex": 401
+  },
+  {
+    "id": "pallid-gorger",
+    "name": "Pallid Gorger",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907473/pallid-gorger_x3y2gq.png",
+    "currentIndex": 402
+  },
+  {
+    "id": "pestilent-titan",
+    "name": "Pestilent Titan",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907499/pestilent-titan_b0oyvw.png",
+    "currentIndex": 403
+  },
+  {
+    "id": "plague-ritual",
+    "name": "Plague Ritual",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907525/plague-ritual_trijfn.png",
+    "currentIndex": 404
+  },
+  {
+    "id": "primordial-coalescence",
+    "name": "Primordial Coalescence",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Primordial Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907551/primordial-coalescence_aqscfy.png",
+    "currentIndex": 405
+  },
+  {
+    "id": "proliferating-slime",
+    "name": "Proliferating Slime",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Wood",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 2,
+      "affinity": {
+        "wood": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Slime",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907577/proliferating-slime_bszop2.png",
+    "currentIndex": 406
+  },
+  {
+    "id": "reality-siphoner",
+    "name": "Reality Siphoner",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907601/reality-siphoner_guopfg.png",
+    "currentIndex": 407
+  },
+  {
+    "id": "reclaim-the-fallen",
+    "name": "Reclaim the Fallen",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark/Earth",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "earth": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907627/reclaim-the-fallen_piizwr.png",
+    "currentIndex": 408
+  },
+  {
+    "id": "rotbeast",
+    "name": "Rotbeast",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 4,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907654/rotbeast_m7wm7l.png",
+    "currentIndex": 409
+  },
+  {
+    "id": "rotling",
+    "name": "Rotling",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907683/rotling_a1mtjr.png",
+    "currentIndex": 410
+  },
+  {
+    "id": "rotwall",
+    "name": "Rotwall",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark/Earth",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 5,
+      "affinity": {
+        "earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907709/rotwall_nqfgw3.png",
+    "currentIndex": 411
+  },
+  {
+    "id": "sacrifice-dude",
+    "name": "Sacrifice Dude",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907734/sacrifice-dude_pxnhss.png",
+    "currentIndex": 412
+  },
+  {
+    "id": "sarcophage",
+    "name": "Sarcophage",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 4,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907762/sacrophage_ksfkmv.png",
+    "currentIndex": 413
+  },
+  {
+    "id": "scholar-of-the-void",
+    "name": "Scholar of the Void",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907815/scholar-of-the-void_rfjvha.png",
+    "currentIndex": 414
+  },
+  {
+    "id": "scuttling-abomination",
+    "name": "Scuttling Abomination",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Polyform",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907788/scuttling-abomination_mmhnvp.png",
+    "currentIndex": 415
+  },
+  {
+    "id": "skittering-blight",
+    "name": "Skittering Blight",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907841/skittering-blight_muxeuq.png",
+    "currentIndex": 416
+  },
+  {
+    "id": "spellbind",
+    "name": "Spellbind",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Modular Arcane",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907842/spellbind_uqxj6l.png",
+    "currentIndex": 417
+  },
+  {
+    "id": "splort",
+    "name": "Splort",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Fire",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Mystic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907843/splort_cazdyj.png",
+    "currentIndex": 418
+  },
+  {
+    "id": "spore-of-regenesis",
+    "name": "Spore of Regenesis",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907842/spore-of-regenesis_lgjsm4.png",
+    "currentIndex": 419
+  },
+  {
+    "id": "swarmling",
+    "name": "Swarmling",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark/Metal",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "metal": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Infection",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907843/swarmling_t5eodd.png",
+    "currentIndex": 420
+  },
+  {
+    "id": "the-omniphage",
+    "name": "The Omniphage",
+    "manaCost": 8,
+    "element": {
+      "type": "Dark/Earth",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 5,
+      "affinity": {
+        "earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Ancient Primordial Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907865/the-omniphage_k4wjte.png",
+    "currentIndex": 421
+  },
+  {
+    "id": "tilling-the-graves",
+    "name": "Tilling the Graves",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907864/tilling-the-graves_kcrmhk.png",
+    "currentIndex": 422
+  },
+  {
+    "id": "thought-extraction",
+    "name": "Thought Extraction",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907864/tought-extraction_d4uxhl.png",
+    "currentIndex": 423
+  },
+  {
+    "id": "thoughtripper",
+    "name": "Thoughtripper",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907864/toughtripper_pejfaw.png",
+    "currentIndex": 424
+  },
+  {
+    "id": "trench-stalker",
+    "name": "Trench Stalker",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark/Water",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 6,
+      "defense": 2,
+      "affinity": {
+        "water": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907871/trench-stalker_sb6ayr.png",
+    "currentIndex": 425
+  },
+  {
+    "id": "uglk",
+    "name": "Uglk",
+    "manaCost": 3,
+    "element": {
+      "type": "Dark/Wood",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {
+        "wood": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Mystic Fungus",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907881/uglk_f7xhps.png",
+    "currentIndex": 426
+  },
+  {
+    "id": "umbral-decay",
+    "name": "Umbral Decay",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Afflicting Blight",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907881/umbral-decay_ja4ah9.png",
+    "currentIndex": 427
+  },
+  {
+    "id": "unrelenting-horror",
+    "name": "Unrelenting Horror",
+    "manaCost": 2,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907881/unrelenting-horror_ofpuif.png",
+    "currentIndex": 428
+  },
+  {
+    "id": "wake-the-dead",
+    "name": "Wake the Dead",
+    "manaCost": 8,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907881/wake-the-dead_f90acn.png",
+    "currentIndex": 429
+  },
+  {
+    "id": "writhing-host",
+    "name": "Writhing Host",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907882/writhing-host_tvdbog.png",
+    "currentIndex": 430
+  },
+  {
+    "id": "xzydris",
+    "name": "Xzydris",
+    "manaCost": 1,
+    "element": {
+      "type": "Dark",
+      "symbol": "/images/elements/dark.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blight Zombie",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907898/xzydris_z9rzpj.png",
+    "currentIndex": 431
+  },
+  {
+    "id": "zephyrzoa",
+    "name": "Zephyrzoa",
+    "manaCost": 4,
+    "element": {
+      "type": "Dark/Water",
+      "symbol": "/images/elements/dark.png",
+      "secondarySymbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {
+        "water": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit Cloud",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772907898/zephyrzoa_oh5k6o.png",
+    "currentIndex": 432
+  },
+  {
+    "id": "abyssal-extortionist",
+    "name": "Abyssal Extortionist",
+    "manaCost": 5,
+    "element": {
+      "type": "Light/Fire",
+      "symbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 3,
+      "affinity": {
+        "Light": 1,
+        "Fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906261/abyssal-extortionist_mkk9rw.png",
+    "currentIndex": 433
+  },
+  {
+    "id": "air-plant",
+    "name": "Air Plant",
+    "manaCost": 7,
+    "element": {
+      "type": "Light/Wood",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1,
+        "Wood": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Plant",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906262/air-plant_oq1vtv.png",
+    "currentIndex": 434
+  },
+  {
+    "id": "angel-of-anguish",
+    "name": "Angel of Anguish",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Dark",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 5,
+      "affinity": {
+        "Light": 1,
+        "Dark": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906263/angel-of-anguish_bp1f4v.png",
+    "currentIndex": 435
+  },
+  {
+    "id": "apex-prime",
+    "name": "Apex Prime",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Metal",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 4,
+      "affinity": {}
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Technology God",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906262/apex-prime_orouyu.png",
+    "currentIndex": 436
+  },
+  {
+    "id": "arbiter-of-armistice",
+    "name": "Arbiter of Armistice",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Holy",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906282/arbiter-of-armistice_h4gaeh.png",
+    "currentIndex": 437
+  },
+  {
+    "id": "arbiter-of-vitality",
+    "name": "Arbiter of Vitality",
+    "manaCost": 8,
+    "element": {
+      "type": "Light/Fire",
+      "symbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 6,
+      "defense": 3,
+      "affinity": {
+        "Light": 1,
+        "Fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906282/arbiter-of-vitality_c3lwb4.png",
+    "currentIndex": 438
+  },
+  {
+    "id": "aurozoa",
+    "name": "Aurozoa",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Water",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 1,
+      "affinity": {
+        "Light": 1,
+        "Water": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Jellyfish",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906282/aurozoa_ek9qqp.png",
+    "currentIndex": 439
+  },
+  {
+    "id": "banishment",
+    "name": "Banishment",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Holy",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906283/banishment_orb0wq.png",
+    "currentIndex": 440
+  },
+  {
+    "id": "big-glimpse-card",
+    "name": "Big Glimpse Card",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Water",
+      "symbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1,
+        "Water": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905240/big-glimpse-card_qjkw8e.png",
+    "currentIndex": 441
+  },
+  {
+    "id": "blessed-thing",
+    "name": "Blessed Thing",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blessed Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905240/blessed-thing_xzpuo5.png",
+    "currentIndex": 442
+  },
+  {
+    "id": "blob-of-the-dark-order",
+    "name": "Blob of the Dark Order",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905240/blob-of-the-dark-order_iodboa.png",
+    "currentIndex": 443
+  },
+  {
+    "id": "bloppert",
+    "name": "Bloppert",
+    "manaCost": 2,
+    "element": {
+      "type": "Light/Wood",
+      "symbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 5,
+      "affinity": {
+        "Light": 1,
+        "Wood": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905240/bloppert_x935mx.png",
+    "currentIndex": 444
+  },
+  {
+    "id": "blurf",
+    "name": "Blurf",
+    "manaCost": 5,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 3,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905240/blurf_paln7w.png",
+    "currentIndex": 445
+  },
+  {
+    "id": "brough",
+    "name": "Brough",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Earth",
+      "symbol": "/images/elements/earth.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 4,
+      "affinity": {
+        "Light": 1,
+        "Earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905241/brough_t8vvxq.png",
+    "currentIndex": 446
+  },
+  {
+    "id": "burden-of-life",
+    "name": "Burden of Life",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Earth",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 20,
+      "defense": 20,
+      "affinity": {
+        "Light": 1,
+        "Earth": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905241/burden-of-life_yefnri.png",
+    "currentIndex": 447
+  },
+  {
+    "id": "calming-force",
+    "name": "Calming Force",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905242/calming-force_wgbf6s.png",
+    "currentIndex": 448
+  },
+  {
+    "id": "colony-of-the-interworld",
+    "name": "Colony of the Interworld",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905241/colony-of-the-interworld_pat7ny.png",
+    "currentIndex": 449
+  },
+  {
+    "id": "covenant-of-the-damned",
+    "name": "Covenant of the Damned",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Dark",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1,
+        "Dark": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905271/covenant-of-the-damned_cyt3fe.png",
+    "currentIndex": 450
+  },
+  {
+    "id": "deathcoil-construct",
+    "name": "Deathcoil Construct",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905272/deathcoil-construct_ylnvwx.png",
+    "currentIndex": 451
+  },
+  {
+    "id": "debt-blep",
+    "name": "Debt Blep",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Caterpillar",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905272/debt-blep_oqzpqo.png",
+    "currentIndex": 452
+  },
+  {
+    "id": "debt-plant",
+    "name": "Debt Plant",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Wood",
+      "symbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 2,
+      "affinity": {
+        "Light": 1,
+        "Wood": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Plant",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905273/debt-plant_qn4aoe.png",
+    "currentIndex": 453
+  },
+  {
+    "id": "deferral-drone",
+    "name": "Deferral Drone",
+    "manaCost": 2,
+    "element": {
+      "type": "Light/Metal",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1,
+        "Metal": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905277/deferral-drone_tdw59q.png",
+    "currentIndex": 454
+  },
+  {
+    "id": "delver-of-the-ephemeral",
+    "name": "Delver of the Ephemeral",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905306/delver-of-the-ephemeral_yxfhn1.png",
+    "currentIndex": 455
+  },
+  {
+    "id": "divine-foresight",
+    "name": "Divine Foresight",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905331/divine-foresight_rdjuyh.png",
+    "currentIndex": 456
+  },
+  {
+    "id": "divine-intervention",
+    "name": "Divine Intervention",
+    "manaCost": 5,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905354/divine-intervention_kihqom.png",
+    "currentIndex": 457
+  },
+  {
+    "id": "dragnol",
+    "name": "Dragnol",
+    "manaCost": 2,
+    "element": {
+      "type": "Light/Fire",
+      "symbol": "/images/elements/fire.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1,
+        "Fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905379/dragnol_ibi2ng.png",
+    "currentIndex": 458
+  },
+  {
+    "id": "equilibriate",
+    "name": "Equilibriate",
+    "manaCost": 5,
+    "element": {
+      "type": "Light/Wood",
+      "symbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1,
+        "Wood": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905403/equilibriate_mzt3qm.png",
+    "currentIndex": 459
+  },
+  {
+    "id": "feed-to-hooba",
+    "name": "Feed to Hooba",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Hooba",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905428/feed-to-hooba_v1h5lm.png",
+    "currentIndex": 460
+  },
+  {
+    "id": "flesh-tithe",
+    "name": "Flesh Tithe",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905452/flesh-tithe_zhszss.png",
+    "currentIndex": 461
+  },
+  {
+    "id": "flzzz",
+    "name": "Flzzz",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 3,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blessed Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905477/flzzz_paowhb.png",
+    "currentIndex": 462
+  },
+  {
+    "id": "gatekeeper-of-souls",
+    "name": "Gatekeeper of Souls",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 7,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905501/gatekeeper-of-souls_ob7rvr.png",
+    "currentIndex": 463
+  },
+  {
+    "id": "glararr",
+    "name": "Glararr",
+    "manaCost": 5,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 5,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905525/glararr_h5xdpm.png",
+    "currentIndex": 464
+  },
+  {
+    "id": "glutton-of-absolution",
+    "name": "Glutton of Absolution",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 7,
+      "defense": 7,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905547/glutton-of-absolution_cwcr8o.png",
+    "currentIndex": 465
+  },
+  {
+    "id": "godray",
+    "name": "Godray",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Blessed",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905548/godray_hhrn06.png",
+    "currentIndex": 466
+  },
+  {
+    "id": "greed-angel",
+    "name": "Greed Angel",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 4,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Flying Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905549/greed-angel_dktc6r.png",
+    "currentIndex": 467
+  },
+  {
+    "id": "grob",
+    "name": "Grob",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 5,
+      "defense": 3,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905548/grob_uuxdwx.png",
+    "currentIndex": 468
+  },
+  {
+    "id": "hammer-of-justice",
+    "name": "Hammer of Justice",
+    "manaCost": 6,
+    "element": {
+      "type": "Light/Earth",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 10,
+      "defense": 5,
+      "affinity": {
+        "Light": 1,
+        "Earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blessed Piercing Structure",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905549/hammer-of-justice_zrmjbq.png",
+    "currentIndex": 469
+  },
+  {
+    "id": "hand-peeper",
+    "name": "Hand Peeper",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 2,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905564/hand-peeper_d1zb5u.png",
+    "currentIndex": 470
+  },
+  {
+    "id": "haunting-memories",
+    "name": "Haunting Memories",
+    "manaCost": 8,
+    "element": {
+      "type": "Light/Dark",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1,
+        "Dark": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905565/haunting-memories_rtz7mm.png",
+    "currentIndex": 471
+  },
+  {
+    "id": "hooba-god",
+    "name": "Hooba-God",
+    "manaCost": 8,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Hooba God",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905565/hooba-god_dypccc.png",
+    "currentIndex": 472
+  },
+  {
+    "id": "hyper-beam",
+    "name": "Hyper Beam",
+    "manaCost": 4,
+    "element": {
+      "type": "Light/Fire",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1,
+        "Fire": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905565/hyper-beam_sceruu.png",
+    "currentIndex": 473
+  },
+  {
+    "id": "insatiable-want",
+    "name": "Insatiable Want",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905578/insatiable-want_engffj.png",
+    "currentIndex": 474
+  },
+  {
+    "id": "iyngstra",
+    "name": "Iyngstra",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Earth",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 6,
+      "affinity": {
+        "Light": 1,
+        "Earth": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Holy Structure",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905578/iyngstra_coxdc8.png",
+    "currentIndex": 475
+  },
+  {
+    "id": "just-a-unit",
+    "name": "Just a Unit",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 3,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905578/just-a-unit_sif8zi.png",
+    "currentIndex": 476
+  },
+  {
+    "id": "keeper-of-tithes",
+    "name": "Keeper of Tithes",
+    "manaCost": 5,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905579/keeper-of-tithes_phhlzo.png",
+    "currentIndex": 477
+  },
+  {
+    "id": "life-channel",
+    "name": "Life Channel",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905616/life-channel_tyrimt.png",
+    "currentIndex": 478
+  },
+  {
+    "id": "life-leech",
+    "name": "Life Leech",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905616/life-leech_h0trcm.png",
+    "currentIndex": 479
+  },
+  {
+    "id": "life-plant",
+    "name": "Life Plant",
+    "manaCost": 7,
+    "element": {
+      "type": "Light/Wood",
+      "symbol": "/images/elements/wood.png"
+    },
+    "stats": {
+      "power": 7,
+      "defense": 3,
+      "affinity": {
+        "Light": 1,
+        "Wood": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Fungus",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905617/life-plant_otlxis.png",
+    "currentIndex": 480
+  },
+  {
+    "id": "life-power-dude",
+    "name": "Life Power Dude",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 3,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905617/life-power-dude_inrk1t.png",
+    "currentIndex": 481
+  },
+  {
+    "id": "lifebound-seer",
+    "name": "Lifebound Seer",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905600/lifebound-seer_lqoqrs.png",
+    "currentIndex": 482
+  },
+  {
+    "id": "living-vault",
+    "name": "Living Vault",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905617/living-vault_d7ahrs.png",
+    "currentIndex": 483
+  },
+  {
+    "id": "murkstalker",
+    "name": "Murkstalker",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Dark",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1,
+        "Dark": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905617/murkstalker_klmpmu.png",
+    "currentIndex": 484
+  },
+  {
+    "id": "nullbringer",
+    "name": "Nullbringer",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905648/nullbringer_hr9yyj.png",
+    "currentIndex": 485
+  },
+  {
+    "id": "pale-tormentor",
+    "name": "Pale Tormentor",
+    "manaCost": 3,
+    "element": {
+      "type": "Light/Dark",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 6,
+      "affinity": {
+        "Light": 1,
+        "Dark": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905673/pale-tormentor_aygobt.png",
+    "currentIndex": 486
+  },
+  {
+    "id": "penance",
+    "name": "Penance",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905697/penance_ldcck2.png",
+    "currentIndex": 487
+  },
+  {
+    "id": "ploosh",
+    "name": "Ploosh",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905722/ploosh_fjfuky.png",
+    "currentIndex": 488
+  },
+  {
+    "id": "prediction-prophet",
+    "name": "Prediction Prophet",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 3,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905746/prediction-prophet_w2jbui.png",
+    "currentIndex": 489
+  },
+  {
+    "id": "prismatic-observer",
+    "name": "Prismatic Observer",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905769/prismatic-observer_uiswln.png",
+    "currentIndex": 490
+  },
+  {
+    "id": "proph",
+    "name": "Proph",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905794/proph_kc6ajo.png",
+    "currentIndex": 491
+  },
+  {
+    "id": "prophecy-bug",
+    "name": "Prophecy Bug",
+    "manaCost": 1,
+    "element": {
+      "type": "Light/Water",
+      "symbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {
+        "Light": 1,
+        "Water": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell Unit",
+      "subType": "Cosmic Jellyfish",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905817/prophecy-bug_umerr5.png",
+    "currentIndex": 492
+  },
+  {
+    "id": "reap-the-due",
+    "name": "Reap the Due",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905840/reap-the-due_v3j72x.png",
+    "currentIndex": 493
+  },
+  {
+    "id": "retribution-thing",
+    "name": "Retribution Thing",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905863/retribution-thing_e89hhd.png",
+    "currentIndex": 494
+  },
+  {
+    "id": "riftspawn-remnant",
+    "name": "Riftspawn Remnant",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 5,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic Nebula Sprite",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905887/riftspawn-remnant_ec1oxo.png",
+    "currentIndex": 495
+  },
+  {
+    "id": "rime-wraith",
+    "name": "Rime Wraith",
+    "manaCost": 2,
+    "element": {
+      "type": "Light/Water",
+      "symbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 1,
+        "Water": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905911/rime-wraith_qikwbt.png",
+    "currentIndex": 496
+  },
+  {
+    "id": "seer-of-empty-spaces",
+    "name": "Seer of Empty Spaces",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905935/seer-of-empty-spaces_rpx1ye.png",
+    "currentIndex": 497
+  },
+  {
+    "id": "shard-sprite",
+    "name": "Shard Sprite",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Friend",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905960/shard-sprite_ndr4nc.png",
+    "currentIndex": 498
+  },
+  {
+    "id": "shib",
+    "name": "Shib",
+    "manaCost": 6,
+    "element": {
+      "type": "Light/Water",
+      "symbol": "/images/elements/water.png"
+    },
+    "stats": {
+      "power": 7,
+      "defense": 4,
+      "affinity": {
+        "Light": 1,
+        "Water": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Blessed Cosmic Jellyfish",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772905984/shib_lhflc0.png",
+    "currentIndex": 499
+  },
+  {
+    "id": "siphon-life",
+    "name": "Siphon Life",
+    "manaCost": 0,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906012/siphon-life_pemgxn.png",
+    "currentIndex": 500
+  },
+  {
+    "id": "slurpr",
+    "name": "Slurpr",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 2,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906037/slurpr_rb0vwz.png",
+    "currentIndex": 501
+  },
+  {
+    "id": "stalwart-sentinel",
+    "name": "Stalwart Sentinel",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 1,
+      "defense": 1,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906061/stalwart-sentinel_jfrxwg.png",
+    "currentIndex": 502
+  },
+  {
+    "id": "stellar-fission",
+    "name": "Stellar Fission",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906085/stellar-fission_bwyc6u.png",
+    "currentIndex": 503
+  },
+  {
+    "id": "suspend",
+    "name": "Suspend",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 0,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell",
+      "subType": "Nature",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906110/suspend_bckn9k.png",
+    "currentIndex": 504
+  },
+  {
+    "id": "the-everywhere",
+    "name": "The Everywhere",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906136/the-everywhere_qvhkmm.png",
+    "currentIndex": 505
+  },
+  {
+    "id": "the-foretold",
+    "name": "The Foretold",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Primordial Alien Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906152/the-foretold_sv3ypz.png",
+    "currentIndex": 506
+  },
+  {
+    "id": "the-mighty-doot",
+    "name": "The Mighty Doot",
+    "manaCost": 5,
+    "element": {
+      "type": "Light/Earth",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 1,
+        "Earth": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906152/the-mighty-doot_qxco8b.png",
+    "currentIndex": 507
+  },
+  {
+    "id": "tithe-enforcer",
+    "name": "Tithe Enforcer",
+    "manaCost": 7,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 6,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Flying Angel Spirit",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906153/tithe-enforcer_yrtfjc.png",
+    "currentIndex": 508
+  },
+  {
+    "id": "triskaidekaphage",
+    "name": "Triskaidekaphage",
+    "manaCost": 3,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 13,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906153/triskaidekaphage_q3alcz.png",
+    "currentIndex": 509
+  },
+  {
+    "id": "vengeance",
+    "name": "Vengeance",
+    "manaCost": 13,
+    "element": {
+      "type": "Light/Fire",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 7,
+      "defense": 9,
+      "affinity": {
+        "Light": 1,
+        "Fire": 1
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Occult",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906153/vengeance_fmbwig.png",
+    "currentIndex": 510
+  },
+  {
+    "id": "visage-of-ruin",
+    "name": "Visage of Ruin",
+    "manaCost": 6,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 5,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Spirit Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906181/visage-of-ruin_b0fyen.png",
+    "currentIndex": 511
+  },
+  {
+    "id": "visionary-construct",
+    "name": "Visionary Construct",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906205/visionary-construct_q86l0j.png",
+    "currentIndex": 512
+  },
+  {
+    "id": "void-mandible",
+    "name": "Void Mandible",
+    "manaCost": 2,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 2,
+      "defense": 1,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Haste",
+      "description": "Haste cards can also be played during the haste step."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Alien Anima",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Complex"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906229/void-mandible_lga3hn.png",
+    "currentIndex": 513
+  },
+  {
+    "id": "vroot",
+    "name": "Vroot",
+    "manaCost": 1,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 4,
+      "defense": 4,
+      "affinity": {
+        "Light": 1
+      }
+    },
+    "timing": {
+      "type": "Virus",
+      "description": "Virus cards can also be applied as augments from your hand during battle."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Cosmic",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906253/vroot_zrj96j.png",
+    "currentIndex": 514
+  },
+  {
+    "id": "waxen-witness",
+    "name": "Waxen Witness",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 3,
+      "defense": 3,
+      "affinity": {
+        "Light": 3
+      }
+    },
+    "timing": {
+      "type": "Battle",
+      "description": "Battle cards can only be played while in battle with another player."
+    },
+    "typeAndAttributes": {
+      "mainType": "Spell Unit",
+      "subType": "Spirit Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906261/waxen-witness_r2mjto.png",
+    "currentIndex": 515
+  },
+  {
+    "id": "witness-of-the-crossing",
+    "name": "Witness of the Crossing",
+    "manaCost": 4,
+    "element": {
+      "type": "Light",
+      "symbol": "/images/elements/light.png"
+    },
+    "stats": {
+      "power": 0,
+      "defense": 3,
+      "affinity": {
+        "Light": 2
+      }
+    },
+    "timing": {
+      "type": "Standard",
+      "description": "Can be played only during deployment phase."
+    },
+    "typeAndAttributes": {
+      "mainType": "Unit",
+      "subType": "Horror",
+      "attributes": []
+    },
+    "abilities": [],
+    "set": {
+      "symbol": "unknown",
+      "name": "Unknown Set",
+      "complexity": "Common"
+    },
+    "imageUrl": "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1772906261/witness-of-the-crossing_chb5xa.png",
+    "currentIndex": 516
   }
 ]

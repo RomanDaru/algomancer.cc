@@ -2,10 +2,10 @@
  * Element types and utilities for Algomancy
  */
 
-import { BasicElementType, Card, Element as CardElement } from "../types/card";
+import { PrimaryElementType, Card } from "../types/card";
 
-// For our UI purposes, we'll use the basic elements plus Colorless
-export type ElementType = BasicElementType | "Colorless";
+// For our UI purposes, we'll use the primary elements plus Colorless.
+export type ElementType = PrimaryElementType | "Colorless";
 
 export interface ElementInfo {
   name: ElementType;
@@ -51,6 +51,18 @@ export const ELEMENTS: Record<ElementType, ElementInfo> = {
       "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654230/Metal_Resource_eqpual.png",
     textColor: "black",
   },
+  Dark: {
+    name: "Dark",
+    color: "#4B2E83",
+    imageUrl: "",
+    textColor: "white",
+  },
+  Light: {
+    name: "Light",
+    color: "#F7E7A5",
+    imageUrl: "",
+    textColor: "black",
+  },
   Colorless: {
     name: "Colorless",
     color: "#9B7CB9", // Using a purple color for colorless
@@ -72,6 +84,15 @@ export function getAllDeckElements(
   }
 
   const allElementsInDeck = new Set<ElementType>();
+  const validPrimaryElements = new Set<ElementType>([
+    "Fire",
+    "Water",
+    "Earth",
+    "Wood",
+    "Metal",
+    "Dark",
+    "Light",
+  ]);
 
   cards.forEach(({ card }) => {
     if (card.element && card.element.type) {
@@ -82,16 +103,12 @@ export function getAllDeckElements(
         const parts = elementType.split("/");
         parts.forEach((part) => {
           const trimmedPart = part.trim();
-          // Only add if it's a valid basic element
-          if (
-            ["Fire", "Water", "Earth", "Wood", "Metal"].includes(trimmedPart)
-          ) {
+          if (validPrimaryElements.has(trimmedPart as ElementType)) {
             allElementsInDeck.add(trimmedPart as ElementType);
           }
         });
       } else {
-        // Single element - only add if it's a valid basic element
-        if (["Fire", "Water", "Earth", "Wood", "Metal"].includes(elementType)) {
+        if (validPrimaryElements.has(elementType as ElementType)) {
           allElementsInDeck.add(elementType as ElementType);
         }
       }
@@ -118,6 +135,15 @@ export function getDeckElements(
 
   // Count elements from single-element cards only
   const elementCounts: Record<string, number> = {};
+  const validPrimaryElements = new Set<ElementType>([
+    "Fire",
+    "Water",
+    "Earth",
+    "Wood",
+    "Metal",
+    "Dark",
+    "Light",
+  ]);
 
   cards.forEach(({ card, quantity }) => {
     // Check if card has element information
@@ -126,7 +152,10 @@ export function getDeckElements(
       const elementType = card.element.type;
 
       // Only count single-element cards (ignore hybrid/multicolor cards)
-      if (!elementType.includes("/")) {
+      if (
+        !elementType.includes("/") &&
+        validPrimaryElements.has(elementType as ElementType)
+      ) {
         elementCounts[elementType] =
           (elementCounts[elementType] || 0) + quantity;
       }

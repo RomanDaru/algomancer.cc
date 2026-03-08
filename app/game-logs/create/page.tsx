@@ -1,15 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
 import { getRankForXp } from "@/app/lib/achievements/ranks";
 import { LEVEL_UP_EVENT, LEVEL_UP_STORAGE_KEY } from "@/app/lib/constants";
+import type { GameLog } from "@/app/lib/types/gameLog";
 import type { LevelUpPayload } from "@/app/lib/types/levelUp";
 import { isValidAlgomancerDeckUrl } from "@/app/lib/utils/deckUrl";
+import {
+  clearGameLogDraft,
+  loadGameLogDraft,
+  saveGameLogDraft,
+  type GameLogDraft,
+} from "@/app/lib/utils/gameLogDraftStorage";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";
 
@@ -37,9 +44,54 @@ function getLocalDateTimeValue(date: Date) {
   return local.toISOString().slice(0, 16);
 }
 
+const CREATE_GAME_LOG_DRAFT_KEY = "algomancy_game_log_create_draft";
+
+type GameLogCreatePayload = {
+  title: string;
+  playedAt: string;
+  durationMinutes: number;
+  outcome: string;
+  format: string;
+  matchType: string;
+  matchTypeLabel?: string;
+  isPublic: boolean;
+  notes?: string;
+  opponents: Array<{
+    name: string;
+    elements: string[];
+    externalDeckUrl?: string;
+    mvpCardIds: string[];
+  }>;
+  constructed?: {
+    deckId?: string;
+    externalDeckUrl?: string;
+    teammateDeckId?: string;
+    teammateExternalDeckUrl?: string;
+  };
+  liveDraft?: {
+    elementsPlayed: string[];
+    mvpCardIds: string[];
+  };
+};
+
+type UnlockedAchievement = {
+  title?: string;
+  xp?: number;
+};
+
+type CreateGameLogResponse = {
+  error?: string;
+  details?: string[];
+  log?: Partial<GameLog> & { _id?: string };
+  achievementsUnlocked?: UnlockedAchievement[];
+  achievementXp?: number;
+  previousAchievementXp?: number;
+};
+
 export default function CreateGameLogPage() {
   const { data: session, status, update } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [opponents, setOpponents] = useState<
     {
@@ -92,13 +144,23 @@ export default function CreateGameLogPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const previousStatusRef = useRef(status);
 
   const isCustomMatch = matchType === "custom";
   const isTeamMatch = matchType === "2v2";
   const isConstructed = format === "constructed";
   const isLiveDraft = format === "live_draft";
   const isAuthenticated = status === "authenticated";
+  const shouldRecoverDraft = searchParams?.get("recoverDraft") === "1";
   const elementOptions = useMemo(() => Object.values(BASIC_ELEMENTS), []);
+  const signInHref = useMemo(
+    () =>
+      `/auth/signin?returnTo=${encodeURIComponent(
+        "/game-logs/create?recoverDraft=1"
+      )}`,
+    []
+  );
 
   const cardLookup = useMemo(() => {
     return cards.reduce<Record<string, Card>>((acc, card) => {
@@ -116,6 +178,102 @@ export default function CreateGameLogPage() {
     }
     return "Save Log";
   }, [isSubmitting, status]);
+
+  const applyDraft = (draft: GameLogDraft) => {
+    setTitle(draft.title || "Untitled Game");
+    setPlayedAt(draft.playedAt || getLocalDateTimeValue(new Date()));
+    setDurationMinutes(draft.durationMinutes || "");
+    setOutcome(draft.outcome || "win");
+    setMatchType(draft.matchType || "1v1");
+    setMatchTypeLabel(draft.matchTypeLabel || "");
+    setFormat(draft.format || "constructed");
+    setIsPublic(draft.isPublic === true);
+    setDeckId(draft.deckId || "");
+    setExternalDeckUrl(draft.externalDeckUrl || "");
+    setTeammateDeckId(draft.teammateDeckId || "");
+    setTeammateExternalDeckUrl(draft.teammateExternalDeckUrl || "");
+    setElementsPlayed(Array.isArray(draft.elementsPlayed) ? draft.elementsPlayed : []);
+    setMvpCardIds(Array.isArray(draft.mvpCardIds) ? draft.mvpCardIds : []);
+    setNotes(draft.notes || "");
+    setOpponents(
+      Array.isArray(draft.opponents) && draft.opponents.length > 0
+        ? draft.opponents
+        : [
+            {
+              id: crypto.randomUUID(),
+              name: "",
+              elements: [],
+              externalDeckUrl: "",
+              mvpCardIds: [],
+            },
+          ]
+    );
+    setOpponentCardQueries({});
+  };
+
+  const draft = useMemo<GameLogDraft>(
+    () => ({
+      title,
+      playedAt,
+      durationMinutes,
+      outcome,
+      matchType,
+      matchTypeLabel,
+      format,
+      isPublic,
+      deckId,
+      externalDeckUrl,
+      teammateDeckId,
+      teammateExternalDeckUrl,
+      elementsPlayed,
+      mvpCardIds,
+      notes,
+      opponents,
+    }),
+    [
+      title,
+      playedAt,
+      durationMinutes,
+      outcome,
+      matchType,
+      matchTypeLabel,
+      format,
+      isPublic,
+      deckId,
+      externalDeckUrl,
+      teammateDeckId,
+      teammateExternalDeckUrl,
+      elementsPlayed,
+      mvpCardIds,
+      notes,
+      opponents,
+    ]
+  );
+
+  useEffect(() => {
+    if (shouldRecoverDraft) {
+      const draft = loadGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
+      if (draft) {
+        applyDraft(draft);
+        setSubmitSuccess("Restored your saved draft.");
+      }
+      router.replace("/game-logs/create");
+      return;
+    }
+    clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
+  }, [router, shouldRecoverDraft]);
+
+  useEffect(() => {
+    const previousStatus = previousStatusRef.current;
+    if (
+      previousStatus === "authenticated" &&
+      status === "unauthenticated"
+    ) {
+      saveGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY, draft);
+      setSessionExpired(true);
+    }
+    previousStatusRef.current = status;
+  }, [draft, status]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -399,7 +557,7 @@ export default function CreateGameLogPage() {
       </div>
 
       <div className='space-y-4'>
-        {opponents.map((opponent, index) => (
+        {opponents.map((opponent) => (
           <div
             key={opponent.id}
             className='rounded-lg border border-white/10 bg-black/30 p-4 space-y-3'>
@@ -676,8 +834,8 @@ export default function CreateGameLogPage() {
     </div>
   );
 
-  const buildPayload = () => {
-    const basePayload: Record<string, any> = {
+  const buildPayload = (): GameLogCreatePayload => {
+    const basePayload: GameLogCreatePayload = {
       title,
       playedAt,
       durationMinutes: durationMinutes ? Number(durationMinutes) : 0,
@@ -737,6 +895,7 @@ export default function CreateGameLogPage() {
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(null);
+    setSessionExpired(false);
 
     try {
       const response = await fetch("/api/game-logs", {
@@ -745,7 +904,18 @@ export default function CreateGameLogPage() {
         body: JSON.stringify(buildPayload()),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as CreateGameLogResponse;
+      if (response.status === 401) {
+        saveGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY, draft);
+        setSessionExpired(true);
+        setSubmitError(
+          "Your session expired. Your draft was saved in this tab. Sign in again to continue."
+        );
+        await update();
+        router.refresh();
+        return;
+      }
+
       if (!response.ok) {
         const message =
           data?.error ||
@@ -761,7 +931,7 @@ export default function CreateGameLogPage() {
         : [];
 
       if (unlocked.length > 0) {
-        unlocked.forEach((achievement: any) => {
+        unlocked.forEach((achievement) => {
           const xpLabel =
             typeof achievement?.xp === "number" ? ` (+${achievement.xp} XP)` : "";
           toast.success(`Achievement unlocked: ${achievement?.title}${xpLabel}`);
@@ -805,6 +975,7 @@ export default function CreateGameLogPage() {
       }
 
       if (savedLog?._id) {
+        clearGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY);
         router.push(`/game-logs/${savedLog._id}`);
       }
     } catch (error) {
@@ -836,11 +1007,16 @@ export default function CreateGameLogPage() {
 
         {!isAuthenticated && (
           <div className='rounded-lg border border-algomancy-gold/30 bg-algomancy-darker p-4 text-sm text-gray-200'>
-            <p className='mb-3'>Sign in to save game logs to your profile.</p>
+            <p className='mb-3'>
+              {sessionExpired
+                ? "Your session expired. Sign in again to continue with your saved draft."
+                : "Sign in to save game logs to your profile."}
+            </p>
             <Link
-              href='/auth/signin'
+              href={signInHref}
+              onClick={() => saveGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY, draft)}
               className='inline-flex items-center rounded-md bg-algomancy-gold px-4 py-2 text-black font-medium hover:bg-algomancy-gold-dark transition-colors'>
-              Sign In
+              {sessionExpired ? "Sign In Again" : "Sign In"}
             </Link>
           </div>
         )}
@@ -1168,6 +1344,16 @@ export default function CreateGameLogPage() {
             <div className='flex items-center gap-3'>
               {submitError && (
                 <span className='text-xs text-red-300'>{submitError}</span>
+              )}
+              {sessionExpired && (
+                <Link
+                  href={signInHref}
+                  onClick={() =>
+                    saveGameLogDraft(CREATE_GAME_LOG_DRAFT_KEY, draft)
+                  }
+                  className='text-xs text-algomancy-gold hover:text-algomancy-gold-dark transition-colors'>
+                  Sign in again
+                </Link>
               )}
               {submitSuccess && (
                 <span className='text-xs text-algomancy-gold'>

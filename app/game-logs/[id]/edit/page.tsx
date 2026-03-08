@@ -1,11 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Card } from "@/app/lib/types/card";
 import { BASIC_ELEMENTS } from "@/app/lib/types/card";
+import type { GameLog } from "@/app/lib/types/gameLog";
+import {
+  clearGameLogDraft,
+  loadGameLogDraft,
+  saveGameLogDraft,
+  type GameLogDraft,
+} from "@/app/lib/utils/gameLogDraftStorage";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 const OUTCOME_OPTIONS = [
@@ -26,6 +33,60 @@ const FORMAT_OPTIONS = [
   { value: "live_draft", label: "Live Draft" },
 ];
 
+type GameLogEditPayload = {
+  title: string;
+  playedAt: string;
+  durationMinutes: number;
+  outcome: string;
+  format: string;
+  matchType: string;
+  matchTypeLabel?: string;
+  isPublic: boolean;
+  notes?: string;
+  opponents: Array<{
+    name: string;
+    elements: string[];
+    externalDeckUrl?: string;
+    mvpCardIds: string[];
+  }>;
+  constructed?: {
+    deckId?: string;
+    externalDeckUrl?: string;
+    teammateDeckId?: string;
+    teammateExternalDeckUrl?: string;
+  };
+  liveDraft?: {
+    elementsPlayed: string[];
+    mvpCardIds: string[];
+  };
+};
+
+type EditGameLogResponse = {
+  error?: string;
+  details?: string[];
+};
+
+type EditGameLogApiResponse = Partial<GameLog> & {
+  userId?: string;
+  playedAt?: string | Date;
+  constructed?: {
+    deckId?: string;
+    externalDeckUrl?: string;
+    teammateDeckId?: string;
+    teammateExternalDeckUrl?: string;
+  };
+  liveDraft?: {
+    elementsPlayed?: string[];
+    mvpCardIds?: string[];
+  };
+  opponents?: Array<{
+    name?: string;
+    elements?: string[];
+    externalDeckUrl?: string;
+    mvpCardIds?: string[];
+  }>;
+};
+
 function getLocalDateTimeValue(date: Date) {
   const offsetMinutes = date.getTimezoneOffset();
   const local = new Date(date.getTime() - offsetMinutes * 60000);
@@ -33,9 +94,10 @@ function getLocalDateTimeValue(date: Date) {
 }
 
 export default function EditGameLogPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const logId = typeof params?.id === "string" ? params.id : "";
 
   const [isLoadingLog, setIsLoadingLog] = useState(true);
@@ -94,13 +156,27 @@ export default function EditGameLogPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const previousStatusRef = useRef(status);
 
   const isCustomMatch = matchType === "custom";
   const isTeamMatch = matchType === "2v2";
   const isConstructed = format === "constructed";
   const isLiveDraft = format === "live_draft";
   const isAuthenticated = status === "authenticated";
+  const shouldRecoverDraft = searchParams?.get("recoverDraft") === "1";
   const elementOptions = useMemo(() => Object.values(BASIC_ELEMENTS), []);
+  const draftStorageKey = useMemo(
+    () => (logId ? `algomancy_game_log_edit_${logId}` : ""),
+    [logId]
+  );
+  const signInHref = useMemo(
+    () =>
+      logId
+        ? `/auth/signin?returnTo=${encodeURIComponent(`/game-logs/${logId}/edit?recoverDraft=1`)}`
+        : "/auth/signin",
+    [logId]
+  );
 
   const cardLookup = useMemo(() => {
     return cards.reduce<Record<string, Card>>((acc, card) => {
@@ -118,6 +194,77 @@ export default function EditGameLogPage() {
     }
     return "Save Changes";
   }, [isSubmitting, status]);
+
+  const applyDraft = (draft: GameLogDraft) => {
+    setTitle(draft.title || "Untitled Game");
+    setPlayedAt(draft.playedAt || getLocalDateTimeValue(new Date()));
+    setDurationMinutes(draft.durationMinutes || "");
+    setOutcome(draft.outcome || "win");
+    setMatchType(draft.matchType || "1v1");
+    setMatchTypeLabel(draft.matchTypeLabel || "");
+    setFormat(draft.format || "constructed");
+    setIsPublic(draft.isPublic === true);
+    setDeckId(draft.deckId || "");
+    setExternalDeckUrl(draft.externalDeckUrl || "");
+    setTeammateDeckId(draft.teammateDeckId || "");
+    setTeammateExternalDeckUrl(draft.teammateExternalDeckUrl || "");
+    setElementsPlayed(Array.isArray(draft.elementsPlayed) ? draft.elementsPlayed : []);
+    setMvpCardIds(Array.isArray(draft.mvpCardIds) ? draft.mvpCardIds : []);
+    setNotes(draft.notes || "");
+    setOpponents(
+      Array.isArray(draft.opponents) && draft.opponents.length > 0
+        ? draft.opponents
+        : [
+            {
+              id: crypto.randomUUID(),
+              name: "",
+              elements: [],
+              externalDeckUrl: "",
+              mvpCardIds: [],
+            },
+          ]
+    );
+    setOpponentCardQueries({});
+  };
+
+  const draft = useMemo<GameLogDraft>(
+    () => ({
+      title,
+      playedAt,
+      durationMinutes,
+      outcome,
+      matchType,
+      matchTypeLabel,
+      format,
+      isPublic,
+      deckId,
+      externalDeckUrl,
+      teammateDeckId,
+      teammateExternalDeckUrl,
+      elementsPlayed,
+      mvpCardIds,
+      notes,
+      opponents,
+    }),
+    [
+      title,
+      playedAt,
+      durationMinutes,
+      outcome,
+      matchType,
+      matchTypeLabel,
+      format,
+      isPublic,
+      deckId,
+      externalDeckUrl,
+      teammateDeckId,
+      teammateExternalDeckUrl,
+      elementsPlayed,
+      mvpCardIds,
+      notes,
+      opponents,
+    ]
+  );
 
   useEffect(() => {
     if (!logId) return;
@@ -137,7 +284,7 @@ export default function EditGameLogPage() {
           }
           throw new Error("Failed to load game log");
         }
-        const data = await response.json();
+        const data = (await response.json()) as EditGameLogApiResponse;
         if (!isMounted) return;
 
         setLogOwnerId(data.userId?.toString?.() || String(data.userId || ""));
@@ -171,7 +318,7 @@ export default function EditGameLogPage() {
 
         if (Array.isArray(data.opponents) && data.opponents.length > 0) {
           setOpponents(
-            data.opponents.map((opponent: any) => ({
+            data.opponents.map((opponent) => ({
               id: crypto.randomUUID(),
               name: opponent?.name || "",
               elements: opponent?.elements || [],
@@ -191,6 +338,17 @@ export default function EditGameLogPage() {
           ]);
         }
         setOpponentCardQueries({});
+
+        if (draftStorageKey && shouldRecoverDraft) {
+          const draft = loadGameLogDraft(draftStorageKey);
+          if (draft) {
+            applyDraft(draft);
+            setSubmitSuccess("Restored your saved draft.");
+          }
+          router.replace(`/game-logs/${logId}/edit`);
+        } else if (draftStorageKey) {
+          clearGameLogDraft(draftStorageKey);
+        }
       } catch (error) {
         console.error("Error loading game log:", error);
         if (isMounted) {
@@ -209,7 +367,7 @@ export default function EditGameLogPage() {
     return () => {
       isMounted = false;
     };
-  }, [logId]);
+  }, [draftStorageKey, logId, router, shouldRecoverDraft]);
 
   useEffect(() => {
     if (!logOwnerId) return;
@@ -307,6 +465,19 @@ export default function EditGameLogPage() {
       cards.filter((card) => card.name.toLowerCase().includes(trimmedQuery))
     );
   }, [cardQuery, cards]);
+
+  useEffect(() => {
+    const previousStatus = previousStatusRef.current;
+    if (
+      draftStorageKey &&
+      previousStatus === "authenticated" &&
+      status === "unauthenticated"
+    ) {
+      saveGameLogDraft(draftStorageKey, draft);
+      setSessionExpired(true);
+    }
+    previousStatusRef.current = status;
+  }, [draft, draftStorageKey, status]);
 
   const toggleElement = (element: string) => {
     setElementsPlayed((prev) =>
@@ -510,7 +681,7 @@ export default function EditGameLogPage() {
       </div>
 
       <div className='space-y-4'>
-        {opponents.map((opponent, index) => (
+        {opponents.map((opponent) => (
           <div
             key={opponent.id}
             className='rounded-lg border border-white/10 bg-black/30 p-4 space-y-3'>
@@ -787,8 +958,8 @@ export default function EditGameLogPage() {
     </div>
   );
 
-  const buildPayload = () => {
-    const basePayload: Record<string, any> = {
+  const buildPayload = (): GameLogEditPayload => {
+    const basePayload: GameLogEditPayload = {
       title,
       playedAt,
       durationMinutes: durationMinutes ? Number(durationMinutes) : 0,
@@ -844,6 +1015,7 @@ export default function EditGameLogPage() {
     setIsSubmitting(true);
     setSubmitError(null);
     setSubmitSuccess(null);
+    setSessionExpired(false);
 
     try {
       const response = await fetch(`/api/game-logs/${logId}`, {
@@ -852,7 +1024,20 @@ export default function EditGameLogPage() {
         body: JSON.stringify(buildPayload()),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as EditGameLogResponse;
+      if (response.status === 401) {
+        if (draftStorageKey) {
+          saveGameLogDraft(draftStorageKey, draft);
+        }
+        setSessionExpired(true);
+        setSubmitError(
+          "Your session expired. Your draft was saved in this tab. Sign in again to continue."
+        );
+        await update();
+        router.refresh();
+        return;
+      }
+
       if (!response.ok) {
         const message =
           data?.error ||
@@ -862,6 +1047,9 @@ export default function EditGameLogPage() {
       }
 
       setSubmitSuccess("Changes saved.");
+      if (draftStorageKey) {
+        clearGameLogDraft(draftStorageKey);
+      }
       router.push(`/game-logs/${logId}`);
     } catch (error) {
       setSubmitError(
@@ -912,11 +1100,20 @@ export default function EditGameLogPage() {
 
         {!isAuthenticated && (
           <div className='rounded-lg border border-algomancy-gold/30 bg-algomancy-darker p-4 text-sm text-gray-200'>
-            <p className='mb-3'>Sign in to edit game logs.</p>
+            <p className='mb-3'>
+              {sessionExpired
+                ? "Your session expired. Sign in again to continue with your saved draft."
+                : "Sign in to edit game logs."}
+            </p>
             <Link
-              href='/auth/signin'
+              href={signInHref}
+              onClick={() => {
+                if (draftStorageKey) {
+                  saveGameLogDraft(draftStorageKey, draft);
+                }
+              }}
               className='inline-flex items-center rounded-md bg-algomancy-gold px-4 py-2 text-black font-medium hover:bg-algomancy-gold-dark transition-colors'>
-              Sign In
+              {sessionExpired ? "Sign In Again" : "Sign In"}
             </Link>
           </div>
         )}
@@ -1244,6 +1441,18 @@ export default function EditGameLogPage() {
             <div className='flex items-center gap-3'>
               {submitError && (
                 <span className='text-xs text-red-300'>{submitError}</span>
+              )}
+              {sessionExpired && (
+                <Link
+                  href={signInHref}
+                  onClick={() => {
+                    if (draftStorageKey) {
+                      saveGameLogDraft(draftStorageKey, draft);
+                    }
+                  }}
+                  className='text-xs text-algomancy-gold hover:text-algomancy-gold-dark transition-colors'>
+                  Sign in again
+                </Link>
               )}
               {submitSuccess && (
                 <span className='text-xs text-algomancy-gold'>

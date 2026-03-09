@@ -264,8 +264,8 @@ export default function PublicDecksClient({
             </div>
             <div
               ref={toolbarRef}
-              className='mt-4 flex items-center gap-3'>
-              <div className='relative min-w-[280px] flex-1'>
+              className='mt-4 grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1.8fr)_170px_170px_170px] lg:items-center'>
+              <div className='relative w-full min-w-0'>
                 <MagnifyingGlassIcon className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400' />
                 <input
                   type='search'
@@ -276,18 +276,18 @@ export default function PublicDecksClient({
                 />
               </div>
 
-              <div className='relative shrink-0'>
+              <div className='relative w-full'>
                 <button
                   type='button'
                   onClick={() =>
                     setOpenMenu((prev) => (prev === "elements" ? null : "elements"))
                   }
-                  className='inline-flex min-w-[170px] items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                  className='inline-flex w-full items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
                   <span className='truncate'>{elementFilterLabel}</span>
                   <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
                 </button>
                 {openMenu === "elements" && (
-                  <div className='absolute left-0 top-full z-20 mt-2 w-[220px] rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl'>
+                  <div className='absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl lg:right-auto lg:w-[220px]'>
                     <div className='space-y-2'>
                       {BASIC_ELEMENTS.map((element) => {
                         const isSelected = selectedElements.includes(element);
@@ -323,18 +323,18 @@ export default function PublicDecksClient({
               </div>
 
               {availableBadges.length > 0 && (
-                <div className='relative shrink-0'>
+                <div className='relative w-full'>
                   <button
                     type='button'
                     onClick={() =>
                       setOpenMenu((prev) => (prev === "badges" ? null : "badges"))
                     }
-                    className='inline-flex min-w-[170px] items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                    className='inline-flex w-full items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
                     <span className='truncate'>{badgeFilterLabel}</span>
                     <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
                   </button>
                   {openMenu === "badges" && (
-                    <div className='absolute left-0 top-full z-20 mt-2 w-[240px] rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl'>
+                    <div className='absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl lg:right-auto lg:w-[240px]'>
                       <div className='flex flex-wrap gap-2'>
                         {availableBadges.map((badge) => {
                           const isSelected = selectedBadges.includes(badge);
@@ -367,7 +367,7 @@ export default function PublicDecksClient({
                 </div>
               )}
 
-              <div className='ml-auto shrink-0'>
+              <div className='w-full'>
                 <select
                   value={sortBy}
                   onChange={(event) =>
@@ -375,7 +375,7 @@ export default function PublicDecksClient({
                       event.target.value as "newest" | "popular" | "liked"
                     )
                   }
-                  className='min-w-[170px] rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                  className='w-full rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
                   <option value='newest'>Sort: Newest</option>
                   <option value='popular'>Sort: Popular</option>
                   <option value='liked'>Sort: Most Liked</option>

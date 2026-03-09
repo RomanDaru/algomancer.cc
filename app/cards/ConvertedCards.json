@@ -15590,14 +15590,15 @@
     "name": "Deathcoil Construct",
     "manaCost": 3,
     "element": {
-      "type": "Light",
+      "type": "Light/Metal",
       "symbol": "/images/elements/light.png"
     },
     "stats": {
       "power": 3,
       "defense": 3,
       "affinity": {
-        "Light": 2
+        "Light": 1,
+        "Metal": 1
       }
     },
     "timing": {
@@ -16589,14 +16590,15 @@
     "name": "Life Power Dude",
     "manaCost": 4,
     "element": {
-      "type": "Light",
+      "type": "Light/Metal",
       "symbol": "/images/elements/light.png"
     },
     "stats": {
       "power": 2,
       "defense": 3,
       "affinity": {
-        "Light": 2
+        "Light": 1,
+        "Metal": 1
       }
     },
     "timing": {
@@ -17619,14 +17621,15 @@
     "name": "Visionary Construct",
     "manaCost": 4,
     "element": {
-      "type": "Light",
+      "type": "Light/Metal",
       "symbol": "/images/elements/light.png"
     },
     "stats": {
       "power": 2,
       "defense": 1,
       "affinity": {
-        "Light": 2
+        "Light": 1,
+        "Metal": 1
       }
     },
     "timing": {

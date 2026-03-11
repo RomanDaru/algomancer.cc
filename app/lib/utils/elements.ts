@@ -20,47 +20,49 @@ export const ELEMENTS: Record<ElementType, ElementInfo> = {
     name: "Fire",
     color: "#EC2826",
     imageUrl:
-      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654231/Fire_Resource_abqiyu.png",
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773229891/Fire_Resource_v2_uvygtp.png",
     textColor: "white",
   },
   Water: {
     name: "Water",
     color: "#5ACBF3",
     imageUrl:
-      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654231/Water_Resource_bm0osf.png",
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773229889/Water_Resource_v2_qxgfo6.png",
     textColor: "black",
   },
   Earth: {
     name: "Earth",
     color: "#F38F30",
     imageUrl:
-      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654230/Earth_Resource_crzzja.png",
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773229888/Earth_Resource_v2_axuty8.png",
     textColor: "black",
   },
   Wood: {
     name: "Wood",
     color: "#6DBF59",
     imageUrl:
-      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654230/Wood_Resource_th5uwo.png",
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773229886/Wood_Resource_v2_dizqmo.png",
     textColor: "black",
   },
   Metal: {
     name: "Metal",
     color: "#D7D9D9",
     imageUrl:
-      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1747654230/Metal_Resource_eqpual.png",
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773229885/Metal_Resource_v2_r64wvn.png",
     textColor: "black",
   },
   Dark: {
     name: "Dark",
     color: "#4B2E83",
-    imageUrl: "",
+    imageUrl:
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773228351/Dark_Resource_vqcbuy.png",
     textColor: "white",
   },
   Light: {
     name: "Light",
     color: "#F7E7A5",
-    imageUrl: "",
+    imageUrl:
+      "https://res.cloudinary.com/dyfj9qvc0/image/upload/v1773228647/Light_Resource_csdngl.png",
     textColor: "black",
   },
   Colorless: {

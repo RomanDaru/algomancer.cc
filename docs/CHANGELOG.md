@@ -3,6 +3,9 @@
 ## 2026-03-21
 
 ### `feat/decks-followups`
+- Fixed `/decks` element filtering for `Dark` and `Light` by correcting the shared primary element source-of-truth and by filtering element-selected browse results from hydrated card data instead of stale stored `deckElements`.
+  - Areas: `app/lib/utils/elements.ts`, `app/lib/db/services/deckDbService.ts`, `app/lib/services/deckService.ts`, `app/lib/utils/__tests__/elements.test.ts`, `app/lib/services/__tests__/deckService.test.ts`
+  - Verification: targeted Jest deck browse tests plus targeted lint
 - Added browser-level Playwright coverage for `/decks` multi-page browsing, sort changes, and search results spanning more than one page.
   - Areas: `playwright.config.ts`, `e2e/decks.spec.ts`, `package.json`, `jest.config.js`
   - Verification: `pnpm test:e2e`

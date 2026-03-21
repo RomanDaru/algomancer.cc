@@ -169,6 +169,20 @@ async function filterDeckResultsBySearch(
   });
 }
 
+function filterDeckResultsByElements(
+  results: DeckWithUserInfo[],
+  elements?: string[]
+) {
+  if (!elements || elements.length === 0) {
+    return results;
+  }
+
+  return results.filter((item) => {
+    const deckElements = item.deckElements || [];
+    return elements.every((element) => deckElements.includes(element));
+  });
+}
+
 function paginateDeckResults(
   results: DeckWithUserInfo[],
   sortBy: DeckSortBy,
@@ -413,9 +427,11 @@ export const deckService = {
   }): Promise<PaginatedDeckResponse> {
     try {
       const { searchQuery, elements, badges } = filters;
-      const dbFilters = { elements, badges };
+      const dbFilters = { badges };
+      const shouldFilterInMemory =
+        Boolean(searchQuery?.trim()) || Boolean(elements?.length);
 
-      if (searchQuery?.trim()) {
+      if (shouldFilterInMemory) {
         const hydratedResults = await hydrateDeckResults(
           await deckDbService.getPublicDecksWithUserInfoPage(
             sortBy,
@@ -425,8 +441,12 @@ export const deckService = {
             dbFilters
           )
         );
-        const searchedResults = await filterDeckResultsBySearch(
+        const elementFilteredResults = filterDeckResultsByElements(
           hydratedResults,
+          elements
+        );
+        const searchedResults = await filterDeckResultsBySearch(
+          elementFilteredResults,
           searchQuery
         );
         const page = paginateDeckResults(searchedResults, sortBy, limit, cursor);

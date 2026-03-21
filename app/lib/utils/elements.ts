@@ -2,7 +2,12 @@
  * Element types and utilities for Algomancy
  */
 
-import { PrimaryElementType, Card } from "../types/card";
+import {
+  BASIC_ELEMENTS as CARD_BASIC_ELEMENTS,
+  Card,
+  PrimaryElementType,
+  SPECIAL_ELEMENTS,
+} from "../types/card";
 
 // For our UI purposes, we'll use the primary elements plus Colorless.
 export type ElementType = PrimaryElementType | "Colorless";
@@ -13,6 +18,13 @@ export interface ElementInfo {
   imageUrl: string;
   textColor: string; // For text that appears on top of the element color
 }
+
+export const PRIMARY_DECK_ELEMENTS: PrimaryElementType[] = [
+  ...Object.values(CARD_BASIC_ELEMENTS),
+  ...Object.values(SPECIAL_ELEMENTS),
+];
+
+const PRIMARY_DECK_ELEMENT_SET = new Set<ElementType>(PRIMARY_DECK_ELEMENTS);
 
 // Element information including colors and image URLs
 export const ELEMENTS: Record<ElementType, ElementInfo> = {
@@ -86,15 +98,6 @@ export function getAllDeckElements(
   }
 
   const allElementsInDeck = new Set<ElementType>();
-  const validPrimaryElements = new Set<ElementType>([
-    "Fire",
-    "Water",
-    "Earth",
-    "Wood",
-    "Metal",
-    "Dark",
-    "Light",
-  ]);
 
   cards.forEach(({ card }) => {
     if (card.element && card.element.type) {
@@ -105,12 +108,12 @@ export function getAllDeckElements(
         const parts = elementType.split("/");
         parts.forEach((part) => {
           const trimmedPart = part.trim();
-          if (validPrimaryElements.has(trimmedPart as ElementType)) {
+          if (PRIMARY_DECK_ELEMENT_SET.has(trimmedPart as ElementType)) {
             allElementsInDeck.add(trimmedPart as ElementType);
           }
         });
       } else {
-        if (validPrimaryElements.has(elementType as ElementType)) {
+        if (PRIMARY_DECK_ELEMENT_SET.has(elementType as ElementType)) {
           allElementsInDeck.add(elementType as ElementType);
         }
       }
@@ -137,15 +140,6 @@ export function getDeckElements(
 
   // Count elements from single-element cards only
   const elementCounts: Record<string, number> = {};
-  const validPrimaryElements = new Set<ElementType>([
-    "Fire",
-    "Water",
-    "Earth",
-    "Wood",
-    "Metal",
-    "Dark",
-    "Light",
-  ]);
 
   cards.forEach(({ card, quantity }) => {
     // Check if card has element information
@@ -156,7 +150,7 @@ export function getDeckElements(
       // Only count single-element cards (ignore hybrid/multicolor cards)
       if (
         !elementType.includes("/") &&
-        validPrimaryElements.has(elementType as ElementType)
+        PRIMARY_DECK_ELEMENT_SET.has(elementType as ElementType)
       ) {
         elementCounts[elementType] =
           (elementCounts[elementType] || 0) + quantity;

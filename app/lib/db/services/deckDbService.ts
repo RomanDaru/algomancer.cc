@@ -15,12 +15,12 @@ import {
   DeckWithUserInfo,
 } from "../../types/deckBrowse";
 import { getDeckSortField } from "../../utils/deckPagination";
+import { PRIMARY_DECK_ELEMENTS } from "../../utils/elements";
 
 type DbConnection = Awaited<ReturnType<typeof connectToDatabase>>;
 
 // Single database connection instance
 let dbConnection: DbConnection | null = null;
-const BASIC_ELEMENTS = ["Fire", "Water", "Earth", "Wood", "Metal"];
 
 /**
  * Ensure database connection is established
@@ -75,7 +75,7 @@ async function computeDeckSummary(cards: DeckCard[]): Promise<{
 
     for (const part of parts) {
       const trimmed = part.trim();
-      if (BASIC_ELEMENTS.includes(trimmed)) {
+      if (PRIMARY_DECK_ELEMENTS.includes(trimmed as (typeof PRIMARY_DECK_ELEMENTS)[number])) {
         elementSet.add(trimmed);
       }
     }
@@ -83,7 +83,7 @@ async function computeDeckSummary(cards: DeckCard[]): Promise<{
 
   const deckElements =
     elementSet.size > 0
-      ? BASIC_ELEMENTS.filter((element) => elementSet.has(element))
+      ? PRIMARY_DECK_ELEMENTS.filter((element) => elementSet.has(element))
       : ["Colorless"];
 
   return { deckElements, totalCards };

@@ -4,14 +4,11 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
 import { cardService } from "@/app/lib/services/cardService";
 import { PUBLIC_DECKS_PAGE_SIZE } from "@/app/lib/constants";
+import { buildE2EPublicDeckResponse } from "./e2eMockData";
 
-type PublicDeckPageData = Awaited<
-  ReturnType<typeof deckService.getPublicDecksWithUserInfo>
+type InitialDeckPageResponse = Awaited<
+  ReturnType<typeof deckService.getPublicDecksPage>
 >;
-type CardFilteredDeckPageData = Awaited<
-  ReturnType<typeof deckService.getDecksContainingCardWithUserInfo>
->;
-type InitialDeckPageData = PublicDeckPageData | CardFilteredDeckPageData;
 type FilteredCardData = Awaited<ReturnType<typeof cardService.getCardById>>;
 
 export default async function PublicDecksPage({
@@ -23,40 +20,48 @@ export default async function PublicDecksPage({
   const session = await getServerSession(authOptions);
   const sp = (await searchParams) || {};
   const cardParam = sp["card"];
+  const e2eParam = sp["e2e"];
   const cardId = typeof cardParam === "string" ? (cardParam as string) : undefined;
+  const isE2EMock =
+    process.env.ENABLE_E2E_MOCK_DECKS === "1" && e2eParam === "1";
 
-  let initialDecks: InitialDeckPageData = [];
+  let initialResponse: InitialDeckPageResponse = {
+    decks: [],
+    total: 0,
+    hasMore: false,
+    nextCursor: null,
+    effectiveLimit: PUBLIC_DECKS_PAGE_SIZE,
+    warnings: [],
+  };
   let filteredCard: FilteredCardData;
-  let initialHasMore = false;
 
-  if (cardId) {
-    // Specific card context
+  if (isE2EMock) {
+    initialResponse = buildE2EPublicDeckResponse();
+  } else if (cardId) {
     filteredCard = await cardService.getCardById(cardId);
-    initialDecks = await deckService.getDecksContainingCardWithUserInfo(cardId, 40);
+    initialResponse = await deckService.getDecksContainingCardPage({
+      cardId,
+      limit: PUBLIC_DECKS_PAGE_SIZE,
+      currentUserId: session?.user?.id,
+    });
   } else {
-    // First page of public decks, newest first, with like status if logged in
-    const initialResults = await deckService.getPublicDecksWithUserInfo(
-      "newest",
-      PUBLIC_DECKS_PAGE_SIZE + 1,
-      0,
-      session?.user?.id
-    );
-    initialHasMore = initialResults.length > PUBLIC_DECKS_PAGE_SIZE;
-    initialDecks = initialHasMore
-      ? initialResults.slice(0, PUBLIC_DECKS_PAGE_SIZE)
-      : initialResults;
+    initialResponse = await deckService.getPublicDecksPage({
+      sortBy: "newest",
+      limit: PUBLIC_DECKS_PAGE_SIZE,
+      currentUserId: session?.user?.id,
+    });
   }
 
   // Ensure we only pass plain JSON-serializable data to the client
-  const initialDecksSerializable = JSON.parse(JSON.stringify(initialDecks));
+  const initialResponseSerializable = JSON.parse(JSON.stringify(initialResponse));
   const filteredCardSerializable = filteredCard
     ? JSON.parse(JSON.stringify(filteredCard))
     : undefined;
 
   return (
     <PublicDecksClient
-      initialDecks={initialDecksSerializable}
-      initialHasMore={initialHasMore}
+      initialResponse={initialResponseSerializable}
+      cardId={cardId}
       filteredCard={filteredCardSerializable}
       isAuthenticated={Boolean(session?.user?.id)}
     />

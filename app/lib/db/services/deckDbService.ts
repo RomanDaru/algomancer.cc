@@ -8,12 +8,19 @@ import {
   convertAggregationToDeck,
 } from "../models/Deck";
 import { ObjectId } from "mongodb";
+import {
+  DeckSortBy,
+  DecodedDeckCursor,
+  DeckBrowseFilters,
+  DeckWithUserInfo,
+} from "../../types/deckBrowse";
+import { getDeckSortField } from "../../utils/deckPagination";
+import { PRIMARY_DECK_ELEMENTS } from "../../utils/elements";
+
+type DbConnection = Awaited<ReturnType<typeof connectToDatabase>>;
 
 // Single database connection instance
-let dbConnection: Awaited<ReturnType<typeof connectToDatabase>> | null = null;
-const BASIC_ELEMENTS = ["Fire", "Water", "Earth", "Wood", "Metal"];
-type AggregationStage = Record<string, unknown>;
-type PopulatedCompetition = { title?: string; status?: string } | null;
+let dbConnection: DbConnection | null = null;
 
 /**
  * Ensure database connection is established
@@ -68,7 +75,7 @@ async function computeDeckSummary(cards: DeckCard[]): Promise<{
 
     for (const part of parts) {
       const trimmed = part.trim();
-      if (BASIC_ELEMENTS.includes(trimmed)) {
+      if (PRIMARY_DECK_ELEMENTS.includes(trimmed as (typeof PRIMARY_DECK_ELEMENTS)[number])) {
         elementSet.add(trimmed);
       }
     }
@@ -76,7 +83,7 @@ async function computeDeckSummary(cards: DeckCard[]): Promise<{
 
   const deckElements =
     elementSet.size > 0
-      ? BASIC_ELEMENTS.filter((element) => elementSet.has(element))
+      ? PRIMARY_DECK_ELEMENTS.filter((element) => elementSet.has(element))
       : ["Colorless"];
 
   return { deckElements, totalCards };
@@ -87,6 +94,72 @@ function buildReviewedDeckState() {
     needsReview: false,
     lastReviewedAt: new Date(),
     reviewFlags: [] as DeckReviewFlag[],
+  };
+}
+
+function normalizeDeckBrowseMatch({
+  cardId,
+  elements,
+  badges,
+}: {
+  cardId?: string;
+  elements?: string[];
+  badges?: string[];
+}) {
+  const match: Record<string, unknown> = {
+    isPublic: true,
+  };
+
+  if (cardId) {
+    match["cards.cardId"] = cardId;
+  }
+
+  if (elements && elements.length > 0) {
+    match.deckElements = { $all: elements };
+  }
+
+  if (badges && badges.length > 0) {
+    match.$and = [
+      ...(Array.isArray(match.$and) ? match.$and : []),
+      badges.length === 1
+        ? {
+            $or: [
+              { deckBadges: { $all: badges } },
+              { deckBadge: badges[0] },
+            ],
+          }
+        : { deckBadges: { $all: badges } },
+    ];
+  }
+
+  return match;
+}
+
+function getDeckSortOptions(sortBy: DeckSortBy) {
+  const sortField = getDeckSortField(sortBy);
+  return {
+    [sortField]: -1 as const,
+    _id: -1 as const,
+  };
+}
+
+function buildCursorMatch(sortBy: DeckSortBy, cursor?: DecodedDeckCursor) {
+  if (!cursor) {
+    return undefined;
+  }
+
+  const sortField = getDeckSortField(sortBy);
+  const cursorValue =
+    sortField === "createdAt" ? new Date(cursor.sortValue) : cursor.sortValue;
+
+  return {
+    $or: [
+      { [sortField]: { $lt: cursorValue } },
+      {
+        [sortField]: cursorValue,
+        _id: { $lt: new ObjectId(cursor.id) },
+      },
+    ],
   };
 }
 
@@ -141,6 +214,123 @@ export const deckDbService = {
     }
   },
 
+  async countPublicDecks(filters: Omit<DeckBrowseFilters, "searchQuery"> = {}) {
+    try {
+      await ensureDbConnection();
+      const match = normalizeDeckBrowseMatch(filters);
+      return await DeckModel.countDocuments(match);
+    } catch (error) {
+      console.error("Error counting public decks:", error);
+      throw error;
+    }
+  },
+
+  async countDecksContainingCard(
+    cardId: string,
+    filters: Omit<DeckBrowseFilters, "searchQuery"> = {}
+  ) {
+    try {
+      await ensureDbConnection();
+      const match = normalizeDeckBrowseMatch({
+        ...filters,
+        cardId,
+      });
+      return await DeckModel.countDocuments(match);
+    } catch (error) {
+      console.error(`Error counting decks containing card ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  async getPublicDecksWithUserInfoPage(
+    sortBy: DeckSortBy = "newest",
+    limit?: number,
+    cursor?: DecodedDeckCursor,
+    currentUserId?: string,
+    filters: Omit<DeckBrowseFilters, "searchQuery"> = {}
+  ): Promise<DeckWithUserInfo[]> {
+    try {
+      await ensureDbConnection();
+
+      const baseMatch = normalizeDeckBrowseMatch(filters);
+      const cursorMatch = buildCursorMatch(sortBy, cursor);
+      const sortOptions = getDeckSortOptions(sortBy);
+
+      const pipeline: Record<string, unknown>[] = [
+        {
+          $match: cursorMatch
+            ? {
+                $and: [baseMatch, cursorMatch],
+              }
+            : baseMatch,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userInfo",
+          },
+        },
+        {
+          $addFields: {
+            user: {
+              $ifNull: [
+                {
+                  $arrayElemAt: [
+                    {
+                      $map: {
+                        input: "$userInfo",
+                        as: "u",
+                        in: {
+                          name: { $ifNull: ["$$u.name", "Unknown User"] },
+                          username: "$$u.username",
+                          achievementXp: {
+                            $ifNull: ["$$u.achievementXp", 0],
+                          },
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+                { name: "Unknown User", username: null, achievementXp: 0 },
+              ],
+            },
+            deckElements: { $ifNull: ["$deckElements", []] },
+            isLikedByCurrentUser: currentUserId
+              ? {
+                  $in: [
+                    new ObjectId(currentUserId),
+                    { $ifNull: ["$likedBy", []] },
+                  ],
+                }
+              : false,
+          },
+        },
+        { $sort: sortOptions },
+        ...(limit !== undefined ? [{ $limit: limit }] : []),
+        {
+          $project: {
+            userInfo: 0,
+          },
+        },
+      ];
+
+      const results = await DeckModel.aggregate(pipeline);
+
+      return results.map((result) => ({
+        deck: convertAggregationToDeck(result),
+        user: result.user,
+        isLikedByCurrentUser: result.isLikedByCurrentUser || false,
+        deckElements: result.deckElements || [],
+      }));
+    } catch (error) {
+      console.error("Error getting public decks page with user info:", error);
+      throw error;
+    }
+  },
+
   /**
    * Get public decks with user information using aggregation for better performance
    * @param sortBy Optional parameter to sort by 'popular' (views), 'liked' (likes), or 'newest' (default)
@@ -175,7 +365,7 @@ export const deckDbService = {
       }
 
       // Use aggregation to join with users collection for better performance
-      const pipeline: AggregationStage[] = [
+      const pipeline: Record<string, unknown>[] = [
         { $match: { isPublic: true } },
         {
           $lookup: {
@@ -374,6 +564,7 @@ export const deckDbService = {
         "../models/CompetitionEntry"
       );
       const { COMPETITION_STATUS } = await import("../../constants");
+      type CompetitionLike = { title?: string; status?: string };
 
       // Check if deck is used in any active competitions
       const competitionEntries = await CompetitionEntryModel.find({
@@ -383,7 +574,7 @@ export const deckDbService = {
       // Filter for competitions that prevent deck deletion
       // Allow deletion only if competitions are UPCOMING or COMPLETED
       const blockingCompetitionEntries = competitionEntries.filter((entry) => {
-        const competition = entry.competitionId as PopulatedCompetition;
+        const competition = entry.competitionId as CompetitionLike | null;
         return (
           competition &&
           competition.status !== COMPETITION_STATUS.UPCOMING &&
@@ -393,12 +584,12 @@ export const deckDbService = {
 
       if (blockingCompetitionEntries.length > 0) {
         const competitionTitles = blockingCompetitionEntries
-          .map((entry) => (entry.competitionId as PopulatedCompetition)?.title)
+          .map((entry) => (entry.competitionId as CompetitionLike | null)?.title)
           .filter(Boolean)
           .join(", ");
 
         const competitionStatuses = blockingCompetitionEntries
-          .map((entry) => (entry.competitionId as PopulatedCompetition)?.status)
+          .map((entry) => (entry.competitionId as CompetitionLike | null)?.status)
           .filter(Boolean);
 
         throw new Error(
@@ -563,6 +754,95 @@ export const deckDbService = {
     }
   },
 
+  async getDecksContainingCardWithUserInfoPage(
+    cardId: string,
+    limit?: number,
+    cursor?: DecodedDeckCursor,
+    currentUserId?: string
+  ): Promise<DeckWithUserInfo[]> {
+    try {
+      await ensureDbConnection();
+
+      const baseMatch = normalizeDeckBrowseMatch({ cardId });
+      const cursorMatch = buildCursorMatch("newest", cursor);
+      const pipeline: Record<string, unknown>[] = [
+        {
+          $match: cursorMatch
+            ? {
+                $and: [baseMatch, cursorMatch],
+              }
+            : baseMatch,
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "userId",
+            foreignField: "_id",
+            as: "userInfo",
+          },
+        },
+        {
+          $addFields: {
+            user: {
+              $ifNull: [
+                {
+                  $arrayElemAt: [
+                    {
+                      $map: {
+                        input: "$userInfo",
+                        as: "u",
+                        in: {
+                          name: { $ifNull: ["$$u.name", "Unknown User"] },
+                          username: "$$u.username",
+                          achievementXp: {
+                            $ifNull: ["$$u.achievementXp", 0],
+                          },
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+                { name: "Unknown User", username: null, achievementXp: 0 },
+              ],
+            },
+            deckElements: { $ifNull: ["$deckElements", []] },
+            isLikedByCurrentUser: currentUserId
+              ? {
+                  $in: [
+                    new ObjectId(currentUserId),
+                    { $ifNull: ["$likedBy", []] },
+                  ],
+                }
+              : false,
+          },
+        },
+        { $sort: getDeckSortOptions("newest") },
+        ...(limit !== undefined ? [{ $limit: limit }] : []),
+        {
+          $project: {
+            userInfo: 0,
+          },
+        },
+      ];
+
+      const results = await DeckModel.aggregate(pipeline);
+
+      return results.map((result) => ({
+        deck: convertAggregationToDeck(result),
+        user: result.user,
+        isLikedByCurrentUser: result.isLikedByCurrentUser || false,
+        deckElements: result.deckElements || [],
+      }));
+    } catch (error) {
+      console.error(
+        `Error getting decks containing card ${cardId} page with user info:`,
+        error
+      );
+      throw error;
+    }
+  },
+
   /**
    * Get decks containing a specific card
    */
@@ -653,7 +933,7 @@ export const deckDbService = {
       await ensureDbConnection();
 
       // Build aggregation pipeline for optimized query
-      const pipeline: AggregationStage[] = [
+      const pipeline: Record<string, unknown>[] = [
         // Match decks containing the specific card
         {
           $match: {
@@ -748,9 +1028,8 @@ export const deckDbService = {
       return results.map((result) => ({
         deck: convertAggregationToDeck(result),
         user: result.user,
-        cards: result.cards.filter(
-          (card: { id?: string } | null | undefined): card is Card =>
-            Boolean(card?.id)
+        cards: (result.cards as Array<Card | null | undefined>).filter(
+          (card): card is Card => Boolean(card?.id)
         ),
       }));
     } catch (error) {

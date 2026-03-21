@@ -121,7 +121,7 @@ export default function DeckGrid({
 
   return (
     <div className={className}>
-      <div className={`grid ${columnClasses} gap-8`}>
+      <div className={`grid ${columnClasses} gap-4 lg:gap-5`}>
         {displayItems.map((item) => {
           if (useOptimizedFormat) {
             // 🎯 NEW: Optimized format with like status

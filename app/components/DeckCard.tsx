@@ -24,9 +24,9 @@ interface DeckCardProps {
     achievementXp?: number;
   };
   cards?: Card[];
-  deckElements?: string[]; // 🎯 NEW: Server-provided deck elements
+  deckElements?: string[];
   className?: string;
-  isLikedByCurrentUser?: boolean; // 🎯 NEW: Like status from optimized API
+  isLikedByCurrentUser?: boolean;
   onLikeChange?: (liked: boolean, likes: number) => void;
 }
 
@@ -34,31 +34,30 @@ export default function DeckCard({
   deck,
   user,
   cards,
-  deckElements: serverDeckElements, // 🎯 NEW: Server-provided elements
+  deckElements: serverDeckElements,
   className = "",
-  isLikedByCurrentUser, // 🎯 NEW: Receive like status
+  isLikedByCurrentUser,
   onLikeChange,
 }: DeckCardProps) {
-  // Calculate total cards
+  const deckBadges = deck.deckBadges || [];
+  const visibleBadges = deckBadges.slice(0, 2);
+  const hiddenBadgeCount = Math.max(
+    deckBadges.length - visibleBadges.length,
+    0,
+  );
+
   const totalCards =
     typeof deck.totalCards === "number"
       ? deck.totalCards
       : deck.cards?.reduce((sum, card) => sum + card.quantity, 0) || 0;
 
-  // Determine deck elements - prioritize server-provided elements
   let deckElements: ElementType[] = ["Colorless"];
 
-  // Use server-provided elements if available
   if (serverDeckElements && serverDeckElements.length > 0) {
     deckElements = serverDeckElements as ElementType[];
-  }
-  // Use stored deck elements if present
-  else if (deck.deckElements && deck.deckElements.length > 0) {
+  } else if (deck.deckElements && deck.deckElements.length > 0) {
     deckElements = deck.deckElements as ElementType[];
-  }
-  // Fallback: Calculate from cards if available
-  else if (cards && cards.length > 0 && deck.cards.length > 0) {
-    // Create an array of card objects with quantities for element calculation
+  } else if (cards && cards.length > 0 && deck.cards.length > 0) {
     const cardsWithQuantities = deck.cards
       .map((deckCard) => {
         const card = cards.find((c) => c.id === deckCard.cardId);
@@ -72,19 +71,15 @@ export default function DeckCard({
       quantity: number;
     }[];
 
-    // Get ALL elements in the deck
     if (cardsWithQuantities.length > 0) {
       deckElements = getAllDeckElements(cardsWithQuantities);
     }
   } else {
-    // Fallback: Use the deck ID for consistent colors when card data isn't available
-    // Convert the deck ID to a number for consistent element selection
     const idSum = deck._id
       .toString()
       .split("")
       .reduce((sum, char) => sum + char.charCodeAt(0), 0);
 
-    // Use the ID to select elements deterministically
     const allElements: ElementType[] = [
       "Fire",
       "Water",
@@ -93,7 +88,6 @@ export default function DeckCard({
       "Metal",
     ];
 
-    // For mono-element decks (if the deck name contains an element name)
     const deckName = deck.name.toLowerCase();
     if (deckName.includes("fire")) {
       deckElements = ["Fire"];
@@ -106,11 +100,9 @@ export default function DeckCard({
     } else if (deckName.includes("metal")) {
       deckElements = ["Metal"];
     } else {
-      // For other decks, use the ID to select 1-2 elements
       const primaryElementIndex = idSum % allElements.length;
       deckElements = [allElements[primaryElementIndex]];
 
-      // 50% chance of being a dual-element deck
       if (idSum % 2 === 0) {
         const secondaryElementIndex = (idSum + 1) % allElements.length;
         if (secondaryElementIndex !== primaryElementIndex) {
@@ -120,7 +112,6 @@ export default function DeckCard({
     }
   }
 
-  // Generate gradient based on deck elements - use non-vibrant colors to match deck detail page
   const gradientStyle = {
     background: generateElementGradient(deckElements, "135deg", false),
   };
@@ -128,63 +119,58 @@ export default function DeckCard({
   return (
     <Link
       href={`/decks/${deck._id.toString()}`}
-      className={`block ${className}`}>
-      <div className='relative rounded-lg overflow-hidden h-full bg-algomancy-darker border border-algomancy-purple/30 hover:border-algomancy-purple transition-colors group'>
-        {/* Element gradient background with opacity to match deck detail page */}
+      className={`block h-full ${className}`}>
+      <div className='group relative flex h-48 flex-col overflow-hidden rounded-lg border border-algomancy-purple/30 bg-algomancy-darker transition-colors hover:border-algomancy-purple'>
         <div
-          className='absolute inset-0 opacity-30 group-hover:opacity-40 transition-opacity'
+          className='absolute inset-0 opacity-30 transition-opacity group-hover:opacity-40'
           style={gradientStyle}
         />
 
-        <div className='relative p-5 z-10 h-full flex flex-col'>
-          {/* Top section */}
-          <div>
-            <div className='flex justify-between items-start gap-3'>
-              <div className='min-w-0'>
-                <div className='flex flex-wrap items-center gap-2'>
-                  <h2 className='text-white text-lg font-medium'>
-                    {deck.name}
-                  </h2>
-                  {deck.deckBadges?.map((badge) => (
-                    <DeckBadge key={badge} badge={badge} />
-                  ))}
-                  {deck.needsReview && (
-                    <DeckReviewNotice
-                      compact
-                      reviewFlags={deck.reviewFlags}
-                    />
-                  )}
-                </div>
+        <div className='relative z-10 flex h-full flex-col p-4'>
+          <div className='flex items-start justify-between gap-3'>
+            <div className='min-w-0 flex-1'>
+              <h2 className='h-8 line-clamp-2 text-lg font-medium leading-5 text-white'>
+                {deck.name}
+              </h2>
+
+              <div className='mt-0.5 flex h-5 items-center gap-1.5 overflow-hidden'>
+                {visibleBadges.map((badge) => (
+                  <DeckBadge
+                    key={badge}
+                    badge={badge}
+                    className='shrink-0 scale-[0.92] origin-left'
+                  />
+                ))}
+                {hiddenBadgeCount > 0 && (
+                  <span className='inline-flex h-5 shrink-0 items-center rounded-md border border-white/15 px-1.5 text-[10px] font-semibold text-white/70'>
+                    +{hiddenBadgeCount}
+                  </span>
+                )}
+                {deck.needsReview && (
+                  <DeckReviewNotice compact reviewFlags={deck.reviewFlags} />
+                )}
               </div>
+            </div>
+
+            <div className='ml-2 shrink-0 pt-0.5'>
               <ElementIcons
                 elements={deckElements}
-                size={20}
-                className='ml-2'
+                size={18}
                 showTooltips={true}
               />
             </div>
-
-            {deck.description && (
-              <p className='text-white/80 text-sm mt-2 line-clamp-2'>
-                {deck.description}
-              </p>
-            )}
           </div>
 
-          {/* Spacer to push bottom section down */}
-          <div className='flex-grow'></div>
-
-          {/* Bottom section - maintains original spacing but positioned at bottom */}
-          <div className='mt-6'>
-            <div className='flex justify-between items-center text-sm'>
-              <div className='flex items-center space-x-4'>
-                <span className='text-white'>{totalCards} cards</span>
+          <div className='mt-auto pt-3'>
+            <div className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-[13px]'>
+              <div className='flex min-w-0 items-center gap-3 text-white/85'>
+                <span className='shrink-0 text-white'>{totalCards} cards</span>
                 <span
-                  className='text-white/80 flex items-center'
+                  className='flex shrink-0 items-center text-white/80'
                   title={`${deck.views || 0} views`}>
                   <svg
                     xmlns='http://www.w3.org/2000/svg'
-                    className='h-4 w-4 mr-1'
+                    className='mr-1 h-3.5 w-3.5'
                     fill='none'
                     viewBox='0 0 24 24'
                     stroke='currentColor'>
@@ -203,47 +189,50 @@ export default function DeckCard({
                   </svg>
                   {typeof deck.views === "number" ? deck.views : 0}
                 </span>
-                <div onClick={(e) => e.preventDefault()}>
+                <div className='shrink-0' onClick={(e) => e.preventDefault()}>
                   <LikeButton
                     deckId={deck._id.toString()}
                     initialLikes={deck.likes || 0}
-                    initialLiked={isLikedByCurrentUser} // 🎯 NEW: Pass optimized like status
+                    initialLiked={isLikedByCurrentUser}
                     size='sm'
                     showCount={true}
                     onLikeChange={onLikeChange}
                   />
                 </div>
               </div>
-              <span className='text-white/80'>
+
+              <span className='shrink-0 text-[11px] text-white/70 sm:text-xs'>
                 {formatDistanceToNow(new Date(deck.createdAt), {
                   addSuffix: true,
                 })}
               </span>
             </div>
 
-            <div className='flex items-center justify-between mt-2 text-sm'>
-              <div className='flex items-center'>
-                <span className='text-white/80'>By </span>
+            <div className='mt-2 flex items-center justify-between gap-3 text-[13px]'>
+              <div className='flex min-w-0 items-center'>
+                <span className='shrink-0 text-white/80'>By </span>
                 <UserNameWithRank
                   name={user.name}
                   username={user.username}
                   achievementXp={user.achievementXp}
-                  className={`ml-1 ${
+                  truncate={true}
+                  className={`ml-1 min-w-0 ${
                     user.username ? "text-white" : "text-white/80"
                   }`}
                   iconClassName='text-algomancy-gold'
-                  iconSize={14}
+                  iconSize={12}
                 />
               </div>
 
-              {/* YouTube video indicator - same row as username */}
-              {deck.youtubeUrl && (
-                <div
-                  className='bg-red-600 rounded-full p-1 shadow-sm'
-                  title='Has video showcase'>
-                  <PlayIcon className='w-3 h-3 text-white' />
-                </div>
-              )}
+              <div className='flex h-4 w-4 shrink-0 items-center justify-center'>
+                {deck.youtubeUrl && (
+                  <div
+                    className='rounded-full bg-red-600 p-0.5 shadow-sm'
+                    title='Has video showcase'>
+                    <PlayIcon className='h-2.5 w-2.5 text-white' />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -251,5 +240,3 @@ export default function DeckCard({
     </Link>
   );
 }
-
-// Import here to avoid circular dependency

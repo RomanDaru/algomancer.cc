@@ -9,6 +9,7 @@ interface UserNameWithRankProps {
   iconClassName?: string;
   iconSize?: number;
   showAt?: boolean;
+  truncate?: boolean;
 }
 
 export default function UserNameWithRank({
@@ -19,6 +20,7 @@ export default function UserNameWithRank({
   iconClassName = "text-algomancy-gold",
   iconSize = 14,
   showAt = true,
+  truncate = false,
 }: UserNameWithRankProps) {
   const label = username
     ? `${showAt ? "@" : ""}${username}`
@@ -27,7 +29,7 @@ export default function UserNameWithRank({
   const rank = hasXp ? getRankForXp(achievementXp || 0) : null;
 
   return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
+    <span className={`inline-flex max-w-full min-w-0 items-center gap-1 ${className}`}>
       {rank && (
         <RankIcon
           rankKey={rank.key}
@@ -36,8 +38,7 @@ export default function UserNameWithRank({
           title={`${rank.name} (${achievementXp} XP)`}
         />
       )}
-      <span>{label}</span>
+      <span className={truncate ? "min-w-0 truncate" : ""}>{label}</span>
     </span>
   );
 }
-

@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Competition } from "@/app/lib/types/user";
 import { COMPETITION_STATUS } from "@/app/lib/constants";
+import AdminTabs from "@/app/components/admin/AdminTabs";
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -132,6 +133,8 @@ export default function AdminCompetitionsPage() {
             Create Competition
           </Link>
         </div>
+
+        <AdminTabs />
 
         {/* Competitions List */}
         {isLoading ? (

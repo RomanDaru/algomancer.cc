@@ -42,11 +42,22 @@ export interface Deck {
   viewedBy: string[];
   likes: number;
   likedBy: ObjectId[];
+  needsReview?: boolean;
+  lastReviewedAt?: Date;
+  reviewFlags?: DeckReviewFlag[];
 }
 
 export interface DeckCard {
   cardId: string;
   quantity: number;
+}
+
+export interface DeckReviewFlag {
+  cardId: string;
+  cardName: string;
+  changeSummary: string;
+  rulesVersion: number;
+  changedAt: Date;
 }
 
 export interface Competition {

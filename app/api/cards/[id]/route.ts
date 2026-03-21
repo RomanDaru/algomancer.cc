@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cardDbService } from "@/app/lib/db/services/cardDbService";
+import { adminCardService } from "@/app/lib/services/adminCardService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
@@ -58,20 +59,26 @@ export async function PUT(
     const resolvedParams = await params;
     const cardId = resolvedParams.id;
 
-    const card = await request.json();
+    const payload = await request.json();
+    const card = payload?.card ?? payload;
+    const isWrappedPayload = Boolean(payload?.card);
 
     // Ensure the ID in the URL matches the card ID
     if (card.id !== cardId) {
       return NextResponse.json({ error: "Card ID mismatch" }, { status: 400 });
     }
 
-    const updatedCard = await cardDbService.updateCard(card);
+    const result = await adminCardService.updateCardWithReview({
+      card,
+      changeMode: isWrappedPayload ? payload.changeMode : "auto",
+      changeSummary: isWrappedPayload ? payload.changeSummary : undefined,
+    });
 
-    if (!updatedCard) {
+    if (!result) {
       return NextResponse.json({ error: "Card not found" }, { status: 404 });
     }
 
-    return NextResponse.json(updatedCard);
+    return NextResponse.json(isWrappedPayload ? result : result.card);
   } catch (error) {
     console.error(`Error updating card:`, error);
     return NextResponse.json(

@@ -17,6 +17,7 @@ import YouTubeEmbed from "@/app/components/YouTubeEmbed";
 import DeckOptionsMenu from "@/app/components/DeckOptionsMenu";
 import UserNameWithRank from "@/app/components/UserNameWithRank";
 import DeckBadge from "@/app/components/DeckBadge";
+import DeckReviewNotice from "@/app/components/DeckReviewNotice";
 import {
   ElementType,
   getAllDeckElements,
@@ -218,6 +219,14 @@ export default function DeckPage({ params }: DeckPageProps) {
               </div>
 
               {deck.description && <p className='text-gray-300 mt-3'>{deck.description}</p>}
+
+              {deck.needsReview && (
+                <DeckReviewNotice
+                  reviewFlags={deck.reviewFlags}
+                  isOwner={isOwner}
+                  className='mt-4'
+                />
+              )}
             </div>
           </div>
         </div>

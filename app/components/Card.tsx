@@ -116,8 +116,7 @@ export default function Card({
           }
           loading={priority ? "eager" : "lazy"}
           priority={priority}
-          // @ts-ignore - fetchpriority is a valid HTML attribute but not in Next.js types yet
-          fetchpriority={priority ? "high" : "low"}
+          fetchPriority={priority ? "high" : "low"}
           onLoad={() => setImageLoaded(true)}
           onError={() => setImageError(true)}
         />

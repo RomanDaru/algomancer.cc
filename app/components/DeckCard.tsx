@@ -14,6 +14,7 @@ import {
   getAllDeckElements,
 } from "@/app/lib/utils/elements";
 import UserNameWithRank from "./UserNameWithRank";
+import DeckReviewNotice from "./DeckReviewNotice";
 
 interface DeckCardProps {
   deck: Deck;
@@ -144,6 +145,9 @@ export default function DeckCard({
                   <span className='inline-flex h-5 shrink-0 items-center rounded-md border border-white/15 px-1.5 text-[10px] font-semibold text-white/70'>
                     +{hiddenBadgeCount}
                   </span>
+                )}
+                {deck.needsReview && (
+                  <DeckReviewNotice compact reviewFlags={deck.reviewFlags} />
                 )}
               </div>
             </div>

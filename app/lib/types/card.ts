@@ -118,6 +118,9 @@ export interface Set {
   complexity: ComplexityType;
 }
 
+export type CardChangeScope = "none" | "asset" | "rules";
+export type CardChangeMode = "auto" | Exclude<CardChangeScope, "none">;
+
 export interface Card {
   id: string;
   name: string;
@@ -131,6 +134,11 @@ export interface Card {
   imageUrl: string;
   flavorText?: string;
   currentIndex?: number; // Added for tracking in the card entry helper
+  rulesVersion?: number;
+  rulesUpdatedAt?: Date;
+  assetUpdatedAt?: Date;
+  lastChangeScope?: Exclude<CardChangeScope, "none">;
+  lastChangeSummary?: string;
 }
 
 // Constants

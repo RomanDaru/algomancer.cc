@@ -94,6 +94,7 @@ export default function MyDecks() {
     typeof session.user.achievementXp === "number"
       ? session.user.achievementXp
       : undefined;
+  const decksNeedingReview = decks.filter((deck) => deck.needsReview);
 
   return (
     <div className='container mx-auto px-4 py-8'>
@@ -133,6 +134,20 @@ export default function MyDecks() {
         {error && (
           <div className='bg-red-500/20 border border-red-500/50 rounded-lg p-4 mb-6 text-white'>
             <p>{error}</p>
+          </div>
+        )}
+
+        {decksNeedingReview.length > 0 && (
+          <div className='mb-6 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100'>
+            <p className='font-medium'>
+              {decksNeedingReview.length} deck
+              {decksNeedingReview.length === 1 ? "" : "s"} need review after a
+              card update.
+            </p>
+            <p className='mt-2 text-sm text-amber-100/80'>
+              Open and save these decks after checking the changed cards:{" "}
+              {decksNeedingReview.map((deck) => deck.name).join(", ")}
+            </p>
           </div>
         )}
 

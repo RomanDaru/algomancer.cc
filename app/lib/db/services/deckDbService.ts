@@ -1,4 +1,4 @@
-import { Deck, DeckCard } from "../../types/user";
+import { Deck, DeckCard, DeckReviewFlag } from "../../types/user";
 import { Card } from "../../types/card";
 import { connectToDatabase } from "../mongodb";
 import {
@@ -87,6 +87,14 @@ async function computeDeckSummary(cards: DeckCard[]): Promise<{
       : ["Colorless"];
 
   return { deckElements, totalCards };
+}
+
+function buildReviewedDeckState() {
+  return {
+    needsReview: false,
+    lastReviewedAt: new Date(),
+    reviewFlags: [] as DeckReviewFlag[],
+  };
 }
 
 function normalizeDeckBrowseMatch({
@@ -495,6 +503,7 @@ export const deckDbService = {
         ...convertDeckToDocument(deck),
         deckElements: summary.deckElements,
         totalCards: summary.totalCards,
+        ...buildReviewedDeckState(),
       });
       await deckDoc.save();
       return convertDocumentToDeck(deckDoc);
@@ -513,19 +522,21 @@ export const deckDbService = {
       const updateData = convertDeckToDocument(deck);
       const cardsToUpdate = Array.isArray(deck.cards) ? deck.cards : null;
 
-        if (cardsToUpdate !== null) {
-          const summary = await computeDeckSummary(cardsToUpdate);
-          updateData.cards = cardsToUpdate;
-          updateData.deckElements = summary.deckElements;
-          updateData.totalCards = summary.totalCards;
-        } else {
-          delete updateData.cards;
-          delete updateData.deckElements;
-          delete updateData.totalCards;
-        }
-        if (deck.deckBadges === undefined) {
-          delete updateData.deckBadges;
-        }
+      if (cardsToUpdate !== null) {
+        const summary = await computeDeckSummary(cardsToUpdate);
+        updateData.cards = cardsToUpdate;
+        updateData.deckElements = summary.deckElements;
+        updateData.totalCards = summary.totalCards;
+      } else {
+        delete updateData.cards;
+        delete updateData.deckElements;
+        delete updateData.totalCards;
+      }
+      if (deck.deckBadges === undefined) {
+        delete updateData.deckBadges;
+      }
+
+      Object.assign(updateData, buildReviewedDeckState());
 
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(id),
@@ -646,6 +657,9 @@ export const deckDbService = {
       const summary = await computeDeckSummary(deck.cards);
       deck.deckElements = summary.deckElements;
       deck.totalCards = summary.totalCards;
+      deck.needsReview = false;
+      deck.lastReviewedAt = new Date();
+      deck.reviewFlags = [];
 
       // Save the updated deck
       await deck.save();
@@ -691,6 +705,9 @@ export const deckDbService = {
         const summary = await computeDeckSummary(deck.cards);
         deck.deckElements = summary.deckElements;
         deck.totalCards = summary.totalCards;
+        deck.needsReview = false;
+        deck.lastReviewedAt = new Date();
+        deck.reviewFlags = [];
 
         // Save the updated deck
         await deck.save();
@@ -724,6 +741,7 @@ export const deckDbService = {
             cards,
             deckElements: summary.deckElements,
             totalCards: summary.totalCards,
+            ...buildReviewedDeckState(),
           },
         },
         { new: true }
@@ -854,6 +872,49 @@ export const deckDbService = {
     }
   },
 
+  async flagDecksForCardChange(flag: DeckReviewFlag): Promise<{
+    totalFlagged: number;
+    publicFlagged: number;
+  }> {
+    try {
+      await ensureDbConnection();
+      const decks = await DeckModel.find(
+        { "cards.cardId": flag.cardId },
+        { _id: 1, isPublic: 1, reviewFlags: 1 }
+      );
+
+      if (decks.length === 0) {
+        return { totalFlagged: 0, publicFlagged: 0 };
+      }
+
+      await Promise.all(
+        decks.map(async (deck) => {
+          const existingFlags = Array.isArray(deck.reviewFlags)
+            ? deck.reviewFlags.filter(
+                (existingFlag: DeckReviewFlag) =>
+                  existingFlag.cardId !== flag.cardId
+              )
+            : [];
+
+          deck.reviewFlags = [...existingFlags, flag];
+          deck.needsReview = true;
+          await deck.save();
+        })
+      );
+
+      return {
+        totalFlagged: decks.length,
+        publicFlagged: decks.filter((deck) => deck.isPublic).length,
+      };
+    } catch (error) {
+      console.error(
+        `Error flagging decks for changed card ${flag.cardId}:`,
+        error
+      );
+      throw error;
+    }
+  },
+
   /**
    * Get decks containing a specific card with user information and card data
    * Optimized version using aggregation pipeline to eliminate N+1 queries
@@ -967,8 +1028,8 @@ export const deckDbService = {
       return results.map((result) => ({
         deck: convertAggregationToDeck(result),
         user: result.user,
-        cards: (result.cards as Array<{ id?: string } | null | undefined>).filter(
-          (card): card is { id: string } => Boolean(card?.id)
+        cards: (result.cards as Array<Card | null | undefined>).filter(
+          (card): card is Card => Boolean(card?.id)
         ),
       }));
     } catch (error) {

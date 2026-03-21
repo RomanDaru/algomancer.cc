@@ -14,24 +14,15 @@ import {
 import ElementIcon from "@/app/components/ElementIcon";
 import { ElementType } from "@/app/lib/utils/elements";
 import { Card } from "@/app/lib/types/card";
-import { Deck } from "@/app/lib/types/user";
+import {
+  DeckSortBy,
+  DeckWithUserInfo,
+  PaginatedDeckResponse,
+} from "@/app/lib/types/deckBrowse";
 import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-
-type DeckWithUserInfo = {
-  deck: Deck;
-  user: { name: string; username: string | null; achievementXp?: number };
-  isLikedByCurrentUser?: boolean;
-  deckElements?: string[];
-};
-
-type PaginatedPublicDeckResponse = {
-  decks: DeckWithUserInfo[];
-  hasMore: boolean;
-  nextSkip: number;
-};
 
 const BASIC_ELEMENTS: ElementType[] = [
   "Fire",
@@ -43,38 +34,61 @@ const BASIC_ELEMENTS: ElementType[] = [
   "Light",
 ];
 
-async function fetchPublicDeckPage({
+async function fetchDeckPage({
   sortBy,
   searchQuery,
-  skip,
+  cursor,
   signal,
+  elements,
+  badges,
+  cardId,
 }: {
-  sortBy: "newest" | "popular" | "liked";
+  sortBy: DeckSortBy;
   searchQuery?: string;
-  skip: number;
+  cursor?: string | null;
   signal?: AbortSignal;
-}): Promise<PaginatedPublicDeckResponse> {
+  elements?: string[];
+  badges?: string[];
+  cardId?: string;
+}): Promise<PaginatedDeckResponse> {
   const params = new URLSearchParams({
-    sort: sortBy,
     limit: PUBLIC_DECKS_PAGE_SIZE.toString(),
-    skip: skip.toString(),
     withMeta: "1",
   });
+
+  if (!cardId) {
+    params.set("sort", sortBy);
+  }
 
   if (searchQuery) {
     params.set("q", searchQuery);
   }
 
-  const response = await fetch(`/api/decks/public?${params.toString()}`, {
+  if (cursor) {
+    params.set("cursor", cursor);
+  }
+
+  if (elements && elements.length > 0) {
+    params.set("elements", elements.join(","));
+  }
+
+  if (badges && badges.length > 0) {
+    params.set("badges", badges.join(","));
+  }
+
+  const endpoint = cardId
+    ? `/api/decks/card/${cardId}?${params.toString()}`
+    : `/api/decks/public?${params.toString()}`;
+  const response = await fetch(endpoint, {
     signal,
     cache: "no-store",
   });
 
   if (!response.ok) {
-    throw new Error("Failed to load public decks");
+    throw new Error("Failed to load decks");
   }
 
-  return (await response.json()) as PaginatedPublicDeckResponse;
+  return (await response.json()) as PaginatedDeckResponse;
 }
 
 function mergeDeckPages(
@@ -100,29 +114,32 @@ function mergeDeckPages(
 }
 
 interface Props {
-  initialDecks: DeckWithUserInfo[];
-  initialHasMore: boolean;
+  initialResponse: PaginatedDeckResponse;
   filteredCard?: Card | null;
+  cardId?: string;
   isAuthenticated: boolean;
 }
 
 export default function PublicDecksClient({
-  initialDecks,
-  initialHasMore,
+  initialResponse,
   filteredCard,
+  cardId,
   isAuthenticated,
 }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadedDecks, setLoadedDecks] = useState(initialDecks);
-  const [hasMoreServerResults, setHasMoreServerResults] =
-    useState(initialHasMore);
-  const [nextSkip, setNextSkip] = useState(initialDecks.length);
+  const [loadedDecks, setLoadedDecks] = useState(initialResponse.decks);
+  const [hasMoreServerResults, setHasMoreServerResults] = useState(
+    initialResponse.hasMore
+  );
+  const [nextCursor, setNextCursor] = useState<string | null>(
+    initialResponse.nextCursor
+  );
+  const [totalDecks, setTotalDecks] = useState(initialResponse.total);
+  const [apiWarnings, setApiWarnings] = useState(initialResponse.warnings);
   const [isFetchingDecks, setIsFetchingDecks] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [sortBy, setSortBy] = useState<"newest" | "popular" | "liked">(
-    "newest"
-  );
+  const [sortBy, setSortBy] = useState<DeckSortBy>("newest");
   const [sortTransition, setSortTransition] = useState(false);
   const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<DeckBadgeType[]>([]);
@@ -130,31 +147,30 @@ export default function PublicDecksClient({
   const [openMenu, setOpenMenu] = useState<"elements" | "badges" | null>(null);
 
   const trimmedQuery = searchQuery.trim();
+  const shouldUseInitialResponse =
+    !filteredCard &&
+    sortBy === "newest" &&
+    !trimmedQuery &&
+    selectedElements.length === 0 &&
+    selectedBadges.length === 0;
 
-  const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
-    if (newSortBy === sortBy) return;
+  const handleSortChange = (newSortBy: DeckSortBy) => {
+    if (newSortBy === sortBy) {
+      return;
+    }
+
     setSortTransition(true);
     setSortBy(newSortBy);
     setTimeout(() => setSortTransition(false), 300);
   };
 
   useEffect(() => {
-    setLoadedDecks(initialDecks);
-    setHasMoreServerResults(initialHasMore);
-    setNextSkip(initialDecks.length);
-  }, [initialDecks, initialHasMore]);
-
-  const availableBadges = useMemo(() => {
-    const usedBadges = new Set<DeckBadgeType>();
-
-    loadedDecks.forEach((item) => {
-      item.deck.deckBadges?.forEach((badge) => {
-        usedBadges.add(badge);
-      });
-    });
-
-    return DECK_BADGE_VALUES.filter((badge) => usedBadges.has(badge));
-  }, [loadedDecks]);
+    setLoadedDecks(initialResponse.decks);
+    setHasMoreServerResults(initialResponse.hasMore);
+    setNextCursor(initialResponse.nextCursor);
+    setTotalDecks(initialResponse.total);
+    setApiWarnings(initialResponse.warnings);
+  }, [initialResponse]);
 
   useEffect(() => {
     setVisibleCount(PUBLIC_DECKS_INITIAL_VISIBLE);
@@ -163,19 +179,17 @@ export default function PublicDecksClient({
     selectedBadges,
     selectedElements,
     filteredCard?.id,
-    initialDecks.length,
     trimmedQuery,
+    initialResponse.decks.length,
   ]);
 
   useEffect(() => {
-    if (filteredCard) {
-      return;
-    }
-
-    if (!trimmedQuery && sortBy === "newest") {
-      setLoadedDecks(initialDecks);
-      setHasMoreServerResults(initialHasMore);
-      setNextSkip(initialDecks.length);
+    if (filteredCard || shouldUseInitialResponse) {
+      setLoadedDecks(initialResponse.decks);
+      setHasMoreServerResults(initialResponse.hasMore);
+      setNextCursor(initialResponse.nextCursor);
+      setTotalDecks(initialResponse.total);
+      setApiWarnings(initialResponse.warnings);
       setSearchError("");
       setIsFetchingDecks(false);
       return;
@@ -187,26 +201,29 @@ export default function PublicDecksClient({
         setIsFetchingDecks(true);
         setSearchError("");
 
-        const page = await fetchPublicDeckPage({
+        const response = await fetchDeckPage({
           sortBy,
           searchQuery: trimmedQuery || undefined,
-          skip: 0,
+          elements: selectedElements,
+          badges: selectedBadges,
           signal: controller.signal,
         });
 
-        setLoadedDecks(page.decks);
-        setHasMoreServerResults(page.hasMore);
-        setNextSkip(page.nextSkip);
+        setLoadedDecks(response.decks);
+        setHasMoreServerResults(response.hasMore);
+        setNextCursor(response.nextCursor);
+        setTotalDecks(response.total);
+        setApiWarnings(response.warnings);
       } catch (error) {
         if ((error as Error).name === "AbortError") {
           return;
         }
 
-        console.error("Failed to fetch public decks:", error);
+        console.error("Failed to fetch decks:", error);
         setSearchError(
           trimmedQuery
             ? "Search is temporarily unavailable."
-            : "Failed to load public decks."
+            : "Failed to load decks."
         );
       } finally {
         setIsFetchingDecks(false);
@@ -217,7 +234,23 @@ export default function PublicDecksClient({
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [filteredCard, initialDecks, initialHasMore, sortBy, trimmedQuery]);
+  }, [
+    filteredCard,
+    initialResponse,
+    selectedBadges,
+    selectedElements,
+    shouldUseInitialResponse,
+    sortBy,
+    trimmedQuery,
+  ]);
+
+  useEffect(() => {
+    if (apiWarnings.length === 0) {
+      return;
+    }
+
+    console.warn("Deck browse API warnings:", apiWarnings);
+  }, [apiWarnings]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -272,47 +305,22 @@ export default function PublicDecksClient({
       ? selectedBadges[0]
       : `Deck Type (${selectedBadges.length})`;
 
-  const filteredDecks = useMemo(() => {
-    let list = loadedDecks;
-
-    if (selectedElements.length > 0) {
-      list = list.filter((item) => {
-        const elements = (item.deckElements ||
-          item.deck.deckElements ||
-          []) as ElementType[];
-
-        if (elements.length === 0) {
-          return false;
-        }
-
-        return selectedElements.every((element) => elements.includes(element));
-      });
-    }
-
-    if (selectedBadges.length > 0) {
-      list = list.filter((item) => {
-        const deckBadges = item.deck.deckBadges || [];
-        return selectedBadges.every((badge) => deckBadges.includes(badge));
-      });
-    }
-
-    return list;
-  }, [loadedDecks, selectedBadges, selectedElements]);
-
-  const displayedDecks = filteredDecks.slice(0, visibleCount);
-  const canLoadMore =
-    filteredDecks.length > visibleCount ||
-    (!filteredCard && hasMoreServerResults);
+  const displayedDecks = useMemo(
+    () => loadedDecks.slice(0, visibleCount),
+    [loadedDecks, visibleCount]
+  );
+  const displayedDeckCount = Math.min(displayedDecks.length, totalDecks);
+  const canLoadMore = loadedDecks.length > visibleCount || hasMoreServerResults;
 
   const handleLoadMore = async () => {
-    if (filteredDecks.length > visibleCount) {
+    if (loadedDecks.length > visibleCount) {
       setVisibleCount((prev) =>
-        Math.min(prev + PUBLIC_DECKS_LOAD_MORE_STEP, filteredDecks.length)
+        Math.min(prev + PUBLIC_DECKS_LOAD_MORE_STEP, loadedDecks.length)
       );
       return;
     }
 
-    if (filteredCard || isFetchingDecks || !hasMoreServerResults) {
+    if (isFetchingDecks || !hasMoreServerResults || !nextCursor) {
       return;
     }
 
@@ -320,19 +328,24 @@ export default function PublicDecksClient({
       setIsFetchingDecks(true);
       setSearchError("");
 
-      const page = await fetchPublicDeckPage({
+      const response = await fetchDeckPage({
         sortBy,
-        searchQuery: trimmedQuery || undefined,
-        skip: nextSkip,
+        searchQuery: filteredCard ? undefined : trimmedQuery || undefined,
+        cursor: nextCursor,
+        elements: filteredCard ? undefined : selectedElements,
+        badges: filteredCard ? undefined : selectedBadges,
+        cardId,
       });
 
-      setLoadedDecks((prev) => mergeDeckPages(prev, page.decks));
-      setHasMoreServerResults(page.hasMore);
-      setNextSkip(page.nextSkip);
+      setLoadedDecks((prev) => mergeDeckPages(prev, response.decks));
+      setHasMoreServerResults(response.hasMore);
+      setNextCursor(response.nextCursor);
+      setTotalDecks(response.total);
+      setApiWarnings(response.warnings);
       setVisibleCount((prev) => prev + PUBLIC_DECKS_LOAD_MORE_STEP);
     } catch (error) {
-      console.error("Failed to load more public decks:", error);
-      setSearchError("Failed to load more public decks.");
+      console.error("Failed to load more decks:", error);
+      setSearchError("Failed to load more decks.");
     } finally {
       setIsFetchingDecks(false);
     }
@@ -367,6 +380,7 @@ export default function PublicDecksClient({
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
                   placeholder='Search by deck, author, or card'
+                  aria-label='Search decks'
                   className='w-full rounded-md border border-algomancy-purple/30 bg-algomancy-dark py-2 pl-9 pr-3 text-sm text-white placeholder:text-gray-500'
                 />
               </div>
@@ -377,6 +391,7 @@ export default function PublicDecksClient({
                   onClick={() =>
                     setOpenMenu((prev) => (prev === "elements" ? null : "elements"))
                   }
+                  aria-label='Filter by elements'
                   className='inline-flex w-full items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
                   <span className='truncate'>{elementFilterLabel}</span>
                   <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
@@ -425,59 +440,57 @@ export default function PublicDecksClient({
                 )}
               </div>
 
-              {availableBadges.length > 0 && (
-                <div className='relative w-full'>
-                  <button
-                    type='button'
-                    onClick={() =>
-                      setOpenMenu((prev) => (prev === "badges" ? null : "badges"))
-                    }
-                    className='inline-flex w-full items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
-                    <span className='truncate'>{badgeFilterLabel}</span>
-                    <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
-                  </button>
-                  {openMenu === "badges" && (
-                    <div className='absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl lg:right-auto lg:w-[240px]'>
-                      <div className='flex flex-wrap gap-2'>
-                        {availableBadges.map((badge) => {
-                          const isSelected = selectedBadges.includes(badge);
-                          return (
-                            <button
-                              key={badge}
-                              type='button'
-                              onClick={() => toggleBadge(badge)}
-                              className={`rounded-full transition-opacity ${
-                                isSelected
-                                  ? "opacity-100"
-                                  : "opacity-65 hover:opacity-100"
-                              }`}
-                              aria-pressed={isSelected}>
-                              <DeckBadge badge={badge} />
-                            </button>
-                          );
-                        })}
-                      </div>
-                      {selectedBadges.length > 0 && (
-                        <button
-                          type='button'
-                          onClick={clearAllBadges}
-                          className='mt-3 text-xs text-algomancy-purple transition-colors hover:text-algomancy-gold'>
-                          Clear
-                        </button>
-                      )}
+              <div className='relative w-full'>
+                <button
+                  type='button'
+                  onClick={() =>
+                    setOpenMenu((prev) => (prev === "badges" ? null : "badges"))
+                  }
+                  aria-label='Filter by deck type'
+                  className='inline-flex w-full items-center justify-between rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
+                  <span className='truncate'>{badgeFilterLabel}</span>
+                  <ChevronDownIcon className='ml-3 h-4 w-4 shrink-0 text-gray-400' />
+                </button>
+                {openMenu === "badges" && (
+                  <div className='absolute left-0 right-0 top-full z-20 mt-2 rounded-xl border border-algomancy-purple/30 bg-algomancy-darker p-3 shadow-xl lg:right-auto lg:w-[240px]'>
+                    <div className='flex flex-wrap gap-2'>
+                      {DECK_BADGE_VALUES.map((badge) => {
+                        const isSelected = selectedBadges.includes(badge);
+                        return (
+                          <button
+                            key={badge}
+                            type='button'
+                            onClick={() => toggleBadge(badge)}
+                            className={`rounded-full transition-opacity ${
+                              isSelected
+                                ? "opacity-100"
+                                : "opacity-65 hover:opacity-100"
+                            }`}
+                            aria-pressed={isSelected}>
+                            <DeckBadge badge={badge} />
+                          </button>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              )}
+                    {selectedBadges.length > 0 && (
+                      <button
+                        type='button'
+                        onClick={clearAllBadges}
+                        className='mt-3 text-xs text-algomancy-purple transition-colors hover:text-algomancy-gold'>
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className='w-full'>
                 <select
                   value={sortBy}
                   onChange={(event) =>
-                    handleSortChange(
-                      event.target.value as "newest" | "popular" | "liked"
-                    )
+                    handleSortChange(event.target.value as DeckSortBy)
                   }
+                  aria-label='Sort decks'
                   className='w-full rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-3 py-2 text-sm text-white'>
                   <option value='newest'>Sort: Newest</option>
                   <option value='popular'>Sort: Popular</option>
@@ -486,17 +499,27 @@ export default function PublicDecksClient({
               </div>
             </div>
 
-            {(isFetchingDecks || searchError) && (
-              <div className='mt-3 text-sm'>
+            <p
+              className='mt-3 text-xs text-gray-400'
+              data-testid='deck-results-summary'>
+              Showing {displayedDeckCount} of {totalDecks}{" "}
+              public decks
+            </p>
+
+            {(isFetchingDecks || searchError || apiWarnings.length > 0) && (
+              <div className='mt-2 text-sm'>
                 {isFetchingDecks && (
                   <p className='text-gray-400'>
-                    {trimmedQuery
-                      ? "Searching public decks..."
-                      : "Loading public decks..."}
+                    {trimmedQuery ? "Searching decks..." : "Loading decks..."}
                   </p>
                 )}
                 {!isFetchingDecks && searchError && (
                   <p className='text-red-400'>{searchError}</p>
+                )}
+                {!isFetchingDecks && apiWarnings.includes("limit_capped_to_max") && (
+                  <p className='text-amber-300'>
+                    Backend capped this request to the maximum page size.
+                  </p>
                 )}
               </div>
             )}
@@ -521,6 +544,10 @@ export default function PublicDecksClient({
               <p className='text-sm text-gray-300'>
                 {filteredCard.element.type}{" "}
                 {filteredCard.typeAndAttributes.mainType}
+              </p>
+              <p className='mt-1 text-xs text-gray-400'>
+                Showing {displayedDeckCount} of {totalDecks}{" "}
+                decks containing this card
               </p>
             </div>
           </div>
@@ -565,6 +592,7 @@ export default function PublicDecksClient({
             type='button'
             onClick={handleLoadMore}
             disabled={isFetchingDecks}
+            data-testid='load-more-decks'
             className='inline-flex items-center justify-center rounded-md bg-algomancy-purple/30 px-4 py-2 text-sm text-white transition-colors hover:bg-algomancy-purple/50 disabled:cursor-not-allowed disabled:opacity-60'>
             {isFetchingDecks ? "Loading..." : "Load more"}
           </button>

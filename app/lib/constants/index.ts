@@ -52,6 +52,7 @@ export const DECK_BADGES = {
 export const PUBLIC_DECKS_PAGE_SIZE = 36;
 export const PUBLIC_DECKS_INITIAL_VISIBLE = 12;
 export const PUBLIC_DECKS_LOAD_MORE_STEP = 12;
+export const PUBLIC_DECKS_MAX_PAGE_SIZE = 100;
 
 // Export types for TypeScript
 export type CompetitionStatus =

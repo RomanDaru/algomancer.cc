@@ -2,12 +2,39 @@ import { NextRequest, NextResponse } from "next/server";
 import { deckService } from "@/app/lib/services/deckService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { PUBLIC_DECKS_PAGE_SIZE } from "@/app/lib/constants";
+import {
+  DECK_BADGE_VALUES,
+  PUBLIC_DECKS_MAX_PAGE_SIZE,
+  PUBLIC_DECKS_PAGE_SIZE,
+} from "@/app/lib/constants";
+import { ElementType } from "@/app/lib/utils/elements";
+
+const VALID_ELEMENTS = new Set<ElementType>([
+  "Fire",
+  "Water",
+  "Earth",
+  "Wood",
+  "Metal",
+  "Dark",
+  "Light",
+  "Colorless",
+]);
+
+function parseCsvParam(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
 
 /**
  * GET /api/decks/public
  * Get all public decks with user information
- * Supports pagination with limit and skip parameters
+ * Supports cursor pagination with limit and cursor parameters
  * Includes like status for authenticated users
  */
 export async function GET(request: NextRequest) {
@@ -25,24 +52,47 @@ export async function GET(request: NextRequest) {
       | null;
     const searchQuery = searchParams.get("q")?.trim() || undefined;
     const limitParam = searchParams.get("limit");
-    const skipParam = searchParams.get("skip");
+    const cursor = searchParams.get("cursor") || undefined;
     const withMeta = searchParams.get("withMeta") === "1";
+    const elements = parseCsvParam(searchParams.get("elements")).filter(
+      (element): element is ElementType => VALID_ELEMENTS.has(element as ElementType)
+    );
+    const badges = parseCsvParam(searchParams.get("badges")).filter((badge) =>
+      DECK_BADGE_VALUES.includes(badge as (typeof DECK_BADGE_VALUES)[number])
+    );
 
     // Validate and parse parameters
     const validSortBy = ["popular", "newest", "liked"].includes(sortBy || "")
       ? (sortBy as "popular" | "newest" | "liked")
       : "newest";
 
-    const limit = limitParam
-      ? Math.min(Math.max(parseInt(limitParam, 10), 1), 100)
-      : undefined;
-    const skip = skipParam ? Math.max(parseInt(skipParam, 10), 0) : undefined;
+    const requestedLimit = limitParam ? parseInt(limitParam, 10) : undefined;
+    const effectiveLimit = requestedLimit
+      ? Math.min(Math.max(requestedLimit, 1), PUBLIC_DECKS_MAX_PAGE_SIZE)
+      : PUBLIC_DECKS_PAGE_SIZE;
+    const warnings: string[] = [];
+
+    if (
+      typeof requestedLimit === "number" &&
+      Number.isFinite(requestedLimit) &&
+      requestedLimit > PUBLIC_DECKS_MAX_PAGE_SIZE
+    ) {
+      warnings.push("limit_capped_to_max");
+      console.warn("Public decks API limit capped", {
+        requestedLimit,
+        effectiveLimit,
+        sortBy: validSortBy,
+        hasSearch: Boolean(searchQuery),
+        elements,
+        badges,
+      });
+    }
 
     if (!withMeta) {
       const decksWithUserInfo = await deckService.getPublicDecksWithUserInfo(
         validSortBy,
-        limit,
-        skip,
+        effectiveLimit,
+        undefined,
         currentUserId,
         searchQuery
       );
@@ -50,23 +100,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(decksWithUserInfo);
     }
 
-    const pageSize = limit ?? PUBLIC_DECKS_PAGE_SIZE;
-    const paginatedResults = await deckService.getPublicDecksWithUserInfo(
-      validSortBy,
-      pageSize + 1,
-      skip,
+    const response = await deckService.getPublicDecksPage({
+      sortBy: validSortBy,
+      limit: effectiveLimit,
+      cursor,
       currentUserId,
-      searchQuery
-    );
-    const hasMore = paginatedResults.length > pageSize;
-    const decks = hasMore ? paginatedResults.slice(0, pageSize) : paginatedResults;
-
-    return NextResponse.json({
-      decks,
-      hasMore,
-      nextSkip: (skip ?? 0) + decks.length,
+      filters: {
+        searchQuery,
+        elements,
+        badges,
+      },
+      requestedLimit,
+      warnings,
     });
+
+    return NextResponse.json(response);
   } catch (error) {
+    if (error instanceof Error && error.message === "Invalid cursor") {
+      return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
+    }
+
     console.error("Error getting public decks:", error);
     return NextResponse.json(
       { error: "Failed to get public decks" },

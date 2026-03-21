@@ -3,6 +3,18 @@ import { deckDbService } from "../db/services/deckDbService";
 import { cardService } from "./cardService";
 import { Card } from "../types/card";
 import { getAllDeckElements } from "../utils/elements";
+import { ObjectId } from "mongodb";
+import {
+  DeckBrowseFilters,
+  DeckSortBy,
+  DeckWithUserInfo,
+  PaginatedDeckResponse,
+} from "../types/deckBrowse";
+import {
+  decodeDeckCursor,
+  encodeDeckCursor,
+  isDeckAfterCursor,
+} from "../utils/deckPagination";
 
 // Cache for decks
 const cachedUserDecks: Record<string, { decks: Deck[]; timestamp: number }> =
@@ -64,6 +76,123 @@ async function addDeckElementsToDecks(decks: Deck[]): Promise<Deck[]> {
       totalCards,
     };
   });
+}
+
+async function hydrateDeckResults(
+  results: DeckWithUserInfo[]
+): Promise<DeckWithUserInfo[]> {
+  if (results.length === 0) {
+    return results;
+  }
+
+  const uniqueCardIds = new Set<string>();
+  for (const item of results) {
+    for (const deckCard of item.deck.cards || []) {
+      uniqueCardIds.add(deckCard.cardId);
+    }
+  }
+
+  if (uniqueCardIds.size === 0) {
+    return results.map((item) => ({
+      ...item,
+      deckElements: item.deckElements?.length ? item.deckElements : ["Colorless"],
+    }));
+  }
+
+  const cards = await cardService.getCardsByIds([...uniqueCardIds]);
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+
+  return results.map((item) => {
+    const cardsWithQuantities = (item.deck.cards || [])
+      .map((deckCard) => {
+        const card = cardMap.get(deckCard.cardId);
+        if (!card) {
+          return null;
+        }
+
+        return {
+          card,
+          quantity: deckCard.quantity,
+        };
+      })
+      .filter(Boolean) as { card: Card; quantity: number }[];
+
+    const deckElements =
+      cardsWithQuantities.length > 0
+        ? getAllDeckElements(cardsWithQuantities)
+        : item.deckElements?.length
+        ? item.deckElements
+        : ["Colorless"];
+
+    return {
+      ...item,
+      deckElements,
+    };
+  });
+}
+
+async function filterDeckResultsBySearch(
+  results: DeckWithUserInfo[],
+  searchQuery?: string
+) {
+  const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
+  if (!normalizedSearchQuery) {
+    return results;
+  }
+
+  const uniqueCardIds = new Set<string>();
+  for (const item of results) {
+    for (const deckCard of item.deck.cards || []) {
+      uniqueCardIds.add(deckCard.cardId);
+    }
+  }
+
+  const cards = uniqueCardIds.size
+    ? await cardService.getCardsByIds([...uniqueCardIds])
+    : [];
+  const cardMap = new Map(cards.map((card) => [card.id, card]));
+
+  return results.filter((item) => {
+    const deckName = item.deck.name?.toLowerCase() || "";
+    const userName = item.user.name?.toLowerCase() || "";
+    const username = item.user.username?.toLowerCase() || "";
+    const cardNames = (item.deck.cards || [])
+      .map((deckCard) => cardMap.get(deckCard.cardId)?.name?.toLowerCase() || "")
+      .filter(Boolean);
+
+    return (
+      deckName.includes(normalizedSearchQuery) ||
+      userName.includes(normalizedSearchQuery) ||
+      username.includes(normalizedSearchQuery) ||
+      cardNames.some((cardName) => cardName.includes(normalizedSearchQuery))
+    );
+  });
+}
+
+function paginateDeckResults(
+  results: DeckWithUserInfo[],
+  sortBy: DeckSortBy,
+  limit: number,
+  cursor?: string
+) {
+  const decodedCursor = cursor ? decodeDeckCursor(cursor, sortBy) : undefined;
+  const cursorFilteredResults = decodedCursor
+    ? results.filter((item) => isDeckAfterCursor(item, decodedCursor, sortBy))
+    : results;
+
+  const decks = cursorFilteredResults.slice(0, limit);
+  const hasMore = cursorFilteredResults.length > limit;
+  const nextCursor =
+    hasMore && decks.length > 0
+      ? encodeDeckCursor(decks[decks.length - 1], sortBy)
+      : null;
+
+  return {
+    decks,
+    hasMore,
+    nextCursor,
+    total: results.length,
+  };
 }
 
 /**
@@ -240,80 +369,106 @@ export const deckService = {
       const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
       const shouldSearch = Boolean(normalizedSearchQuery);
 
-      // Use the optimized aggregation method from deckDbService
       const results = await deckDbService.getPublicDecksWithUserInfo(
         sortBy,
         shouldSearch ? undefined : limit,
         shouldSearch ? undefined : skip,
         currentUserId
       );
-
-      if (results.length === 0) {
-        return results;
-      }
-
-      const uniqueCardIds = new Set<string>();
-      for (const item of results) {
-        for (const deckCard of item.deck.cards || []) {
-          uniqueCardIds.add(deckCard.cardId);
-        }
-      }
-
-      if (uniqueCardIds.size === 0) {
-        return results.map((item) => ({
-          ...item,
-          deckElements: item.deckElements?.length ? item.deckElements : ["Colorless"],
-        }));
-      }
-
-      const cards = await cardService.getCardsByIds([...uniqueCardIds]);
-      const cardMap = new Map(cards.map((card) => [card.id, card]));
-
-      const hydratedResults = results.map((item) => {
-        const cardsWithQuantities = (item.deck.cards || [])
-          .map((deckCard) => {
-            const card = cardMap.get(deckCard.cardId);
-            if (!card) return null;
-            return { card, quantity: deckCard.quantity };
-          })
-          .filter(Boolean) as { card: Card; quantity: number }[];
-
-        const deckElements =
-          cardsWithQuantities.length > 0
-            ? getAllDeckElements(cardsWithQuantities)
-            : ["Colorless"];
-
-        return {
-          ...item,
-          deckElements,
-        };
-      });
+      const hydratedResults = await hydrateDeckResults(results);
 
       if (!shouldSearch || !normalizedSearchQuery) {
         return hydratedResults;
       }
 
-      const filteredResults = hydratedResults.filter((item) => {
-        const deckName = item.deck.name?.toLowerCase() || "";
-        const userName = item.user.name?.toLowerCase() || "";
-        const username = item.user.username?.toLowerCase() || "";
-        const cardNames = (item.deck.cards || [])
-          .map((deckCard) => cardMap.get(deckCard.cardId)?.name?.toLowerCase() || "")
-          .filter(Boolean);
-
-        return (
-          deckName.includes(normalizedSearchQuery) ||
-          userName.includes(normalizedSearchQuery) ||
-          username.includes(normalizedSearchQuery) ||
-          cardNames.some((cardName) => cardName.includes(normalizedSearchQuery))
-        );
-      });
-
+      const filteredResults = await filterDeckResultsBySearch(
+        hydratedResults,
+        normalizedSearchQuery
+      );
       const start = skip || 0;
       const end = limit !== undefined ? start + limit : undefined;
       return filteredResults.slice(start, end);
     } catch (error) {
       console.error("Error getting public decks with user info:", error);
+      throw error;
+    }
+  },
+
+  async getPublicDecksPage({
+    sortBy = "newest",
+    limit,
+    cursor,
+    currentUserId,
+    filters = {},
+    requestedLimit,
+    warnings = [],
+  }: {
+    sortBy?: DeckSortBy;
+    limit: number;
+    cursor?: string;
+    currentUserId?: string;
+    filters?: DeckBrowseFilters;
+    requestedLimit?: number;
+    warnings?: string[];
+  }): Promise<PaginatedDeckResponse> {
+    try {
+      const { searchQuery, elements, badges } = filters;
+      const dbFilters = { elements, badges };
+
+      if (searchQuery?.trim()) {
+        const hydratedResults = await hydrateDeckResults(
+          await deckDbService.getPublicDecksWithUserInfoPage(
+            sortBy,
+            undefined,
+            undefined,
+            currentUserId,
+            dbFilters
+          )
+        );
+        const searchedResults = await filterDeckResultsBySearch(
+          hydratedResults,
+          searchQuery
+        );
+        const page = paginateDeckResults(searchedResults, sortBy, limit, cursor);
+
+        return {
+          ...page,
+          effectiveLimit: limit,
+          requestedLimit,
+          warnings,
+        };
+      }
+
+      const [results, total] = await Promise.all([
+        deckDbService.getPublicDecksWithUserInfoPage(
+          sortBy,
+          limit + 1,
+          cursor ? decodeDeckCursor(cursor, sortBy) : undefined,
+          currentUserId,
+          dbFilters
+        ),
+        deckDbService.countPublicDecks(dbFilters),
+      ]);
+
+      const hasMore = results.length > limit;
+      const decks = hasMore ? results.slice(0, limit) : results;
+      const hydratedDecks = await hydrateDeckResults(decks);
+      const nextCursor =
+        hasMore && hydratedDecks.length > 0
+          ? encodeDeckCursor(hydratedDecks[hydratedDecks.length - 1], sortBy)
+          : null;
+
+      return {
+        decks: hydratedDecks,
+        total,
+        hasMore,
+        nextCursor,
+        effectiveLimit: limit,
+        requestedLimit,
+        warnings,
+      };
+    } catch (error) {
+      console.error("Error getting public decks page:", error);
       throw error;
     }
   },
@@ -403,22 +558,76 @@ export const deckService = {
    */
   async getDecksContainingCardWithUserInfo(
     cardId: string,
-    limit?: number
+    limit?: number,
+    currentUserId?: string
   ): Promise<
     {
       deck: Deck;
       user: { name: string; username: string | null; achievementXp?: number };
-      cards: Card[];
+      isLikedByCurrentUser?: boolean;
+      deckElements?: string[];
     }[]
   > {
     try {
-      // Use the optimized aggregation method from deckDbService
-      return await deckDbService.getDecksContainingCardWithUserInfoOptimized(
-        cardId,
-        limit
+      return await hydrateDeckResults(
+        await deckDbService.getDecksContainingCardWithUserInfoPage(
+          cardId,
+          limit,
+          undefined,
+          currentUserId
+        )
       );
     } catch (error) {
       console.error(`Error getting decks containing card ${cardId}:`, error);
+      throw error;
+    }
+  },
+
+  async getDecksContainingCardPage({
+    cardId,
+    limit,
+    cursor,
+    currentUserId,
+    requestedLimit,
+    warnings = [],
+  }: {
+    cardId: string;
+    limit: number;
+    cursor?: string;
+    currentUserId?: string;
+    requestedLimit?: number;
+    warnings?: string[];
+  }): Promise<PaginatedDeckResponse> {
+    try {
+      const [results, total] = await Promise.all([
+        deckDbService.getDecksContainingCardWithUserInfoPage(
+          cardId,
+          limit + 1,
+          cursor ? decodeDeckCursor(cursor, "newest") : undefined,
+          currentUserId
+        ),
+        deckDbService.countDecksContainingCard(cardId),
+      ]);
+
+      const hasMore = results.length > limit;
+      const decks = hasMore ? results.slice(0, limit) : results;
+      const hydratedDecks = await hydrateDeckResults(decks);
+      const nextCursor =
+        hasMore && hydratedDecks.length > 0
+          ? encodeDeckCursor(hydratedDecks[hydratedDecks.length - 1], "newest")
+          : null;
+
+      return {
+        decks: hydratedDecks,
+        total,
+        hasMore,
+        nextCursor,
+        effectiveLimit: limit,
+        requestedLimit,
+        warnings,
+      };
+    } catch (error) {
+      console.error(`Error getting deck page for card ${cardId}:`, error);
       throw error;
     }
   },

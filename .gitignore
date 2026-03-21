@@ -111,6 +111,7 @@ Thumbs.db
 /app/lib/data/cardImages.json
 
 *.md
+!docs/CHANGELOG.md
 app/cards/AlgomancyCards.json
 scripts/upload-new-card-images.js
 scripts/update-card-urls-bulk.js

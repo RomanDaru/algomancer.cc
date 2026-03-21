@@ -97,7 +97,7 @@ export const cardDbService = {
       await ensureDbConnection();
       const cardDoc = await CardModel.findOneAndUpdate(
         { originalId: card.id },
-        convertCardToDocument(card),
+        { $set: convertCardToDocument(card) },
         { new: true }
       );
       return cardDoc ? convertDocumentToCard(cardDoc) : null;
@@ -156,7 +156,7 @@ export const cardDbService = {
         // Update existing card
         const updatedCardDoc = await CardModel.findOneAndUpdate(
           { originalId: card.id },
-          convertCardToDocument(card),
+          { $set: convertCardToDocument(card) },
           { new: true }
         );
         return convertDocumentToCard(updatedCardDoc!);
@@ -200,7 +200,14 @@ export const cardDbService = {
       const operations = cardDocuments.map((doc) => ({
         updateOne: {
           filter: { originalId: doc.originalId },
-          update: doc,
+          update: {
+            $set: doc,
+            $setOnInsert: {
+              rulesVersion: 1,
+              rulesUpdatedAt: new Date(),
+              assetUpdatedAt: new Date(),
+            },
+          },
           upsert: true,
         },
       }));
@@ -209,6 +216,57 @@ export const cardDbService = {
       return result.upsertedCount + result.modifiedCount;
     } catch (error) {
       console.error("Error importing cards:", error);
+      throw error;
+    }
+  },
+
+  async getCardUsage(cardId: string): Promise<{
+    totalDecks: number;
+    publicDecks: number;
+    privateDecks: number;
+    sampleDecks: Array<{ id: string; name: string; isPublic: boolean }>;
+  }> {
+    try {
+      const connection = await ensureDbConnection();
+      if (!connection?.db) {
+        return {
+          totalDecks: 0,
+          publicDecks: 0,
+          privateDecks: 0,
+          sampleDecks: [],
+        };
+      }
+
+      const [totalDecks, publicDecks, sampleDecks] = await Promise.all([
+        connection.db
+          .collection("decks")
+          .countDocuments({ "cards.cardId": cardId }),
+        connection.db
+          .collection("decks")
+          .countDocuments({ "cards.cardId": cardId, isPublic: true }),
+        connection.db
+          .collection("decks")
+          .find(
+            { "cards.cardId": cardId },
+            { projection: { name: 1, isPublic: 1 } }
+          )
+          .sort({ updatedAt: -1 })
+          .limit(5)
+          .toArray(),
+      ]);
+
+      return {
+        totalDecks,
+        publicDecks,
+        privateDecks: Math.max(0, totalDecks - publicDecks),
+        sampleDecks: sampleDecks.map((deck) => ({
+          id: deck._id.toString(),
+          name: deck.name || "Untitled Deck",
+          isPublic: Boolean(deck.isPublic),
+        })),
+      };
+    } catch (error) {
+      console.error(`Error getting usage for card ${cardId}:`, error);
       throw error;
     }
   },

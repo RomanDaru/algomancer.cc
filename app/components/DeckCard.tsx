@@ -14,6 +14,7 @@ import {
   getAllDeckElements,
 } from "@/app/lib/utils/elements";
 import UserNameWithRank from "./UserNameWithRank";
+import DeckReviewNotice from "./DeckReviewNotice";
 
 interface DeckCardProps {
   deck: Deck;
@@ -147,6 +148,12 @@ export default function DeckCard({
                   {deck.deckBadges?.map((badge) => (
                     <DeckBadge key={badge} badge={badge} />
                   ))}
+                  {deck.needsReview && (
+                    <DeckReviewNotice
+                      compact
+                      reviewFlags={deck.reviewFlags}
+                    />
+                  )}
                 </div>
               </div>
               <ElementIcons

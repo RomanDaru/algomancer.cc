@@ -402,7 +402,7 @@ export default function Navbar() {
                         </Link>
                         {session?.user?.isAdmin && (
                           <Link
-                            href='/admin/competitions'
+                            href='/admin'
                             className='block px-4 py-2 text-sm text-algomancy-gold hover:bg-algomancy-gold/10'
                             onClick={() => setIsProfileMenuOpen(false)}
                             role='menuitem'
@@ -636,7 +636,7 @@ export default function Navbar() {
                 </Link>
                 {session?.user?.isAdmin && (
                   <Link
-                    href='/admin/competitions'
+                    href='/admin'
                     className='block px-3 py-2 rounded-md text-algomancy-gold hover:bg-algomancy-gold/10'
                     onClick={(e) => handleMenuToggle(e, false, true)} // Close menu on link click, allow navigation
                   >

@@ -84,6 +84,11 @@ const CardSchema = new Schema(
     imageUrl: { type: String, required: true },
     flavorText: { type: String },
     currentIndex: { type: Number },
+    rulesVersion: { type: Number, default: 1, min: 1 },
+    rulesUpdatedAt: { type: Date, default: Date.now },
+    assetUpdatedAt: { type: Date, default: Date.now },
+    lastChangeScope: { type: String, enum: ["asset", "rules"] },
+    lastChangeSummary: { type: String },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -118,6 +123,11 @@ export function convertDocumentToCard(doc: CardDocument): CardType {
     imageUrl: card.imageUrl,
     flavorText: card.flavorText,
     currentIndex: card.currentIndex,
+    rulesVersion: typeof card.rulesVersion === "number" ? card.rulesVersion : 1,
+    rulesUpdatedAt: card.rulesUpdatedAt,
+    assetUpdatedAt: card.assetUpdatedAt,
+    lastChangeScope: card.lastChangeScope,
+    lastChangeSummary: card.lastChangeSummary,
   };
 }
 
@@ -134,7 +144,24 @@ export function convertCardToDocument(card: CardType): CardDocRaw {
     abilities: card.abilities,
     set: card.set,
     imageUrl: card.imageUrl,
-    flavorText: card.flavorText,
-    currentIndex: card.currentIndex,
+    ...(card.flavorText !== undefined ? { flavorText: card.flavorText } : {}),
+    ...(card.currentIndex !== undefined
+      ? { currentIndex: card.currentIndex }
+      : {}),
+    ...(card.rulesVersion !== undefined
+      ? { rulesVersion: card.rulesVersion }
+      : {}),
+    ...(card.rulesUpdatedAt !== undefined
+      ? { rulesUpdatedAt: card.rulesUpdatedAt }
+      : {}),
+    ...(card.assetUpdatedAt !== undefined
+      ? { assetUpdatedAt: card.assetUpdatedAt }
+      : {}),
+    ...(card.lastChangeScope !== undefined
+      ? { lastChangeScope: card.lastChangeScope }
+      : {}),
+    ...(card.lastChangeSummary !== undefined
+      ? { lastChangeSummary: card.lastChangeSummary }
+      : {}),
   };
 }

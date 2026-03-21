@@ -1,6 +1,11 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Deck as DeckType, DeckCard } from "../../types/user";
-import { ObjectId } from "mongodb";
+import { Deck as DeckType } from "../../types/user";
+
+type DeckLike = Partial<DeckType> & {
+  _id: DeckType["_id"];
+  deckBadge?: string | null;
+  deckBadges?: string[];
+};
 
 // Interface for the MongoDB document
 export interface DeckDocument extends Document, Omit<DeckType, "_id"> {
@@ -12,6 +17,17 @@ const DeckCardSchema = new Schema(
   {
     cardId: { type: String, required: true },
     quantity: { type: Number, required: true, min: 1, max: 4 },
+  },
+  { _id: false }
+);
+
+const DeckReviewFlagSchema = new Schema(
+  {
+    cardId: { type: String, required: true },
+    cardName: { type: String, required: true },
+    changeSummary: { type: String, required: true },
+    rulesVersion: { type: Number, required: true, min: 1 },
+    changedAt: { type: Date, required: true },
   },
   { _id: false }
 );
@@ -33,6 +49,9 @@ const DeckSchema = new Schema(
     viewedBy: { type: [String], default: [] }, // Store IPs or session IDs that have viewed the deck
     likes: { type: Number, default: 0 }, // Track number of likes
     likedBy: { type: [Schema.Types.ObjectId], default: [], ref: "User" }, // Store user IDs who liked the deck
+    needsReview: { type: Boolean, default: false },
+    lastReviewedAt: { type: Date, default: Date.now },
+    reviewFlags: { type: [DeckReviewFlagSchema], default: [] },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
@@ -63,7 +82,7 @@ export const DeckModel =
 
 // Helper function to convert between MongoDB document and our Deck type
 export function convertDocumentToDeck(doc: DeckDocument): DeckType {
-  const deck = doc.toObject();
+  const deck = doc.toObject() as DeckLike;
   return {
     _id: deck._id,
     name: deck.name,
@@ -86,11 +105,14 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
     viewedBy: deck.viewedBy || [],
     likes: deck.likes || 0,
     likedBy: deck.likedBy || [],
+    needsReview: Boolean(deck.needsReview),
+    lastReviewedAt: deck.lastReviewedAt,
+    reviewFlags: deck.reviewFlags || [],
   };
 }
 
 // Helper function to convert aggregation result (plain object) to our Deck type
-export function convertAggregationToDeck(obj: any): DeckType {
+export function convertAggregationToDeck(obj: DeckLike): DeckType {
   return {
     _id: obj._id,
     name: obj.name,
@@ -113,13 +135,19 @@ export function convertAggregationToDeck(obj: any): DeckType {
     viewedBy: obj.viewedBy || [],
     likes: obj.likes || 0,
     likedBy: obj.likedBy || [],
+    needsReview: Boolean(obj.needsReview),
+    lastReviewedAt: obj.lastReviewedAt,
+    reviewFlags: obj.reviewFlags || [],
   };
 }
 
 // Universal helper function that can handle both Mongoose documents and plain objects
-export function convertToDeck(input: DeckDocument | any): DeckType {
+export function convertToDeck(input: DeckDocument | DeckLike): DeckType {
   // Check if it's a Mongoose document (has toObject method)
-  const obj = typeof input.toObject === "function" ? input.toObject() : input;
+  const obj =
+    typeof (input as DeckDocument).toObject === "function"
+      ? ((input as DeckDocument).toObject() as DeckLike)
+      : input;
 
   return {
     _id: obj._id,
@@ -143,6 +171,9 @@ export function convertToDeck(input: DeckDocument | any): DeckType {
     viewedBy: obj.viewedBy || [],
     likes: obj.likes || 0,
     likedBy: obj.likedBy || [],
+    needsReview: Boolean(obj.needsReview),
+    lastReviewedAt: obj.lastReviewedAt,
+    reviewFlags: obj.reviewFlags || [],
   };
 }
 
@@ -160,5 +191,8 @@ export function convertDeckToDocument(
     isPublic: deck.isPublic,
     deckElements: deck.deckElements,
     totalCards: deck.totalCards,
+    needsReview: deck.needsReview,
+    lastReviewedAt: deck.lastReviewedAt,
+    reviewFlags: deck.reviewFlags,
   };
 }

@@ -499,24 +499,31 @@ export default function PublicDecksClient({
               </div>
             </div>
 
-            <p
-              className='mt-3 text-xs text-gray-400'
-              data-testid='deck-results-summary'>
-              Showing {displayedDeckCount} of {totalDecks}{" "}
-              public decks
-            </p>
-
-            {(isFetchingDecks || searchError || apiWarnings.length > 0) && (
-              <div className='mt-2 text-sm'>
+            <div className='mt-3 flex min-h-4 items-center justify-between gap-3 text-xs text-gray-400'>
+              <p
+                className='min-w-0'
+                data-testid='deck-results-summary'>
+                Showing {displayedDeckCount} of {totalDecks} public decks
+              </p>
+              <div className='min-w-[8rem] text-right'>
                 {isFetchingDecks && (
-                  <p className='text-gray-400'>
-                    {trimmedQuery ? "Searching decks..." : "Loading decks..."}
-                  </p>
+                  <span className='inline-flex items-center gap-2 text-gray-400'>
+                    <span
+                      aria-hidden='true'
+                      className='h-2 w-2 rounded-full bg-algomancy-gold animate-pulse'
+                    />
+                    {trimmedQuery ? "Searching..." : "Loading..."}
+                  </span>
                 )}
-                {!isFetchingDecks && searchError && (
+              </div>
+            </div>
+
+            {(searchError || apiWarnings.length > 0) && (
+              <div className='mt-2 text-sm'>
+                {searchError && (
                   <p className='text-red-400'>{searchError}</p>
                 )}
-                {!isFetchingDecks && apiWarnings.includes("limit_capped_to_max") && (
+                {apiWarnings.includes("limit_capped_to_max") && (
                   <p className='text-amber-300'>
                     Backend capped this request to the maximum page size.
                   </p>

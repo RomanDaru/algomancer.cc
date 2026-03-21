@@ -3,6 +3,18 @@
 ## 2026-03-21
 
 ### `feat/decks-followups`
+- Standardized deck browse card heights so `/decks` no longer jumps when filtering decks with different title, badge, description, or author lengths.
+  - Areas: `app/components/DeckCard.tsx`, `app/components/UserNameWithRank.tsx`
+  - Verification: targeted lint plus production build
+- Tightened deck browse card density so desktop `/decks` views can fit three rows of cards more comfortably within one viewport.
+  - Areas: `app/components/DeckCard.tsx`, `app/components/DeckGrid.tsx`
+  - Verification: targeted lint plus production build
+- Removed deck description notes and section divider lines from browse cards to keep the `/decks` grid smaller and visually cleaner.
+  - Areas: `app/components/DeckCard.tsx`
+  - Verification: targeted lint plus production build
+- Restored stronger deck title sizing and moved the `/decks` loading state into the summary row so filtering no longer inserts an extra layout-shifting line above the grid.
+  - Areas: `app/components/DeckCard.tsx`, `app/decks/PublicDecksClient.tsx`
+  - Verification: targeted lint plus isolated production build
 - Fixed `/decks` element filtering for `Dark` and `Light` by correcting the shared primary element source-of-truth and by filtering element-selected browse results from hydrated card data instead of stale stored `deckElements`.
   - Areas: `app/lib/utils/elements.ts`, `app/lib/db/services/deckDbService.ts`, `app/lib/services/deckService.ts`, `app/lib/utils/__tests__/elements.test.ts`, `app/lib/services/__tests__/deckService.test.ts`
   - Verification: targeted Jest deck browse tests plus targeted lint

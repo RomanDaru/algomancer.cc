@@ -49,6 +49,10 @@ export const DECK_BADGES = {
   COMBO: "Combo",
 } as const;
 
+export const PUBLIC_DECKS_PAGE_SIZE = 36;
+export const PUBLIC_DECKS_INITIAL_VISIBLE = 12;
+export const PUBLIC_DECKS_LOAD_MORE_STEP = 12;
+
 // Export types for TypeScript
 export type CompetitionStatus =
   (typeof COMPETITION_STATUS)[keyof typeof COMPETITION_STATUS];

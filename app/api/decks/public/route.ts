@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { deckService } from "@/app/lib/services/deckService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { PUBLIC_DECKS_PAGE_SIZE } from "@/app/lib/constants";
 
 /**
  * GET /api/decks/public
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
     const searchQuery = searchParams.get("q")?.trim() || undefined;
     const limitParam = searchParams.get("limit");
     const skipParam = searchParams.get("skip");
+    const withMeta = searchParams.get("withMeta") === "1";
 
     // Validate and parse parameters
     const validSortBy = ["popular", "newest", "liked"].includes(sortBy || "")
@@ -36,14 +38,34 @@ export async function GET(request: NextRequest) {
       : undefined;
     const skip = skipParam ? Math.max(parseInt(skipParam, 10), 0) : undefined;
 
-    const decksWithUserInfo = await deckService.getPublicDecksWithUserInfo(
+    if (!withMeta) {
+      const decksWithUserInfo = await deckService.getPublicDecksWithUserInfo(
+        validSortBy,
+        limit,
+        skip,
+        currentUserId,
+        searchQuery
+      );
+
+      return NextResponse.json(decksWithUserInfo);
+    }
+
+    const pageSize = limit ?? PUBLIC_DECKS_PAGE_SIZE;
+    const paginatedResults = await deckService.getPublicDecksWithUserInfo(
       validSortBy,
-      limit,
+      pageSize + 1,
       skip,
       currentUserId,
       searchQuery
     );
-    return NextResponse.json(decksWithUserInfo);
+    const hasMore = paginatedResults.length > pageSize;
+    const decks = hasMore ? paginatedResults.slice(0, pageSize) : paginatedResults;
+
+    return NextResponse.json({
+      decks,
+      hasMore,
+      nextSkip: (skip ?? 0) + decks.length,
+    });
   } catch (error) {
     console.error("Error getting public decks:", error);
     return NextResponse.json(

@@ -26,7 +26,7 @@ interface DeckGridProps {
   decksWithUserInfo?: Array<{
     deck: Deck;
     user: { name: string; username: string | null; achievementXp?: number };
-    isLikedByCurrentUser: boolean;
+    isLikedByCurrentUser?: boolean;
     deckElements?: string[];
   }>;
 
@@ -133,7 +133,7 @@ export default function DeckGrid({
             } = item as {
               deck: Deck;
               user: { name: string; username: string | null; achievementXp?: number };
-              isLikedByCurrentUser: boolean;
+              isLikedByCurrentUser?: boolean;
               deckElements?: string[];
             };
 

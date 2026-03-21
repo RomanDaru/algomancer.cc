@@ -4,7 +4,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import DeckBadge from "@/app/components/DeckBadge";
 import DeckGrid from "@/app/components/DeckGrid";
-import { DECK_BADGE_VALUES, type DeckBadge as DeckBadgeType } from "@/app/lib/constants";
+import {
+  DECK_BADGE_VALUES,
+  PUBLIC_DECKS_INITIAL_VISIBLE,
+  PUBLIC_DECKS_LOAD_MORE_STEP,
+  PUBLIC_DECKS_PAGE_SIZE,
+  type DeckBadge as DeckBadgeType,
+} from "@/app/lib/constants";
 import ElementIcon from "@/app/components/ElementIcon";
 import { ElementType } from "@/app/lib/utils/elements";
 import { Card } from "@/app/lib/types/card";
@@ -17,12 +23,16 @@ import {
 type DeckWithUserInfo = {
   deck: Deck;
   user: { name: string; username: string | null; achievementXp?: number };
-  isLikedByCurrentUser: boolean;
+  isLikedByCurrentUser?: boolean;
   deckElements?: string[];
 };
 
-const INITIAL_VISIBLE = 12;
-const LOAD_MORE_STEP = 12;
+type PaginatedPublicDeckResponse = {
+  decks: DeckWithUserInfo[];
+  hasMore: boolean;
+  nextSkip: number;
+};
+
 const BASIC_ELEMENTS: ElementType[] = [
   "Fire",
   "Water",
@@ -33,23 +43,82 @@ const BASIC_ELEMENTS: ElementType[] = [
   "Light",
 ];
 
+async function fetchPublicDeckPage({
+  sortBy,
+  searchQuery,
+  skip,
+  signal,
+}: {
+  sortBy: "newest" | "popular" | "liked";
+  searchQuery?: string;
+  skip: number;
+  signal?: AbortSignal;
+}): Promise<PaginatedPublicDeckResponse> {
+  const params = new URLSearchParams({
+    sort: sortBy,
+    limit: PUBLIC_DECKS_PAGE_SIZE.toString(),
+    skip: skip.toString(),
+    withMeta: "1",
+  });
+
+  if (searchQuery) {
+    params.set("q", searchQuery);
+  }
+
+  const response = await fetch(`/api/decks/public?${params.toString()}`, {
+    signal,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to load public decks");
+  }
+
+  return (await response.json()) as PaginatedPublicDeckResponse;
+}
+
+function mergeDeckPages(
+  currentDecks: DeckWithUserInfo[],
+  nextDecks: DeckWithUserInfo[]
+) {
+  const seenDeckIds = new Set(
+    currentDecks.map((item) => item.deck._id.toString())
+  );
+  const mergedDecks = [...currentDecks];
+
+  for (const item of nextDecks) {
+    const deckId = item.deck._id.toString();
+    if (seenDeckIds.has(deckId)) {
+      continue;
+    }
+
+    seenDeckIds.add(deckId);
+    mergedDecks.push(item);
+  }
+
+  return mergedDecks;
+}
+
 interface Props {
   initialDecks: DeckWithUserInfo[];
+  initialHasMore: boolean;
   filteredCard?: Card | null;
   isAuthenticated: boolean;
 }
 
 export default function PublicDecksClient({
   initialDecks,
+  initialHasMore,
   filteredCard,
   isAuthenticated,
 }: Props) {
   const toolbarRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchedDecks, setSearchedDecks] = useState<DeckWithUserInfo[] | null>(
-    null
-  );
-  const [isSearching, setIsSearching] = useState(false);
+  const [loadedDecks, setLoadedDecks] = useState(initialDecks);
+  const [hasMoreServerResults, setHasMoreServerResults] =
+    useState(initialHasMore);
+  const [nextSkip, setNextSkip] = useState(initialDecks.length);
+  const [isFetchingDecks, setIsFetchingDecks] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "popular" | "liked">(
     "newest"
@@ -57,8 +126,10 @@ export default function PublicDecksClient({
   const [sortTransition, setSortTransition] = useState(false);
   const [selectedElements, setSelectedElements] = useState<ElementType[]>([]);
   const [selectedBadges, setSelectedBadges] = useState<DeckBadgeType[]>([]);
-  const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const [visibleCount, setVisibleCount] = useState(PUBLIC_DECKS_INITIAL_VISIBLE);
   const [openMenu, setOpenMenu] = useState<"elements" | "badges" | null>(null);
+
+  const trimmedQuery = searchQuery.trim();
 
   const handleSortChange = (newSortBy: "newest" | "popular" | "liked") => {
     if (newSortBy === sortBy) return;
@@ -67,86 +138,86 @@ export default function PublicDecksClient({
     setTimeout(() => setSortTransition(false), 300);
   };
 
-  const decks = useMemo(() => initialDecks, [initialDecks]);
-  const activeDecks = useMemo(
-    () => (searchQuery.trim() ? searchedDecks ?? decks : decks),
-    [decks, searchQuery, searchedDecks]
-  );
+  useEffect(() => {
+    setLoadedDecks(initialDecks);
+    setHasMoreServerResults(initialHasMore);
+    setNextSkip(initialDecks.length);
+  }, [initialDecks, initialHasMore]);
+
   const availableBadges = useMemo(() => {
     const usedBadges = new Set<DeckBadgeType>();
 
-    activeDecks.forEach((item) => {
+    loadedDecks.forEach((item) => {
       item.deck.deckBadges?.forEach((badge) => {
         usedBadges.add(badge);
       });
     });
 
     return DECK_BADGE_VALUES.filter((badge) => usedBadges.has(badge));
-  }, [activeDecks]);
+  }, [loadedDecks]);
 
   useEffect(() => {
-    setVisibleCount(INITIAL_VISIBLE);
+    setVisibleCount(PUBLIC_DECKS_INITIAL_VISIBLE);
   }, [
     sortBy,
     selectedBadges,
     selectedElements,
     filteredCard?.id,
     initialDecks.length,
-    searchQuery,
-    searchedDecks?.length,
+    trimmedQuery,
   ]);
 
   useEffect(() => {
-    if (filteredCard) return;
+    if (filteredCard) {
+      return;
+    }
 
-    const trimmedQuery = searchQuery.trim();
-    if (!trimmedQuery) {
-      setSearchedDecks(null);
+    if (!trimmedQuery && sortBy === "newest") {
+      setLoadedDecks(initialDecks);
+      setHasMoreServerResults(initialHasMore);
+      setNextSkip(initialDecks.length);
       setSearchError("");
-      setIsSearching(false);
+      setIsFetchingDecks(false);
       return;
     }
 
     const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
       try {
-        setIsSearching(true);
+        setIsFetchingDecks(true);
         setSearchError("");
 
-        const params = new URLSearchParams({
-          q: trimmedQuery,
-          sort: sortBy,
-          limit: "100",
-        });
-        const response = await fetch(`/api/decks/public?${params.toString()}`, {
+        const page = await fetchPublicDeckPage({
+          sortBy,
+          searchQuery: trimmedQuery || undefined,
+          skip: 0,
           signal: controller.signal,
-          cache: "no-store",
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to search decks");
-        }
-
-        const data = (await response.json()) as DeckWithUserInfo[];
-        setSearchedDecks(data);
+        setLoadedDecks(page.decks);
+        setHasMoreServerResults(page.hasMore);
+        setNextSkip(page.nextSkip);
       } catch (error) {
         if ((error as Error).name === "AbortError") {
           return;
         }
 
-        console.error("Failed to search public decks:", error);
-        setSearchError("Search is temporarily unavailable.");
-        setSearchedDecks([]);
+        console.error("Failed to fetch public decks:", error);
+        setSearchError(
+          trimmedQuery
+            ? "Search is temporarily unavailable."
+            : "Failed to load public decks."
+        );
       } finally {
-        setIsSearching(false);
+        setIsFetchingDecks(false);
       }
-    }, 250);
+    }, trimmedQuery ? 250 : 0);
 
     return () => {
       controller.abort();
       window.clearTimeout(timeoutId);
     };
-  }, [filteredCard, searchQuery, sortBy]);
+  }, [filteredCard, initialDecks, initialHasMore, sortBy, trimmedQuery]);
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -201,19 +272,20 @@ export default function PublicDecksClient({
       ? selectedBadges[0]
       : `Deck Type (${selectedBadges.length})`;
 
-  const filteredAndSorted = useMemo(() => {
-    let list = decks;
-    if (searchQuery.trim()) {
-      list = searchedDecks ?? decks;
-    }
+  const filteredDecks = useMemo(() => {
+    let list = loadedDecks;
 
     if (selectedElements.length > 0) {
       list = list.filter((item) => {
-        const elems = (item.deckElements ||
+        const elements = (item.deckElements ||
           item.deck.deckElements ||
           []) as ElementType[];
-        if (elems.length === 0) return false;
-        return selectedElements.every((e) => elems.includes(e));
+
+        if (elements.length === 0) {
+          return false;
+        }
+
+        return selectedElements.every((element) => elements.includes(element));
       });
     }
 
@@ -224,24 +296,47 @@ export default function PublicDecksClient({
       });
     }
 
-    const sorted = [...list].sort((a, b) => {
-      if (sortBy === "popular") {
-        return (b.deck.views || 0) - (a.deck.views || 0);
-      } else if (sortBy === "liked") {
-        return (b.deck.likes || 0) - (a.deck.likes || 0);
-      } else {
-        return (
-          new Date(b.deck.createdAt).getTime() -
-          new Date(a.deck.createdAt).getTime()
-        );
-      }
-    });
+    return list;
+  }, [loadedDecks, selectedBadges, selectedElements]);
 
-    return sorted;
-  }, [decks, searchQuery, searchedDecks, selectedBadges, selectedElements, sortBy]);
+  const displayedDecks = filteredDecks.slice(0, visibleCount);
+  const canLoadMore =
+    filteredDecks.length > visibleCount ||
+    (!filteredCard && hasMoreServerResults);
 
-  const displayedDecks = filteredAndSorted.slice(0, visibleCount);
-  const canLoadMore = filteredAndSorted.length > visibleCount;
+  const handleLoadMore = async () => {
+    if (filteredDecks.length > visibleCount) {
+      setVisibleCount((prev) =>
+        Math.min(prev + PUBLIC_DECKS_LOAD_MORE_STEP, filteredDecks.length)
+      );
+      return;
+    }
+
+    if (filteredCard || isFetchingDecks || !hasMoreServerResults) {
+      return;
+    }
+
+    try {
+      setIsFetchingDecks(true);
+      setSearchError("");
+
+      const page = await fetchPublicDeckPage({
+        sortBy,
+        searchQuery: trimmedQuery || undefined,
+        skip: nextSkip,
+      });
+
+      setLoadedDecks((prev) => mergeDeckPages(prev, page.decks));
+      setHasMoreServerResults(page.hasMore);
+      setNextSkip(page.nextSkip);
+      setVisibleCount((prev) => prev + PUBLIC_DECKS_LOAD_MORE_STEP);
+    } catch (error) {
+      console.error("Failed to load more public decks:", error);
+      setSearchError("Failed to load more public decks.");
+    } finally {
+      setIsFetchingDecks(false);
+    }
+  };
 
   return (
     <div className='mx-auto max-w-[95%] bg-background px-6 py-8'>
@@ -250,8 +345,8 @@ export default function PublicDecksClient({
           <div className='flex items-center'>
             <Link
               href='/decks'
-              className='text-algomancy-purple hover:text-algomancy-gold mr-3'>
-              ← Back to All Decks
+              className='mr-3 text-algomancy-purple hover:text-algomancy-gold'>
+              {"<-"} Back to All Decks
             </Link>
             <h1 className='text-2xl font-bold text-white'>
               Decks with {filteredCard.name}
@@ -302,10 +397,18 @@ export default function PublicDecksClient({
                                 : "text-gray-300 hover:bg-white/5"
                             }`}>
                             <span className='flex items-center gap-2'>
-                              <ElementIcon element={element} size={20} showTooltip={false} />
+                              <ElementIcon
+                                element={element}
+                                size={20}
+                                showTooltip={false}
+                              />
                               {element}
                             </span>
-                            {isSelected && <span className='text-xs text-algomancy-gold'>Selected</span>}
+                            {isSelected && (
+                              <span className='text-xs text-algomancy-gold'>
+                                Selected
+                              </span>
+                            )}
                           </button>
                         );
                       })}
@@ -383,12 +486,16 @@ export default function PublicDecksClient({
               </div>
             </div>
 
-            {(isSearching || searchError) && (
+            {(isFetchingDecks || searchError) && (
               <div className='mt-3 text-sm'>
-                {isSearching && (
-                  <p className='text-gray-400'>Searching public decks...</p>
+                {isFetchingDecks && (
+                  <p className='text-gray-400'>
+                    {trimmedQuery
+                      ? "Searching public decks..."
+                      : "Loading public decks..."}
+                  </p>
                 )}
-                {!isSearching && searchError && (
+                {!isFetchingDecks && searchError && (
                   <p className='text-red-400'>{searchError}</p>
                 )}
               </div>
@@ -398,13 +505,13 @@ export default function PublicDecksClient({
       </div>
 
       {filteredCard && (
-        <div className='bg-algomancy-dark border border-algomancy-purple/30 rounded-lg p-4 mb-6'>
+        <div className='mb-6 rounded-lg border border-algomancy-purple/30 bg-algomancy-dark p-4'>
           <div className='flex items-center'>
-            <div className='relative w-12 h-16 mr-4 rounded overflow-hidden'>
+            <div className='relative mr-4 h-16 w-12 overflow-hidden rounded'>
               <img
                 src={filteredCard.imageUrl}
                 alt={filteredCard.name}
-                className='object-cover w-full h-full'
+                className='h-full w-full object-cover'
               />
             </div>
             <div>
@@ -422,14 +529,14 @@ export default function PublicDecksClient({
 
       <div
         className={`transition-all duration-300 ${
-          sortTransition ? "opacity-50 scale-95" : "opacity-100 scale-100"
+          sortTransition ? "scale-95 opacity-50" : "scale-100 opacity-100"
         }`}>
         <DeckGrid
           decksWithUserInfo={displayedDecks}
           emptyMessage={
             filteredCard
               ? `No decks found containing ${filteredCard.name}`
-              : searchQuery.trim()
+              : trimmedQuery
               ? "No public decks matched your search"
               : selectedElements.length > 0 || selectedBadges.length > 0
               ? "No decks match the current filters"
@@ -456,13 +563,10 @@ export default function PublicDecksClient({
         <div className='mt-6 text-center'>
           <button
             type='button'
-            onClick={() =>
-              setVisibleCount((prev) =>
-                Math.min(prev + LOAD_MORE_STEP, filteredAndSorted.length)
-              )
-            }
-            className='inline-flex items-center justify-center px-4 py-2 text-sm rounded-md bg-algomancy-purple/30 hover:bg-algomancy-purple/50 text-white transition-colors'>
-            Load more
+            onClick={handleLoadMore}
+            disabled={isFetchingDecks}
+            className='inline-flex items-center justify-center rounded-md bg-algomancy-purple/30 px-4 py-2 text-sm text-white transition-colors hover:bg-algomancy-purple/50 disabled:cursor-not-allowed disabled:opacity-60'>
+            {isFetchingDecks ? "Loading..." : "Load more"}
           </button>
         </div>
       )}

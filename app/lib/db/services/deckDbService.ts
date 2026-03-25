@@ -16,6 +16,12 @@ import {
 } from "../../types/deckBrowse";
 import { getDeckSortField } from "../../utils/deckPagination";
 import { PRIMARY_DECK_ELEMENTS } from "../../utils/elements";
+import {
+  addCardToSection,
+  canAddCardToSection,
+  normalizeDeckSections,
+  removeCardFromSection,
+} from "../../utils/deckSections";
 
 type DbConnection = Awaited<ReturnType<typeof connectToDatabase>>;
 
@@ -97,6 +103,12 @@ function buildReviewedDeckState() {
   };
 }
 
+function buildDeckCardMatch(cardId: string) {
+  return {
+    $or: [{ "cards.cardId": cardId }, { "sideboard.cardId": cardId }],
+  };
+}
+
 function normalizeDeckBrowseMatch({
   cardId,
   elements,
@@ -111,7 +123,7 @@ function normalizeDeckBrowseMatch({
   };
 
   if (cardId) {
-    match["cards.cardId"] = cardId;
+    Object.assign(match, buildDeckCardMatch(cardId));
   }
 
   if (elements && elements.length > 0) {
@@ -498,9 +510,17 @@ export const deckDbService = {
   async createDeck(deck: Partial<Deck>): Promise<Deck> {
     try {
       await ensureDbConnection();
-      const summary = await computeDeckSummary(deck.cards || []);
+      const normalizedSections = normalizeDeckSections({
+        cards: deck.cards,
+        sideboard: deck.sideboard,
+      });
+      const summary = await computeDeckSummary(normalizedSections.cards);
       const deckDoc = new DeckModel({
-        ...convertDeckToDocument(deck),
+        ...convertDeckToDocument({
+          ...deck,
+          cards: normalizedSections.cards,
+          sideboard: normalizedSections.sideboard,
+        }),
         deckElements: summary.deckElements,
         totalCards: summary.totalCards,
         ...buildReviewedDeckState(),
@@ -520,15 +540,33 @@ export const deckDbService = {
     try {
       await ensureDbConnection();
       const updateData = convertDeckToDocument(deck);
-      const cardsToUpdate = Array.isArray(deck.cards) ? deck.cards : null;
+      const shouldUpdateSections =
+        Array.isArray(deck.cards) || Array.isArray(deck.sideboard);
 
-      if (cardsToUpdate !== null) {
-        const summary = await computeDeckSummary(cardsToUpdate);
-        updateData.cards = cardsToUpdate;
+      if (shouldUpdateSections) {
+        const existingDeck = await DeckModel.findById(new ObjectId(id), {
+          cards: 1,
+          sideboard: 1,
+        });
+
+        if (!existingDeck) {
+          return null;
+        }
+
+        const normalizedSections = normalizeDeckSections({
+          cards: Array.isArray(deck.cards) ? deck.cards : existingDeck.cards,
+          sideboard: Array.isArray(deck.sideboard)
+            ? deck.sideboard
+            : existingDeck.sideboard,
+        });
+        const summary = await computeDeckSummary(normalizedSections.cards);
+        updateData.cards = normalizedSections.cards;
+        updateData.sideboard = normalizedSections.sideboard;
         updateData.deckElements = summary.deckElements;
         updateData.totalCards = summary.totalCards;
       } else {
         delete updateData.cards;
+        delete updateData.sideboard;
         delete updateData.deckElements;
         delete updateData.totalCards;
       }
@@ -630,7 +668,8 @@ export const deckDbService = {
   async addCardToDeck(
     deckId: string,
     cardId: string,
-    quantity: number = 1
+    quantity: number = 1,
+    zone: "main" | "sideboard" = "main"
   ): Promise<Deck | null> {
     try {
       await ensureDbConnection();
@@ -641,18 +680,31 @@ export const deckDbService = {
         return null;
       }
 
-      // Check if the card already exists in the deck
-      const existingCardIndex = deck.cards.findIndex(
-        (c: DeckCard) => c.cardId === cardId
-      );
+      const normalizedSections = normalizeDeckSections({
+        cards: deck.cards,
+        sideboard: deck.sideboard,
+      });
 
-      if (existingCardIndex >= 0) {
-        // Update the quantity of the existing card
-        deck.cards[existingCardIndex].quantity += quantity;
-      } else {
-        // Add the new card to the deck
-        deck.cards.push({ cardId, quantity });
+      if (
+        !canAddCardToSection({
+          section: zone,
+          cards: normalizedSections.cards,
+          sideboard: normalizedSections.sideboard,
+          cardId,
+          amount: quantity,
+        })
+      ) {
+        return convertDocumentToDeck(deck);
       }
+
+      deck.cards =
+        zone === "main"
+          ? addCardToSection(normalizedSections.cards, cardId, quantity)
+          : normalizedSections.cards;
+      deck.sideboard =
+        zone === "sideboard"
+          ? addCardToSection(normalizedSections.sideboard, cardId, quantity)
+          : normalizedSections.sideboard;
 
       const summary = await computeDeckSummary(deck.cards);
       deck.deckElements = summary.deckElements;
@@ -677,7 +729,8 @@ export const deckDbService = {
   async removeCardFromDeck(
     deckId: string,
     cardId: string,
-    quantity: number = 1
+    quantity: number = 1,
+    zone: "main" | "sideboard" = "main"
   ): Promise<Deck | null> {
     try {
       await ensureDbConnection();
@@ -688,30 +741,29 @@ export const deckDbService = {
         return null;
       }
 
-      // Find the card in the deck
-      const existingCardIndex = deck.cards.findIndex(
-        (c: DeckCard) => c.cardId === cardId
-      );
+      const normalizedSections = normalizeDeckSections({
+        cards: deck.cards,
+        sideboard: deck.sideboard,
+      });
 
-      if (existingCardIndex >= 0) {
-        // Decrease the quantity of the card
-        deck.cards[existingCardIndex].quantity -= quantity;
+      deck.cards =
+        zone === "main"
+          ? removeCardFromSection(normalizedSections.cards, cardId, quantity)
+          : normalizedSections.cards;
+      deck.sideboard =
+        zone === "sideboard"
+          ? removeCardFromSection(normalizedSections.sideboard, cardId, quantity)
+          : normalizedSections.sideboard;
 
-        // If the quantity is 0 or less, remove the card from the deck
-        if (deck.cards[existingCardIndex].quantity <= 0) {
-          deck.cards.splice(existingCardIndex, 1);
-        }
+      const summary = await computeDeckSummary(deck.cards);
+      deck.deckElements = summary.deckElements;
+      deck.totalCards = summary.totalCards;
+      deck.needsReview = false;
+      deck.lastReviewedAt = new Date();
+      deck.reviewFlags = [];
 
-        const summary = await computeDeckSummary(deck.cards);
-        deck.deckElements = summary.deckElements;
-        deck.totalCards = summary.totalCards;
-        deck.needsReview = false;
-        deck.lastReviewedAt = new Date();
-        deck.reviewFlags = [];
-
-        // Save the updated deck
-        await deck.save();
-      }
+      // Save the updated deck
+      await deck.save();
 
       return convertDocumentToDeck(deck);
     } catch (error) {
@@ -728,17 +780,31 @@ export const deckDbService = {
    */
   async updateDeckCards(
     deckId: string,
-    cards: DeckCard[]
+    cards: DeckCard[],
+    sideboard?: DeckCard[]
   ): Promise<Deck | null> {
     try {
       await ensureDbConnection();
 
-      const summary = await computeDeckSummary(cards);
+      const existingDeck = await DeckModel.findById(new ObjectId(deckId), {
+        sideboard: 1,
+      });
+
+      if (!existingDeck) {
+        return null;
+      }
+
+      const normalizedSections = normalizeDeckSections({
+        cards,
+        sideboard: Array.isArray(sideboard) ? sideboard : existingDeck.sideboard,
+      });
+      const summary = await computeDeckSummary(normalizedSections.cards);
       const deckDoc = await DeckModel.findByIdAndUpdate(
         new ObjectId(deckId),
         {
           $set: {
-            cards,
+            cards: normalizedSections.cards,
+            sideboard: normalizedSections.sideboard,
             deckElements: summary.deckElements,
             totalCards: summary.totalCards,
             ...buildReviewedDeckState(),
@@ -855,7 +921,7 @@ export const deckDbService = {
 
       // Find decks that contain the card and are public
       let query = DeckModel.find({
-        "cards.cardId": cardId,
+        ...buildDeckCardMatch(cardId),
         isPublic: true,
       }).sort({ createdAt: -1 });
 
@@ -879,7 +945,7 @@ export const deckDbService = {
     try {
       await ensureDbConnection();
       const decks = await DeckModel.find(
-        { "cards.cardId": flag.cardId },
+        buildDeckCardMatch(flag.cardId),
         { _id: 1, isPublic: 1, reviewFlags: 1 }
       );
 
@@ -937,8 +1003,8 @@ export const deckDbService = {
         // Match decks containing the specific card
         {
           $match: {
-            "cards.cardId": cardId,
             isPublic: true,
+            ...buildDeckCardMatch(cardId),
           },
         },
         // Sort by creation date (newest first)

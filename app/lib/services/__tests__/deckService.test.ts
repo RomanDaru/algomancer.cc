@@ -55,7 +55,8 @@ function buildDeckWithUserInfo(
   idSeed: number,
   name: string,
   cardId: string,
-  createdAt: string
+  createdAt: string,
+  sideboardCardId?: string
 ): DeckWithUserInfo {
   return {
     deck: {
@@ -63,6 +64,9 @@ function buildDeckWithUserInfo(
       name,
       userId: new ObjectId((idSeed + 1000).toString(16).padStart(24, "0")),
       cards: [{ cardId, quantity: 1 }],
+      sideboard: sideboardCardId
+        ? [{ cardId: sideboardCardId, quantity: 1 }]
+        : [],
       createdAt: new Date(createdAt),
       updatedAt: new Date(createdAt),
       isPublic: true,
@@ -113,5 +117,43 @@ describe("deckService.getPublicDecksPage", () => {
     const dbFiltersArg = (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock)
       .mock.calls[0][4];
     expect(dbFiltersArg).not.toHaveProperty("elements");
+  });
+
+  it("matches search queries against sideboard card names", async () => {
+    (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock).mockResolvedValue([
+      buildDeckWithUserInfo(
+        3,
+        "Control Deck",
+        "main-card",
+        "2026-03-02T12:00:00.000Z",
+        "sideboard-answer"
+      ),
+      buildDeckWithUserInfo(
+        4,
+        "Aggro Deck",
+        "main-card-2",
+        "2026-03-01T12:00:00.000Z"
+      ),
+    ]);
+    (cardService.getCardsByIds as jest.Mock).mockResolvedValue([
+      buildCard("main-card", "Water"),
+      buildCard("main-card-2", "Fire"),
+      {
+        ...buildCard("sideboard-answer", "Dark"),
+        name: "Answer Card",
+      },
+    ]);
+
+    const response = await deckService.getPublicDecksPage({
+      sortBy: "newest",
+      limit: 36,
+      filters: {
+        searchQuery: "answer",
+      },
+    });
+
+    expect(response.total).toBe(1);
+    expect(response.decks).toHaveLength(1);
+    expect(response.decks[0].deck.name).toBe("Control Deck");
   });
 });

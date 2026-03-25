@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { deckService } from "@/app/lib/services/deckService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { validateDeckSections } from "@/app/lib/utils/deckSections";
 
 /**
  * PUT /api/decks/[id]/cards
@@ -41,7 +42,7 @@ export async function PUT(
     }
 
     // Get the updated cards
-    const { cards } = await request.json();
+    const { cards, sideboard } = await request.json();
 
     if (!Array.isArray(cards)) {
       return NextResponse.json(
@@ -50,8 +51,21 @@ export async function PUT(
       );
     }
 
+    const validation = validateDeckSections({ cards, sideboard });
+
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.errors[0] || "Invalid deck configuration" },
+        { status: 400 }
+      );
+    }
+
     // Update the deck cards
-    const updatedDeck = await deckService.updateDeckCards(deckId, cards);
+    const updatedDeck = await deckService.updateDeckCards(
+      deckId,
+      cards,
+      sideboard
+    );
 
     return NextResponse.json(updatedDeck);
   } catch (error) {
@@ -101,7 +115,7 @@ export async function POST(
     }
 
     // Get the card data
-    const { cardId, quantity = 1 } = await request.json();
+    const { cardId, quantity = 1, zone = "main" } = await request.json();
 
     if (!cardId) {
       return NextResponse.json(
@@ -110,11 +124,19 @@ export async function POST(
       );
     }
 
+    if (zone !== "main" && zone !== "sideboard") {
+      return NextResponse.json(
+        { error: "Invalid zone" },
+        { status: 400 }
+      );
+    }
+
     // Add the card to the deck
     const updatedDeck = await deckService.addCardToDeck(
       deckId,
       cardId,
-      quantity
+      quantity,
+      zone
     );
 
     return NextResponse.json(updatedDeck);

@@ -3,8 +3,8 @@ import { deckService } from "@/app/lib/services/deckService";
 import { achievementService } from "@/app/lib/services/achievementService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { ObjectId } from "mongodb";
 import { DECK_BADGES } from "@/app/lib/constants";
+import { validateDeckSections } from "@/app/lib/utils/deckSections";
 
 /**
  * GET /api/decks/[id]
@@ -110,6 +110,20 @@ export async function PUT(
       deckData.deckBadges = deckBadges;
     }
     delete deckData.deckBadge;
+
+    if (Array.isArray(deckData?.cards) || Array.isArray(deckData?.sideboard)) {
+      const validation = validateDeckSections({
+        cards: deckData.cards,
+        sideboard: deckData.sideboard,
+      });
+
+      if (!validation.isValid) {
+        return NextResponse.json(
+          { error: validation.errors[0] || "Invalid deck configuration" },
+          { status: 400 }
+        );
+      }
+    }
 
     // Update the deck
     const updatedDeck = await deckService.updateDeck(deckId, deckData);

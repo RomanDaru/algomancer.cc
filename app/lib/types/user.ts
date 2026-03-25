@@ -33,6 +33,7 @@ export interface Deck {
   deckBadges?: DeckBadge[];
   userId: ObjectId;
   cards: DeckCard[];
+  sideboard?: DeckCard[];
   deckElements?: string[];
   totalCards?: number;
   createdAt: Date;

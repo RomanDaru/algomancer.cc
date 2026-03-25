@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 import { Deck as DeckType } from "../../types/user";
+import { DECK_CONSTRUCTION_RULES } from "../../constants";
 
 type DeckLike = Partial<DeckType> & {
   _id: DeckType["_id"];
@@ -16,7 +17,12 @@ export interface DeckDocument extends Document, Omit<DeckType, "_id"> {
 const DeckCardSchema = new Schema(
   {
     cardId: { type: String, required: true },
-    quantity: { type: Number, required: true, min: 1, max: 4 },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+      max: DECK_CONSTRUCTION_RULES.maxCopiesPerCardPerZone,
+    },
   },
   { _id: false }
 );
@@ -42,6 +48,7 @@ const DeckSchema = new Schema(
     deckBadges: { type: [String], default: [] },
     userId: { type: Schema.Types.ObjectId, required: true, ref: "User" },
     cards: { type: [DeckCardSchema], default: [] },
+    sideboard: { type: [DeckCardSchema], default: [] },
     deckElements: { type: [String], default: ["Colorless"] },
     totalCards: { type: Number, default: 0 },
     isPublic: { type: Boolean, default: true },
@@ -67,11 +74,14 @@ DeckSchema.index({ isPublic: 1, views: -1 }); // For popular decks
 DeckSchema.index({ isPublic: 1, likes: -1 }); // For most liked decks
 DeckSchema.index({ userId: 1, createdAt: -1 }); // For user decks sorted by date
 DeckSchema.index({ "cards.cardId": 1, isPublic: 1, createdAt: -1 }); // Compound index for card-specific deck queries
+DeckSchema.index({ "sideboard.cardId": 1 });
+DeckSchema.index({ "sideboard.cardId": 1, isPublic: 1, createdAt: -1 });
 
 // Ensure schema updates are applied during HMR in development
 if (
   mongoose.models.Deck &&
-  !mongoose.models.Deck.schema.path("deckBadges")
+  (!mongoose.models.Deck.schema.path("deckBadges") ||
+    !mongoose.models.Deck.schema.path("sideboard"))
 ) {
   delete mongoose.models.Deck;
 }
@@ -96,6 +106,7 @@ export function convertDocumentToDeck(doc: DeckDocument): DeckType {
         : [],
     userId: deck.userId,
     cards: deck.cards,
+    sideboard: deck.sideboard || [],
     deckElements: deck.deckElements || [],
     totalCards: typeof deck.totalCards === "number" ? deck.totalCards : undefined,
     createdAt: deck.createdAt,
@@ -126,6 +137,7 @@ export function convertAggregationToDeck(obj: DeckLike): DeckType {
         : [],
     userId: obj.userId,
     cards: obj.cards || [],
+    sideboard: obj.sideboard || [],
     deckElements: obj.deckElements || [],
     totalCards: typeof obj.totalCards === "number" ? obj.totalCards : undefined,
     createdAt: obj.createdAt,
@@ -162,6 +174,7 @@ export function convertToDeck(input: DeckDocument | DeckLike): DeckType {
         : [],
     userId: obj.userId,
     cards: obj.cards || [],
+    sideboard: obj.sideboard || [],
     deckElements: obj.deckElements || [],
     totalCards: typeof obj.totalCards === "number" ? obj.totalCards : undefined,
     createdAt: obj.createdAt,
@@ -188,6 +201,7 @@ export function convertDeckToDocument(
     deckBadges: deck.deckBadges,
     userId: deck.userId,
     cards: deck.cards,
+    sideboard: deck.sideboard,
     isPublic: deck.isPublic,
     deckElements: deck.deckElements,
     totalCards: deck.totalCards,

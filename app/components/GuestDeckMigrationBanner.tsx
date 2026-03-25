@@ -7,6 +7,7 @@ import { CloudArrowUpIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/outl
 interface GuestDeckMigrationBannerProps {
   deckName: string;
   totalCards: number;
+  sideboardCards?: number;
   onMigrate: () => Promise<{ success: boolean; deckId?: string; error?: string } | null>;
   onDiscard: () => void;
   onDismiss?: () => void;
@@ -15,6 +16,7 @@ interface GuestDeckMigrationBannerProps {
 export default function GuestDeckMigrationBanner({
   deckName,
   totalCards,
+  sideboardCards = 0,
   onMigrate,
   onDiscard,
   onDismiss,
@@ -66,7 +68,8 @@ export default function GuestDeckMigrationBanner({
               Save Your Guest Deck
             </h3>
             <p className="text-gray-300 text-sm mb-3">
-              You have a deck "{deckName}" with {totalCards} cards from your guest session. 
+              You have a deck "{deckName}" with {totalCards} main deck cards
+              {sideboardCards > 0 ? ` and ${sideboardCards} sideboard cards` : ""} from your guest session.
               Would you like to save it to your account?
             </p>
             

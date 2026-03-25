@@ -3,19 +3,31 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
-import { DECK_BADGE_VALUES, DeckBadge } from "@/app/lib/constants";
-import CardSearch from "./CardSearch";
-import CardGrid from "./CardGrid";
+import {
+  DECK_BADGE_VALUES,
+  DECK_CONSTRUCTION_RULES,
+  DeckBadge,
+} from "@/app/lib/constants";
 import DeckViewer from "./DeckViewer";
 import DeckStats from "./DeckStats";
-import CardHoverPreview from "./CardHoverPreview";
 import GuestModePrompt from "./GuestModePrompt";
+import DeckCardBrowser from "./DeckCardBrowser";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { GuestDeckManager } from "@/app/lib/utils/guestDeckManager";
 import { validateAndNormalizeYouTubeUrl } from "@/app/lib/utils/youtube";
-import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 import { getAllDeckElements } from "@/app/lib/utils/elements";
+import {
+  addCardToSection,
+  canAddCardToSection,
+  DeckSection,
+  getDeckSectionTotal,
+  moveCardBetweenSections,
+  normalizeDeckSections,
+  removeAllCopiesFromSection,
+  removeCardFromSection,
+  validateDeckSections,
+} from "@/app/lib/utils/deckSections";
 
 interface DeckBuilderProps {
   cards: Card[];
@@ -23,6 +35,7 @@ interface DeckBuilderProps {
   initialDeckDescription?: string;
   initialYouTubeUrl?: string;
   initialDeckCards?: DeckCard[];
+  initialSideboardCards?: DeckCard[];
   initialIsPublic?: boolean;
   initialDeckBadges?: DeckBadge[];
   deckId?: string;
@@ -36,6 +49,7 @@ export default function DeckBuilder({
   initialDeckDescription = "",
   initialYouTubeUrl = "",
   initialDeckCards = [],
+  initialSideboardCards = [],
   initialIsPublic = true,
   initialDeckBadges = [],
   deckId,
@@ -48,7 +62,12 @@ export default function DeckBuilder({
     initialDeckDescription
   );
   const [youtubeUrl, setYoutubeUrl] = useState(initialYouTubeUrl);
-  const [deckCards, setDeckCards] = useState<DeckCard[]>(initialDeckCards);
+  const [deckSections, setDeckSections] = useState(() =>
+    normalizeDeckSections({
+      cards: initialDeckCards,
+      sideboard: initialSideboardCards,
+    })
+  );
   const [deckBadges, setDeckBadges] = useState<DeckBadge[]>(
     initialDeckBadges
   );
@@ -56,6 +75,11 @@ export default function DeckBuilder({
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+
+  const deckCards = deckSections.cards;
+  const sideboardCards = deckSections.sideboard;
+  const mainDeckCount = getDeckSectionTotal(deckCards);
+  const sideboardCount = getDeckSectionTotal(sideboardCards);
   const deckElements = useMemo(() => {
     if (deckCards.length === 0) return [];
 
@@ -73,8 +97,6 @@ export default function DeckBuilder({
     );
   }, [cards, deckCards]);
 
-  // Maximum number of copies of a card allowed in a deck
-  const MAX_COPIES = 2;
   const deckBadgeOptions = DECK_BADGE_VALUES;
   const maxDeckBadges = 2;
 
@@ -90,7 +112,6 @@ export default function DeckBuilder({
     });
   };
 
-  // Load guest deck data on mount if in guest mode
   useEffect(() => {
     if (isGuestMode && !isEditing) {
       const guestDeck = GuestDeckManager.loadGuestDeck();
@@ -98,18 +119,25 @@ export default function DeckBuilder({
         setDeckName(guestDeck.name);
         setDeckDescription(guestDeck.description);
         setDeckBadges(guestDeck.deckBadges ?? []);
-        setDeckCards(guestDeck.cards);
+        setDeckSections(
+          normalizeDeckSections({
+            cards: guestDeck.cards,
+            sideboard: guestDeck.sideboard,
+          })
+        );
         setIsPublic(guestDeck.isPublic);
       }
     }
   }, [isGuestMode, isEditing]);
 
-  // Auto-save guest deck changes
   useEffect(() => {
     if (
       isGuestMode &&
       !isEditing &&
-      (deckName || deckDescription || deckCards.length > 0)
+      (deckName ||
+        deckDescription ||
+        deckCards.length > 0 ||
+        sideboardCards.length > 0)
     ) {
       const timeoutId = setTimeout(() => {
         try {
@@ -118,12 +146,13 @@ export default function DeckBuilder({
             description: deckDescription,
             deckBadges,
             cards: deckCards,
+            sideboard: sideboardCards,
             isPublic,
           });
         } catch (error) {
           console.error("Failed to auto-save guest deck:", error);
         }
-      }, 1000); // Debounce auto-save by 1 second
+      }, 1000);
 
       return () => clearTimeout(timeoutId);
     }
@@ -132,70 +161,86 @@ export default function DeckBuilder({
     deckDescription,
     deckBadges,
     deckCards,
+    sideboardCards,
     isPublic,
     isGuestMode,
     isEditing,
   ]);
 
-  // Handle adding a card to the deck
-  const handleAddCard = (cardId: string) => {
-    setDeckCards((prevDeckCards) => {
-      const existingCardIndex = prevDeckCards.findIndex(
-        (c) => c.cardId === cardId
-      );
+  const canAddToSection = (cardId: string, section: DeckSection) =>
+    canAddCardToSection({
+      section,
+      cards: deckCards,
+      sideboard: sideboardCards,
+      cardId,
+      amount: 1,
+    });
 
-      if (existingCardIndex >= 0) {
-        // Card already exists in the deck, increase quantity if below max
-        if (prevDeckCards[existingCardIndex].quantity < MAX_COPIES) {
-          const updatedCards = [...prevDeckCards];
-          updatedCards[existingCardIndex] = {
-            ...updatedCards[existingCardIndex],
-            quantity: updatedCards[existingCardIndex].quantity + 1,
-          };
-          return updatedCards;
-        }
-        return prevDeckCards; // Already at max copies
-      } else {
-        // Card doesn't exist in the deck, add it
-        return [...prevDeckCards, { cardId, quantity: 1 }];
+  const handleAddCard = (cardId: string, section: DeckSection) => {
+    setDeckSections((prev) => {
+      if (
+        !canAddCardToSection({
+          section,
+          cards: prev.cards,
+          sideboard: prev.sideboard,
+          cardId,
+          amount: 1,
+        })
+      ) {
+        return prev;
       }
+
+      return {
+        cards:
+          section === "main"
+            ? addCardToSection(prev.cards, cardId, 1)
+            : prev.cards,
+        sideboard:
+          section === "sideboard"
+            ? addCardToSection(prev.sideboard, cardId, 1)
+            : prev.sideboard,
+      };
     });
   };
 
-  // Handle removing a card from the deck
-  const handleRemoveCard = (cardId: string) => {
-    setDeckCards((prevDeckCards) => {
-      const existingCardIndex = prevDeckCards.findIndex(
-        (c) => c.cardId === cardId
-      );
-
-      if (existingCardIndex >= 0) {
-        // Card exists in the deck
-        if (prevDeckCards[existingCardIndex].quantity > 1) {
-          // More than one copy, decrease quantity
-          const updatedCards = [...prevDeckCards];
-          updatedCards[existingCardIndex] = {
-            ...updatedCards[existingCardIndex],
-            quantity: updatedCards[existingCardIndex].quantity - 1,
-          };
-          return updatedCards;
-        } else {
-          // Only one copy, remove the card
-          return prevDeckCards.filter((c) => c.cardId !== cardId);
-        }
-      }
-      return prevDeckCards;
-    });
+  const handleRemoveCard = (cardId: string, section: DeckSection) => {
+    setDeckSections((prev) => ({
+      cards:
+        section === "main"
+          ? removeCardFromSection(prev.cards, cardId, 1)
+          : prev.cards,
+      sideboard:
+        section === "sideboard"
+          ? removeCardFromSection(prev.sideboard, cardId, 1)
+          : prev.sideboard,
+    }));
   };
 
-  // Handle removing all copies of a card from the deck
-  const handleRemoveAllCopies = (cardId: string) => {
-    setDeckCards((prevDeckCards) =>
-      prevDeckCards.filter((c) => c.cardId !== cardId)
+  const handleRemoveAllCopies = (cardId: string, section: DeckSection) => {
+    setDeckSections((prev) => ({
+      cards:
+        section === "main"
+          ? removeAllCopiesFromSection(prev.cards, cardId)
+          : prev.cards,
+      sideboard:
+        section === "sideboard"
+          ? removeAllCopiesFromSection(prev.sideboard, cardId)
+          : prev.sideboard,
+    }));
+  };
+
+  const handleMoveCard = (cardId: string, from: DeckSection) => {
+    setDeckSections((prev) =>
+      moveCardBetweenSections({
+        from,
+        cards: prev.cards,
+        sideboard: prev.sideboard,
+        cardId,
+        amount: 1,
+      })
     );
   };
 
-  // Handle saving the deck
   const handleSaveDeck = async () => {
     if (!deckName.trim()) {
       toast.error("Please enter a deck name");
@@ -203,11 +248,20 @@ export default function DeckBuilder({
     }
 
     if (deckCards.length === 0) {
-      toast.error("Please add at least one card to your deck");
+      toast.error("Please add at least one card to your main deck");
       return;
     }
 
-    // Validate YouTube URL if provided
+    const validation = validateDeckSections({
+      cards: deckCards,
+      sideboard: sideboardCards,
+    });
+
+    if (!validation.isValid) {
+      toast.error(validation.errors[0] || "Invalid deck configuration");
+      return;
+    }
+
     let normalizedYouTubeUrl = "";
     if (youtubeUrl.trim()) {
       const validatedUrl = validateAndNormalizeYouTubeUrl(youtubeUrl.trim());
@@ -218,7 +272,6 @@ export default function DeckBuilder({
       normalizedYouTubeUrl = validatedUrl;
     }
 
-    // If in guest mode, show prompt to sign in
     if (isGuestMode) {
       setShowGuestPrompt(true);
       return;
@@ -233,30 +286,26 @@ export default function DeckBuilder({
         youtubeUrl: normalizedYouTubeUrl,
         deckBadges,
         cards: deckCards,
+        sideboard: sideboardCards,
         isPublic,
       };
 
-      let response;
-
-      if (isEditing && deckId) {
-        // Update existing deck
-        response = await fetch(`/api/decks/${deckId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(deckData),
-        });
-      } else {
-        // Create new deck
-        response = await fetch("/api/decks", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(deckData),
-        });
-      }
+      const response =
+        isEditing && deckId
+          ? await fetch(`/api/decks/${deckId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(deckData),
+            })
+          : await fetch("/api/decks", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(deckData),
+            });
 
       if (!response.ok) {
         const error = await response.json();
@@ -269,7 +318,6 @@ export default function DeckBuilder({
         isEditing ? "Deck updated successfully" : "Deck created successfully"
       );
 
-      // Redirect to the deck page
       router.push(`/decks/${savedDeck._id}`);
     } catch (error) {
       console.error("Error saving deck:", error);
@@ -281,9 +329,153 @@ export default function DeckBuilder({
     }
   };
 
+  const renderDeckInfoPanel = (idSuffix: string) => (
+    <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
+      <h3 className='text-lg font-semibold text-white mb-4'>Deck Information</h3>
+
+      <div className='space-y-4'>
+        <div>
+          <label
+            htmlFor={`deckName${idSuffix}`}
+            className='block text-sm font-medium text-gray-300 mb-1'>
+            Deck Name
+          </label>
+          <input
+            type='text'
+            id={`deckName${idSuffix}`}
+            value={deckName}
+            onChange={(e) => setDeckName(e.target.value)}
+            className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
+            placeholder='Enter deck name'
+          />
+        </div>
+
+        <div>
+          <label className='block text-sm font-medium text-gray-300 mb-1'>
+            Deck Badges
+          </label>
+          <div className='flex flex-wrap gap-2'>
+            <button
+              type='button'
+              onClick={() => setDeckBadges([])}
+              className={`px-3 py-1 text-xs rounded-full border ${
+                deckBadges.length === 0
+                  ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
+                  : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
+              }`}>
+              Clear
+            </button>
+            {deckBadgeOptions.map((badge) => {
+              const isActive = deckBadges.includes(badge);
+              const isDisabled =
+                !isActive && deckBadges.length >= maxDeckBadges;
+              return (
+                <button
+                  key={badge}
+                  type='button'
+                  onClick={() => toggleDeckBadge(badge)}
+                  disabled={isDisabled}
+                  className={`px-3 py-1 text-xs rounded-full border ${
+                    isActive
+                      ? "bg-algomancy-purple/50 border-algomancy-purple text-white"
+                      : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
+                  } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
+                  {badge}
+                </button>
+              );
+            })}
+          </div>
+          <p className='text-xs text-gray-400 mt-1'>
+            Pick up to {maxDeckBadges} badges to show on your deck.
+          </p>
+        </div>
+
+        <div>
+          <label
+            htmlFor={`deckDescription${idSuffix}`}
+            className='block text-sm font-medium text-gray-300 mb-1'>
+            Description
+          </label>
+          <textarea
+            id={`deckDescription${idSuffix}`}
+            value={deckDescription}
+            onChange={(e) => setDeckDescription(e.target.value)}
+            className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white h-24'
+            placeholder='Enter deck description'
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor={`youtubeUrl${idSuffix}`}
+            className='block text-sm font-medium text-gray-300 mb-1'>
+            YouTube Video URL (Optional)
+          </label>
+          <input
+            type='url'
+            id={`youtubeUrl${idSuffix}`}
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
+            placeholder='https://www.youtube.com/watch?v=...'
+          />
+          <p className='text-xs text-gray-400 mt-1'>
+            Add a YouTube video to showcase your deck in action
+          </p>
+        </div>
+
+        <div className='flex items-center'>
+          <input
+            type='checkbox'
+            id={`isPublic${idSuffix}`}
+            checked={!isPublic}
+            onChange={(e) => setIsPublic(!e.target.checked)}
+            className='mr-2'
+          />
+          <label htmlFor={`isPublic${idSuffix}`} className='text-sm text-gray-300'>
+            Make this deck private
+          </label>
+        </div>
+
+        <div className='rounded-md border border-white/10 bg-black/10 p-3 text-xs text-gray-300'>
+          <div className='flex items-center justify-between'>
+            <span>Main Deck</span>
+            <span>{mainDeckCount} cards</span>
+          </div>
+          <div className='mt-2 flex items-center justify-between'>
+            <span>Sideboard</span>
+            <span>
+              {sideboardCount}/{DECK_CONSTRUCTION_RULES.maxSideboardCards}
+            </span>
+          </div>
+          <p className='mt-3 text-gray-400'>
+            Max {DECK_CONSTRUCTION_RULES.maxCopiesPerCardTotal} total copies of a
+            card across both zones.
+          </p>
+        </div>
+
+        <button
+          onClick={handleSaveDeck}
+          disabled={isSaving}
+          className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
+            isGuestMode
+              ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
+              : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
+          }`}>
+          {isSaving
+            ? "Saving..."
+            : isGuestMode
+            ? "Sign In to Save Deck"
+            : isEditing
+            ? "Update Deck"
+            : "Save Deck"}
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-      {/* Guest Mode Prompt */}
       {isGuestMode && (
         <div className='lg:col-span-3'>
           <GuestModePrompt
@@ -294,7 +486,6 @@ export default function DeckBuilder({
         </div>
       )}
 
-      {/* Guest Mode Modal Prompt */}
       {showGuestPrompt && (
         <div className='fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4'>
           <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg max-w-md w-full'>
@@ -308,449 +499,68 @@ export default function DeckBuilder({
         </div>
       )}
 
-      {/* Mobile: Card Browser First */}
       <div className='lg:hidden lg:col-span-2 order-1'>
-        {/* Card Browser - Taller on mobile */}
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-white mb-4'>
-            Card Browser
-          </h3>
-
-          <CardSearch
-            cards={cards}
-            onSearchResults={setFilteredCards}
-            deckElements={deckElements}
-          />
-
-          <div className='mt-4'>
-            {filteredCards.length > 0 ? (
-              <div className='grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto custom-scrollbar'>
-                {filteredCards.map((card) => {
-                  const deckCard = deckCards.find(
-                    (dc) => dc.cardId === card.id
-                  );
-                  const quantity = deckCard?.quantity || 0;
-
-                  return (
-                    <div key={card.id} className='flex flex-col'>
-                      {/* Mobile: Simple card without preview */}
-                      <div
-                        className='relative cursor-pointer hover:opacity-80 transition-opacity'
-                        onClick={() => handleAddCard(card.id)}>
-                        <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                          <img
-                            src={card.imageUrl}
-                            alt={card.name}
-                            className='object-cover w-full h-full'
-                          />
-                        </div>
-                      </div>
-
-                      {/* Controls beneath the card */}
-                      <div className='flex items-center justify-center mt-2 space-x-2'>
-                        <button
-                          onClick={() => handleAddCard(card.id)}
-                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                          title='Add one copy'
-                          aria-label={`Add one copy of ${card.name}`}>
-                          <PlusIcon className='w-4 h-4' aria-hidden='true' />
-                        </button>
-                        <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
-                          {quantity}/{MAX_COPIES}
-                        </span>
-                        <button
-                          onClick={() => handleRemoveCard(card.id)}
-                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                          title='Remove one copy'
-                          aria-label={`Remove one copy of ${card.name}`}>
-                          <MinusIcon className='w-4 h-4' aria-hidden='true' />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className='text-center py-12'>
-                <p className='text-xl text-gray-400'>
-                  No cards found matching your search criteria.
-                </p>
-                <p className='text-gray-500 mt-2'>
-                  Try adjusting your search terms.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+        <DeckCardBrowser
+          cards={cards}
+          filteredCards={filteredCards}
+          deckCards={deckCards}
+          sideboardCards={sideboardCards}
+          deckElements={deckElements}
+          onSearchResults={setFilteredCards}
+          onAddToDeck={(cardId) => handleAddCard(cardId, "main")}
+          onAddToSideboard={(cardId) => handleAddCard(cardId, "sideboard")}
+          canAddToDeck={(cardId) => canAddToSection(cardId, "main")}
+          canAddToSideboard={(cardId) => canAddToSection(cardId, "sideboard")}
+          useHoverPreview={false}
+          maxHeightClassName='max-h-[600px]'
+          gridClassName='grid-cols-2 sm:grid-cols-3'
+        />
       </div>
 
-      {/* Mobile: Deck Viewer Second */}
       <div className='lg:hidden order-2'>
         <DeckViewer
           cards={cards}
           deckCards={deckCards}
+          sideboardCards={sideboardCards}
           onAddCard={handleAddCard}
           onRemoveCard={handleRemoveCard}
           onRemoveAllCopies={handleRemoveAllCopies}
-          maxCopies={MAX_COPIES}
+          onMoveCard={handleMoveCard}
         />
       </div>
 
-      {/* Mobile: Deck Info and Stats Last */}
       <div className='lg:hidden space-y-4 order-3'>
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-white mb-4'>
-            Deck Information
-          </h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label
-                htmlFor='deckName-mobile'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                Deck Name
-              </label>
-              <input
-                type='text'
-                id='deckName-mobile'
-                value={deckName}
-                onChange={(e) => setDeckName(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
-                placeholder='Enter deck name'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-300 mb-1'>
-                Deck Badges
-              </label>
-              <div className='flex flex-wrap gap-2'>
-                <button
-                  type='button'
-                  onClick={() => setDeckBadges([])}
-                  className={`px-3 py-1 text-xs rounded-full border ${
-                    deckBadges.length === 0
-                      ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
-                      : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
-                  }`}>
-                  Clear
-                </button>
-                {deckBadgeOptions.map((badge) => {
-                  const isActive = deckBadges.includes(badge);
-                  const isDisabled =
-                    !isActive && deckBadges.length >= maxDeckBadges;
-                  return (
-                    <button
-                      key={badge}
-                      type='button'
-                      onClick={() => toggleDeckBadge(badge)}
-                      disabled={isDisabled}
-                      className={`px-3 py-1 text-xs rounded-full border ${
-                        isActive
-                          ? "bg-algomancy-purple/50 border-algomancy-purple text-white"
-                          : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
-                      } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
-                      {badge}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className='text-xs text-gray-400 mt-1'>
-                Pick up to {maxDeckBadges} badges to show on your deck.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor='deckDescription-mobile'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                Description
-              </label>
-              <textarea
-                id='deckDescription-mobile'
-                value={deckDescription}
-                onChange={(e) => setDeckDescription(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white h-24'
-                placeholder='Enter deck description'
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor='youtubeUrl-mobile'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                YouTube Video URL (Optional)
-              </label>
-              <input
-                type='url'
-                id='youtubeUrl-mobile'
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
-                placeholder='https://www.youtube.com/watch?v=...'
-              />
-              <p className='text-xs text-gray-400 mt-1'>
-                Add a YouTube video to showcase your deck in action
-              </p>
-            </div>
-
-            <div className='flex items-center'>
-              <input
-                type='checkbox'
-                id='isPublic-mobile'
-                checked={!isPublic}
-                onChange={(e) => setIsPublic(!e.target.checked)}
-                className='mr-2'
-              />
-              <label
-                htmlFor='isPublic-mobile'
-                className='text-sm text-gray-300'>
-                Make this deck private
-              </label>
-            </div>
-
-            <button
-              onClick={handleSaveDeck}
-              disabled={isSaving}
-              className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
-                isGuestMode
-                  ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
-                  : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
-              }`}>
-              {isSaving
-                ? "Saving..."
-                : isGuestMode
-                ? "Sign In to Save Deck"
-                : isEditing
-                ? "Update Deck"
-                : "Save Deck"}
-            </button>
-          </div>
-        </div>
-
+        {renderDeckInfoPanel("-mobile")}
         <DeckStats cards={cards} deckCards={deckCards} />
       </div>
 
-      {/* Desktop: Left Column - Deck Info and Stats */}
       <div className='hidden lg:block lg:col-span-1 space-y-4'>
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-white mb-4'>
-            Deck Information
-          </h3>
-
-          <div className='space-y-4'>
-            <div>
-              <label
-                htmlFor='deckName'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                Deck Name
-              </label>
-              <input
-                type='text'
-                id='deckName'
-                value={deckName}
-                onChange={(e) => setDeckName(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
-                placeholder='Enter deck name'
-              />
-            </div>
-
-            <div>
-              <label className='block text-sm font-medium text-gray-300 mb-1'>
-                Deck Badges
-              </label>
-              <div className='flex flex-wrap gap-2'>
-                <button
-                  type='button'
-                  onClick={() => setDeckBadges([])}
-                  className={`px-3 py-1 text-xs rounded-full border ${
-                    deckBadges.length === 0
-                      ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
-                      : "bg-algomancy-dark border-algomancy-gold/30 hover:bg-algomancy-gold/20"
-                  }`}>
-                  Clear
-                </button>
-                {deckBadgeOptions.map((badge) => {
-                  const isActive = deckBadges.includes(badge);
-                  const isDisabled =
-                    !isActive && deckBadges.length >= maxDeckBadges;
-                  return (
-                    <button
-                      key={badge}
-                      type='button'
-                      onClick={() => toggleDeckBadge(badge)}
-                      disabled={isDisabled}
-                      className={`px-3 py-1 text-xs rounded-full border ${
-                        isActive
-                          ? "bg-algomancy-purple/50 border-algomancy-purple text-white"
-                          : "bg-algomancy-dark border-algomancy-purple/30 hover:bg-algomancy-purple/20"
-                      } ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}>
-                      {badge}
-                    </button>
-                  );
-                })}
-              </div>
-              <p className='text-xs text-gray-400 mt-1'>
-                Pick up to {maxDeckBadges} badges to show on your deck.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor='deckDescription'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                Description
-              </label>
-              <textarea
-                id='deckDescription'
-                value={deckDescription}
-                onChange={(e) => setDeckDescription(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white h-24'
-                placeholder='Enter deck description'
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor='youtubeUrl'
-                className='block text-sm font-medium text-gray-300 mb-1'>
-                YouTube Video URL (Optional)
-              </label>
-              <input
-                type='url'
-                id='youtubeUrl'
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                className='w-full p-2 bg-algomancy-dark border border-algomancy-purple/30 rounded text-white'
-                placeholder='https://www.youtube.com/watch?v=...'
-              />
-              <p className='text-xs text-gray-400 mt-1'>
-                Add a YouTube video to showcase your deck in action
-              </p>
-            </div>
-
-            <div className='flex items-center'>
-              <input
-                type='checkbox'
-                id='isPublic'
-                checked={!isPublic}
-                onChange={(e) => setIsPublic(!e.target.checked)}
-                className='mr-2'
-              />
-              <label htmlFor='isPublic' className='text-sm text-gray-300'>
-                Make this deck private
-              </label>
-            </div>
-
-            <button
-              onClick={handleSaveDeck}
-              disabled={isSaving}
-              className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
-                isGuestMode
-                  ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
-                  : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
-              }`}>
-              {isSaving
-                ? "Saving..."
-                : isGuestMode
-                ? "Sign In to Save Deck"
-                : isEditing
-                ? "Update Deck"
-                : "Save Deck"}
-            </button>
-          </div>
-        </div>
-
+        {renderDeckInfoPanel("")}
         <DeckStats cards={cards} deckCards={deckCards} />
       </div>
 
-      {/* Desktop: Right Column - Card Browser and Deck Viewer */}
       <div className='hidden lg:block lg:col-span-2'>
-        {/* Card Browser */}
-        <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
-          <h3 className='text-lg font-semibold text-white mb-4'>
-            Card Browser
-          </h3>
+        <DeckCardBrowser
+          cards={cards}
+          filteredCards={filteredCards}
+          deckCards={deckCards}
+          sideboardCards={sideboardCards}
+          deckElements={deckElements}
+          onSearchResults={setFilteredCards}
+          onAddToDeck={(cardId) => handleAddCard(cardId, "main")}
+          onAddToSideboard={(cardId) => handleAddCard(cardId, "sideboard")}
+          canAddToDeck={(cardId) => canAddToSection(cardId, "main")}
+          canAddToSideboard={(cardId) => canAddToSection(cardId, "sideboard")}
+        />
 
-          <CardSearch
-            cards={cards}
-            onSearchResults={setFilteredCards}
-            deckElements={deckElements}
-          />
-
-          <div className='mt-4'>
-            {filteredCards.length > 0 ? (
-              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-[320px] overflow-y-auto custom-scrollbar'>
-                {filteredCards.map((card) => {
-                  const deckCard = deckCards.find(
-                    (dc) => dc.cardId === card.id
-                  );
-                  const quantity = deckCard?.quantity || 0;
-
-                  return (
-                    <div key={card.id} className='flex flex-col'>
-                      {/* Desktop: CardHoverPreview */}
-                      <CardHoverPreview
-                        card={card}
-                        onClick={() => handleAddCard(card.id)}>
-                        <div className='relative'>
-                          <div className='cursor-pointer hover:opacity-80 transition-opacity'>
-                            <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                              <img
-                                src={card.imageUrl}
-                                alt={card.name}
-                                className='object-cover w-full h-full'
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </CardHoverPreview>
-
-                      {/* Controls beneath the card */}
-                      <div className='flex items-center justify-center mt-2 space-x-2'>
-                        <button
-                          onClick={() => handleAddCard(card.id)}
-                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                          title='Add one copy'
-                          aria-label={`Add one copy of ${card.name}`}>
-                          <PlusIcon className='w-4 h-4' aria-hidden='true' />
-                        </button>
-                        <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
-                          {quantity}/{MAX_COPIES}
-                        </span>
-                        <button
-                          onClick={() => handleRemoveCard(card.id)}
-                          className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                          title='Remove one copy'
-                          aria-label={`Remove one copy of ${card.name}`}>
-                          <MinusIcon className='w-4 h-4' aria-hidden='true' />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className='text-center py-12'>
-                <p className='text-xl text-gray-400'>
-                  No cards found matching your search criteria.
-                </p>
-                <p className='text-gray-500 mt-2'>
-                  Try adjusting your search terms.
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Unified Deck Viewer with multiple view options */}
         <DeckViewer
           cards={cards}
           deckCards={deckCards}
+          sideboardCards={sideboardCards}
           onAddCard={handleAddCard}
           onRemoveCard={handleRemoveCard}
           onRemoveAllCopies={handleRemoveAllCopies}
-          maxCopies={MAX_COPIES}
+          onMoveCard={handleMoveCard}
         />
       </div>
     </div>

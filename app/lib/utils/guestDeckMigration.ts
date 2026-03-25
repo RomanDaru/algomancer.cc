@@ -21,6 +21,7 @@ export class GuestDeckMigration {
   static getGuestDeckInfo(): {
     deckName: string;
     totalCards: number;
+    sideboardCards: number;
     lastUpdated: string;
   } | null {
     const guestDeck = GuestDeckManager.loadGuestDeck();
@@ -29,10 +30,15 @@ export class GuestDeckMigration {
     }
 
     const totalCards = guestDeck.cards.reduce((sum, card) => sum + card.quantity, 0);
+    const sideboardCards = (guestDeck.sideboard || []).reduce(
+      (sum, card) => sum + card.quantity,
+      0
+    );
 
     return {
       deckName: guestDeck.name,
       totalCards,
+      sideboardCards,
       lastUpdated: guestDeck.updatedAt,
     };
   }
@@ -121,6 +127,7 @@ export class GuestDeckMigration {
     show: boolean;
     deckName: string;
     totalCards: number;
+    sideboardCards: number;
     onMigrate: () => Promise<MigrationResult | null>;
     onDiscard: () => void;
   } {
@@ -130,6 +137,7 @@ export class GuestDeckMigration {
       show: !!guestDeckInfo,
       deckName: guestDeckInfo?.deckName || '',
       totalCards: guestDeckInfo?.totalCards || 0,
+      sideboardCards: guestDeckInfo?.sideboardCards || 0,
       onMigrate: () => this.promptAndMigrate(),
       onDiscard: () => this.discardGuestDeck(),
     };

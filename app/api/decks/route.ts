@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { ObjectId } from 'mongodb';
 import { DECK_BADGES } from "@/app/lib/constants";
+import { validateDeckSections } from "@/app/lib/utils/deckSections";
 
 /**
  * GET /api/decks
@@ -69,6 +70,18 @@ export async function POST(request: NextRequest) {
     if (!deckData.name) {
       return NextResponse.json(
         { error: 'Deck name is required' },
+        { status: 400 }
+      );
+    }
+
+    const validation = validateDeckSections({
+      cards: deckData.cards,
+      sideboard: deckData.sideboard,
+    });
+
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.errors[0] || "Invalid deck configuration" },
         { status: 400 }
       );
     }

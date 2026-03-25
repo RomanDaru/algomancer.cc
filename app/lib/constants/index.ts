@@ -49,6 +49,14 @@ export const DECK_BADGES = {
   COMBO: "Combo",
 } as const;
 
+export const DECK_CONSTRUCTION_RULES = {
+  minMainDeckCards: 20,
+  maxMainDeckCards: 60,
+  maxSideboardCards: 15,
+  maxCopiesPerCardPerZone: 2,
+  maxCopiesPerCardTotal: 2,
+} as const;
+
 export const PUBLIC_DECKS_PAGE_SIZE = 36;
 export const PUBLIC_DECKS_INITIAL_VISIBLE = 12;
 export const PUBLIC_DECKS_LOAD_MORE_STEP = 12;

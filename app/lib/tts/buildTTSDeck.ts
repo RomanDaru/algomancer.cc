@@ -49,6 +49,11 @@ export interface ExportCardInput {
   quantity: number;
 }
 
+export interface ExportDeckSectionInput {
+  name: string;
+  cards: ExportCardInput[];
+}
+
 const DEFAULT_TRANSFORM: TTSCardTransform = {
   posX: 0,
   posY: 1,
@@ -70,25 +75,25 @@ function sanitizeFilename(name: string): string {
   return cleaned.replace(/\s+/g, '_') || 'deck';
 }
 
-// Build a TTS Deck JSON using one CustomDeck entry per physical card copy
-export function buildTTSDeck(
+function buildDeckObjectState(
   deckName: string,
+  sectionName: string,
   cards: ExportCardInput[],
-  backUrl: string
-): { json: TTSDeckRoot; suggestedFilename: string } {
+  backUrl: string,
+  startingKey: number,
+  posX: number
+): { objectState: TTSDeckObjectState; nextKey: number } {
   const contained: TTSContainedObject[] = [];
   const deckIds: number[] = [];
   const customDeck: Record<string, TTSCustomDeckEntry> = {};
 
-  let key = 0; // CustomDeck keys are 1-based in TTS
+  let key = startingKey;
 
   for (const c of cards) {
     const qty = Math.max(0, Math.floor(c.quantity || 0));
     for (let i = 0; i < qty; i++) {
       key += 1;
       const keyStr = String(key);
-
-      // In TTS, CardID = deckKey * 100 + indexWithinSheet (0 for 1x1)
       const cardId = key * 100;
 
       customDeck[keyStr] = {
@@ -101,7 +106,7 @@ export function buildTTSDeck(
 
       contained.push({
         CardID: cardId,
-        Name: 'Card',
+        Name: "Card",
         Nickname: c.name,
         Transform: { ...DEFAULT_TRANSFORM },
       });
@@ -110,17 +115,48 @@ export function buildTTSDeck(
     }
   }
 
-  const objectState: TTSDeckObjectState = {
-    Name: 'DeckCustom',
-    ContainedObjects: contained,
-    DeckIDs: deckIds,
-    CustomDeck: customDeck,
-    Transform: { ...DEFAULT_TRANSFORM },
-    Nickname: deckName,
+  return {
+    objectState: {
+      Name: "DeckCustom",
+      ContainedObjects: contained,
+      DeckIDs: deckIds,
+      CustomDeck: customDeck,
+      Transform: {
+        ...DEFAULT_TRANSFORM,
+        posX,
+      },
+      Nickname: `${deckName} - ${sectionName}`,
+    },
+    nextKey: key,
   };
+}
+
+// Build a TTS Deck JSON using one CustomDeck entry per physical card copy
+export function buildTTSDeck(
+  deckName: string,
+  sections: ExportDeckSectionInput[],
+  backUrl: string
+): { json: TTSDeckRoot; suggestedFilename: string } {
+  const objectStates: TTSDeckObjectState[] = [];
+  let nextKey = 0;
+
+  sections
+    .filter((section) => section.cards.length > 0)
+    .forEach((section, index) => {
+      const { objectState, nextKey: updatedKey } = buildDeckObjectState(
+        deckName,
+        section.name,
+        section.cards,
+        backUrl,
+        nextKey,
+        index * 3
+      );
+      objectStates.push(objectState);
+      nextKey = updatedKey;
+    });
 
   return {
-    json: { ObjectStates: [objectState] },
+    json: { ObjectStates: objectStates },
     suggestedFilename: sanitizeFilename(deckName) + '.json',
   };
 }

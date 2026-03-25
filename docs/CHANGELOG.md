@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-03-25
+
+### `feature/deck-builder-sideboard`
+- Updated the exported `.txt` footer copy to `Generated with ❤️ by Algomancer.cc` while keeping the direct deck URL underneath.
+  - Areas: `app/components/DeckOptionsMenu.tsx`, `docs/CHANGELOG.md`
+  - Verification: manual code review
+- Added Algomancer.cc attribution and direct deck URL footer to exported `.txt` decklists, including sideboard-aware exports.
+  - Areas: `app/components/DeckOptionsMenu.tsx`, `docs/CHANGELOG.md`
+  - Verification: manual code review
+- Added full Sideboard support across deck creation, editing, viewing, exports, copy flows, guest deck persistence, and competition submission validation.
+  - Areas: `app/components/DeckBuilder.tsx`, `app/components/DeckCardBrowser.tsx`, `app/components/DeckViewer.tsx`, `app/components/DeckDetailViewer.tsx`, `app/lib/utils/deckSections.ts`, `app/lib/db/models/Deck.ts`, `app/lib/db/services/deckDbService.ts`, `app/lib/services/deckService.ts`, `app/api/decks/route.ts`, `app/api/decks/[id]/route.ts`, `app/api/tts/export/[id]/route.ts`
+  - Verification: `pnpm test -- --runInBand app/lib/utils/__tests__/deckSections.test.ts app/lib/services/__tests__/deckService.test.ts`, `pnpm build`, `pnpm exec tsc --noEmit` blocked by pre-existing `_tmp_page.tsx` and `backups/app-decks-id-page.before-refactor.tsx`
+
 ## 2026-03-21
 
 ### `feature/card-change-review-admin`

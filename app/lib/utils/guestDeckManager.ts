@@ -7,6 +7,7 @@ export interface GuestDeck {
   description: string;
   deckBadges?: DeckBadge[];
   cards: DeckCard[];
+  sideboard?: DeckCard[];
   isPublic: boolean;
   createdAt: string;
   updatedAt: string;
@@ -41,6 +42,7 @@ export class GuestDeckManager {
       description: deckData.description,
       deckBadges: deckData.deckBadges ?? [],
       cards: deckData.cards,
+      sideboard: deckData.sideboard ?? [],
       isPublic: deckData.isPublic,
       createdAt: existingDeck?.createdAt || now,
       updatedAt: now,
@@ -80,7 +82,11 @@ export class GuestDeckManager {
         return null;
       }
 
-      return parsed as GuestDeck;
+      return {
+        ...parsed,
+        deckBadges: parsed.deckBadges ?? [],
+        sideboard: Array.isArray(parsed.sideboard) ? parsed.sideboard : [],
+      } as GuestDeck;
     } catch (error) {
       console.error("Failed to load guest deck from localStorage:", error);
       this.clearGuestDeck(); // Clear corrupted data
@@ -138,6 +144,7 @@ export class GuestDeckManager {
     description: string;
     deckBadges?: DeckBadge[];
     cards: DeckCard[];
+    sideboard?: DeckCard[];
     isPublic: boolean;
   } {
     return {
@@ -145,6 +152,7 @@ export class GuestDeckManager {
       description: guestDeck.description,
       deckBadges: guestDeck.deckBadges ?? [],
       cards: guestDeck.cards,
+      sideboard: guestDeck.sideboard ?? [],
       isPublic: guestDeck.isPublic,
     };
   }
@@ -154,6 +162,7 @@ export class GuestDeckManager {
    */
   static getGuestDeckStats(): {
     totalCards: number;
+    sideboardCards: number;
     lastUpdated: string | null;
     deckName: string | null;
   } {
@@ -161,15 +170,21 @@ export class GuestDeckManager {
     if (!deck) {
       return {
         totalCards: 0,
+        sideboardCards: 0,
         lastUpdated: null,
         deckName: null,
       };
     }
 
     const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
+    const sideboardCards = (deck.sideboard || []).reduce(
+      (sum, card) => sum + card.quantity,
+      0
+    );
 
     return {
       totalCards,
+      sideboardCards,
       lastUpdated: deck.updatedAt,
       deckName: deck.name,
     };

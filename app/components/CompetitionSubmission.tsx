@@ -25,6 +25,7 @@ interface UserDeck {
   description?: string;
   isPublic: boolean;
   cards: Array<{ cardId: string; quantity: number }>;
+  sideboard?: Array<{ cardId: string; quantity: number }>;
   createdAt: string;
 }
 
@@ -290,11 +291,17 @@ export default function CompetitionSubmission({
               className='w-full px-3 py-2 bg-algomancy-dark border border-algomancy-purple/30 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-algomancy-purple/50'>
               <option value=''>Select a deck...</option>
               {userDecks.map((deck) => (
-                <option key={deck._id} value={deck._id}>
-                  {deck.name} (
-                  {deck.cards.reduce((sum, card) => sum + card.quantity, 0)}{" "}
-                  cards)
-                </option>
+              <option key={deck._id} value={deck._id}>
+                {deck.name} (
+                  {deck.cards.reduce((sum, card) => sum + card.quantity, 0)} cards
+                  {(deck.sideboard || []).length > 0
+                    ? ` + ${deck.sideboard?.reduce(
+                        (sum, card) => sum + card.quantity,
+                        0
+                      )} SB`
+                    : ""}
+                )
+              </option>
               ))}
             </select>
           </div>

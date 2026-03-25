@@ -123,18 +123,29 @@ export default function DeckPage({ params }: DeckPageProps) {
 
   const isOwner = session?.user?.id === deck.userId.toString();
 
-  // Group cards by type for DeckDetailViewer
-  const groupedCards: Record<string, { card: Card; quantity: number }[]> = {};
-  deck.cards.forEach((dc: Deck["cards"][number]) => {
-    const card = cards.find((c: Card) => c.id === dc.cardId);
-    if (card) {
-      const type = card.typeAndAttributes.mainType;
-      if (!groupedCards[type]) groupedCards[type] = [];
-      groupedCards[type].push({ card, quantity: dc.quantity });
-    }
-  });
+  const buildGroupedCards = (sourceCards: Deck["cards"]) => {
+    const groupedCards: Record<string, { card: Card; quantity: number }[]> = {};
+
+    sourceCards.forEach((dc) => {
+      const card = cards.find((entry: Card) => entry.id === dc.cardId);
+      if (card) {
+        const type = card.typeAndAttributes.mainType;
+        if (!groupedCards[type]) groupedCards[type] = [];
+        groupedCards[type].push({ card, quantity: dc.quantity });
+      }
+    });
+
+    return groupedCards;
+  };
+
+  const groupedCards = buildGroupedCards(deck.cards);
+  const groupedSideboardCards = buildGroupedCards(deck.sideboard || []);
 
   const totalCards = deck.cards.reduce(
+    (sum: number, c: Deck["cards"][number]) => sum + c.quantity,
+    0
+  );
+  const totalSideboardCards = (deck.sideboard || []).reduce(
     (sum: number, c: Deck["cards"][number]) => sum + c.quantity,
     0
   );
@@ -239,9 +250,10 @@ export default function DeckPage({ params }: DeckPageProps) {
           <div className='lg:col-span-2'>
             <div ref={exportTargetRef}>
               <DeckDetailViewer
-                cards={cards}
-                groupedCards={groupedCards}
-                totalCards={totalCards}
+                mainDeckGroupedCards={groupedCards}
+                sideboardGroupedCards={groupedSideboardCards}
+                mainDeckTotalCards={totalCards}
+                sideboardTotalCards={totalSideboardCards}
               />
             </div>
           </div>

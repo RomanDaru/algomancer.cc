@@ -6,6 +6,7 @@ import { competitionDbService } from "@/app/lib/db/services/competitionDbService
 import { ObjectId } from "mongodb";
 import { COMPETITION_STATUS } from "@/app/lib/constants";
 import { connectToDatabase } from "@/app/lib/db/mongodb";
+import { validateDeckSubmission } from "@/app/lib/utils/competitionValidation";
 
 // Batch fetch functions to avoid N+1 queries
 async function getBatchDecks(deckIds: ObjectId[]): Promise<Map<string, any>> {
@@ -23,6 +24,7 @@ async function getBatchDecks(deckIds: ObjectId[]): Promise<Map<string, any>> {
           userId: 1,
           isPublic: 1,
           cards: 1, // Include cards for submission display
+          sideboard: 1,
           elements: 1,
           totalCards: 1,
           createdAt: 1,
@@ -41,6 +43,7 @@ async function getBatchDecks(deckIds: ObjectId[]): Promise<Map<string, any>> {
       userId: deck.userId,
       isPublic: deck.isPublic,
       cards: deck.cards || [], // Ensure cards array exists
+      sideboard: deck.sideboard || [],
       elements: deck.elements || [],
       totalCards: deck.totalCards || 0,
       createdAt: deck.createdAt,
@@ -166,6 +169,14 @@ export async function POST(
     if (!deck.isPublic) {
       return NextResponse.json(
         { error: "Deck must be public to submit to competition" },
+        { status: 400 }
+      );
+    }
+
+    const validation = validateDeckSubmission(deck);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.errors[0] || "Deck is not valid for submission" },
         { status: 400 }
       );
     }

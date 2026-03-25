@@ -329,6 +329,10 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                     false
                   ),
                 };
+                const sideboardCount = (deck.sideboard || []).reduce(
+                  (sum, sideboardCard) => sum + sideboardCard.quantity,
+                  0
+                );
 
                 return (
                   <Link
@@ -376,8 +380,10 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
                             {deck.cards.reduce(
                               (sum, card) => sum + card.quantity,
                               0
-                            )}{" "}
-                            cards
+                            )} cards
+                            {sideboardCount > 0
+                              ? ` + ${sideboardCount} SB`
+                              : ""}
                           </div>
                           <div className='text-xs text-white/80 flex items-center mt-1'>
                             <svg

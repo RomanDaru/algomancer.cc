@@ -1,4 +1,9 @@
 import { Competition, Deck } from "../types/user";
+import { DECK_CONSTRUCTION_RULES } from "../constants";
+import {
+  getDeckSectionTotal,
+  validateDeckSections,
+} from "./deckSections";
 
 export interface ValidationResult {
   isValid: boolean;
@@ -127,19 +132,21 @@ export function validateDeckSubmission(deck: Deck): ValidationResult {
     errors.push("Deck cannot be empty");
   }
 
-  // Check deck size (Algomancy rules)
-  const totalCards = deck.cards.reduce((sum, card) => sum + card.quantity, 0);
-  if (totalCards < 20) {
-    errors.push("Deck must contain at least 20 cards");
-  }
-  if (totalCards > 60) {
-    errors.push("Deck cannot contain more than 60 cards");
-  }
+  const sectionValidation = validateDeckSections({
+    cards: deck.cards,
+    sideboard: deck.sideboard,
+  });
+  errors.push(...sectionValidation.errors);
 
-  // Check card quantity limits (max 2 per card in Algomancy)
-  const invalidCards = deck.cards.filter((card) => card.quantity > 2);
-  if (invalidCards.length > 0) {
-    errors.push("No card can appear more than 2 times in a deck");
+  if (sectionValidation.mainDeckCount < DECK_CONSTRUCTION_RULES.minMainDeckCards) {
+    errors.push(
+      `Deck must contain at least ${DECK_CONSTRUCTION_RULES.minMainDeckCards} cards`
+    );
+  }
+  if (sectionValidation.mainDeckCount > DECK_CONSTRUCTION_RULES.maxMainDeckCards) {
+    errors.push(
+      `Deck cannot contain more than ${DECK_CONSTRUCTION_RULES.maxMainDeckCards} cards`
+    );
   }
 
   return {
@@ -318,22 +325,29 @@ export function validateDeckForSubmission(deck: any): FieldValidationResult {
     return { isValid: false, error: "Deck cannot be empty" };
   }
 
-  const totalCards = deck.cards.reduce(
-    (sum: number, card: any) => sum + card.quantity,
-    0
-  );
-  if (totalCards < 20) {
-    return { isValid: false, error: "Deck must contain at least 20 cards" };
-  }
-  if (totalCards > 60) {
-    return { isValid: false, error: "Deck cannot contain more than 60 cards" };
-  }
+  const sectionValidation = validateDeckSections({
+    cards: deck.cards,
+    sideboard: deck.sideboard,
+  });
 
-  const invalidCards = deck.cards.filter((card: any) => card.quantity > 2);
-  if (invalidCards.length > 0) {
+  if (!sectionValidation.isValid) {
     return {
       isValid: false,
-      error: "No card can appear more than 2 times in a deck",
+      error: sectionValidation.errors[0] || "Invalid deck configuration",
+    };
+  }
+
+  const totalCards = getDeckSectionTotal(deck.cards);
+  if (totalCards < DECK_CONSTRUCTION_RULES.minMainDeckCards) {
+    return {
+      isValid: false,
+      error: `Deck must contain at least ${DECK_CONSTRUCTION_RULES.minMainDeckCards} cards`,
+    };
+  }
+  if (totalCards > DECK_CONSTRUCTION_RULES.maxMainDeckCards) {
+    return {
+      isValid: false,
+      error: `Deck cannot contain more than ${DECK_CONSTRUCTION_RULES.maxMainDeckCards} cards`,
     };
   }
 

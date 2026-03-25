@@ -50,6 +50,8 @@ export default function DeckCard({
     typeof deck.totalCards === "number"
       ? deck.totalCards
       : deck.cards?.reduce((sum, card) => sum + card.quantity, 0) || 0;
+  const sideboardCount =
+    deck.sideboard?.reduce((sum, card) => sum + card.quantity, 0) || 0;
 
   let deckElements: ElementType[] = ["Colorless"];
 
@@ -164,7 +166,10 @@ export default function DeckCard({
           <div className='mt-auto pt-3'>
             <div className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-[13px]'>
               <div className='flex min-w-0 items-center gap-3 text-white/85'>
-                <span className='shrink-0 text-white'>{totalCards} cards</span>
+                <span className='shrink-0 text-white'>
+                  {totalCards} cards
+                  {sideboardCount > 0 ? ` + ${sideboardCount} SB` : ""}
+                </span>
                 <span
                   className='flex shrink-0 items-center text-white/80'
                   title={`${deck.views || 0} views`}>

@@ -59,6 +59,10 @@ export async function POST(
       // youtubeUrl intentionally cleared
       userId: new ObjectId(session.user.id),
       cards: sourceDeck.cards.map((c) => ({ cardId: c.cardId, quantity: c.quantity })),
+      sideboard: (sourceDeck.sideboard || []).map((c) => ({
+        cardId: c.cardId,
+        quantity: c.quantity,
+      })),
       isPublic: false, // default to private
     };
 

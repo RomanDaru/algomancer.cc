@@ -120,6 +120,7 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
           initialYouTubeUrl={deck.youtubeUrl || ""}
           initialDeckBadges={deck.deckBadges ?? []}
           initialDeckCards={deck.cards}
+          initialSideboardCards={deck.sideboard ?? []}
           initialIsPublic={deck.isPublic || false}
           deckId={id}
           isEditing={true}

@@ -34,12 +34,6 @@ export async function GET(
       }
     }
 
-    // Join cards with quantities from deck.cards in order
-    const qtyMap = new Map<string, number>();
-    for (const dc of deck.cards) {
-      qtyMap.set(dc.cardId, (qtyMap.get(dc.cardId) || 0) + (dc.quantity || 0));
-    }
-
     const exportCards = deck.cards
       .map((dc) => {
         const card = cards.find((c) => c.id === dc.cardId);
@@ -53,7 +47,27 @@ export async function GET(
       })
       .filter((c): c is NonNullable<typeof c> => !!c);
 
-    const { json, suggestedFilename } = buildTTSDeck(deck.name, exportCards, DEFAULT_BACK_URL);
+    const sideboardCards = (deck.sideboard || [])
+      .map((dc) => {
+        const card = cards.find((c) => c.id === dc.cardId);
+        if (!card) return null;
+        return {
+          id: card.id,
+          name: card.name,
+          imageUrl: card.imageUrl,
+          quantity: dc.quantity || 0,
+        };
+      })
+      .filter((c): c is NonNullable<typeof c> => !!c);
+
+    const { json, suggestedFilename } = buildTTSDeck(
+      deck.name,
+      [
+        { name: "Main Deck", cards: exportCards },
+        { name: "Sideboard", cards: sideboardCards },
+      ],
+      DEFAULT_BACK_URL
+    );
 
     // Return as a downloadable attachment named after the deck
     const body = JSON.stringify(json);

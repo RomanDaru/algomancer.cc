@@ -99,6 +99,7 @@ export default function DeckOptionsMenu({
         youtubeUrl: deck.youtubeUrl || "",
         deckBadges: deck.deckBadges ?? [],
         cards: deck.cards,
+        sideboard: deck.sideboard ?? [],
         isPublic: false,
       };
       const res = await fetch("/api/decks", {
@@ -125,12 +126,31 @@ export default function DeckOptionsMenu({
   const handleExportTxt = async () => {
     try {
       const lines: string[] = [];
+      const exportDeckUrl =
+        deckUrl ||
+        (typeof window !== "undefined"
+          ? `${window.location.origin}/decks/${deckId}`
+          : "");
       lines.push(deck.name);
       lines.push("");
+      lines.push("Main Deck");
       deck.cards.forEach((dc) => {
         const c = cards.find((x) => x.id === dc.cardId);
         if (c) lines.push(`${dc.quantity}x ${c.name}`);
       });
+      if ((deck.sideboard || []).length > 0) {
+        lines.push("");
+        lines.push("Sideboard");
+        deck.sideboard?.forEach((dc) => {
+          const c = cards.find((x) => x.id === dc.cardId);
+          if (c) lines.push(`${dc.quantity}x ${c.name}`);
+        });
+      }
+      lines.push("");
+      lines.push("Generated with ❤️ by Algomancer.cc");
+      if (exportDeckUrl) {
+        lines.push(`See full list @ ${exportDeckUrl}`);
+      }
       const content = lines.join("\n");
       const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);

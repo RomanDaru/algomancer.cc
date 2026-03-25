@@ -15,6 +15,7 @@ import {
   encodeDeckCursor,
   isDeckAfterCursor,
 } from "../utils/deckPagination";
+import { getDeckCardIds } from "../utils/deckSections";
 
 // Cache for decks
 const cachedUserDecks: Record<string, { decks: Deck[]; timestamp: number }> =
@@ -87,7 +88,10 @@ async function hydrateDeckResults(
 
   const uniqueCardIds = new Set<string>();
   for (const item of results) {
-    for (const deckCard of item.deck.cards || []) {
+    for (const deckCard of [
+      ...(item.deck.cards || []),
+      ...(item.deck.sideboard || []),
+    ]) {
       uniqueCardIds.add(deckCard.cardId);
     }
   }
@@ -142,7 +146,10 @@ async function filterDeckResultsBySearch(
 
   const uniqueCardIds = new Set<string>();
   for (const item of results) {
-    for (const deckCard of item.deck.cards || []) {
+    for (const deckCard of [
+      ...(item.deck.cards || []),
+      ...(item.deck.sideboard || []),
+    ]) {
       uniqueCardIds.add(deckCard.cardId);
     }
   }
@@ -156,7 +163,7 @@ async function filterDeckResultsBySearch(
     const deckName = item.deck.name?.toLowerCase() || "";
     const userName = item.user.name?.toLowerCase() || "";
     const username = item.user.username?.toLowerCase() || "";
-    const cardNames = (item.deck.cards || [])
+    const cardNames = [...(item.deck.cards || []), ...(item.deck.sideboard || [])]
       .map((deckCard) => cardMap.get(deckCard.cardId)?.name?.toLowerCase() || "")
       .filter(Boolean);
 
@@ -343,9 +350,7 @@ export const deckService = {
         return { deck: null, cards: [] };
       }
 
-      const cardIds = Array.from(
-        new Set(deck.cards.map((deckCard) => deckCard.cardId))
-      );
+      const cardIds = getDeckCardIds(deck);
       const cards = await cardService.getCardsByIds(cardIds);
 
       // Get user information
@@ -499,13 +504,15 @@ export const deckService = {
   async addCardToDeck(
     deckId: string,
     cardId: string,
-    quantity: number = 1
+    quantity: number = 1,
+    zone: "main" | "sideboard" = "main"
   ): Promise<Deck | null> {
     try {
       const updatedDeck = await deckDbService.addCardToDeck(
         deckId,
         cardId,
-        quantity
+        quantity,
+        zone
       );
 
       // Clear cache for this user
@@ -526,13 +533,15 @@ export const deckService = {
   async removeCardFromDeck(
     deckId: string,
     cardId: string,
-    quantity: number = 1
+    quantity: number = 1,
+    zone: "main" | "sideboard" = "main"
   ): Promise<Deck | null> {
     try {
       const updatedDeck = await deckDbService.removeCardFromDeck(
         deckId,
         cardId,
-        quantity
+        quantity,
+        zone
       );
 
       // Clear cache for this user
@@ -555,10 +564,15 @@ export const deckService = {
    */
   async updateDeckCards(
     deckId: string,
-    cards: DeckCard[]
+    cards: DeckCard[],
+    sideboard?: DeckCard[]
   ): Promise<Deck | null> {
     try {
-      const updatedDeck = await deckDbService.updateDeckCards(deckId, cards);
+      const updatedDeck = await deckDbService.updateDeckCards(
+        deckId,
+        cards,
+        sideboard
+      );
 
       // Clear cache for this user
       if (updatedDeck && cachedUserDecks[updatedDeck.userId.toString()]) {

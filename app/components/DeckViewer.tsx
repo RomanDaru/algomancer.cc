@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import Image from "next/image";
-import { PlusIcon, MinusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
 import {
   ViewColumnsIcon,
   ListBulletIcon,
@@ -14,104 +14,345 @@ import {
   ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import CardHoverPreview from "./CardHoverPreview";
+import { DECK_CONSTRUCTION_RULES } from "@/app/lib/constants";
+import {
+  canAddCardToSection,
+  canMoveCardBetweenSections,
+  DeckSection,
+  getDeckSectionTotal,
+} from "@/app/lib/utils/deckSections";
 
 interface DeckViewerProps {
   cards: Card[];
   deckCards: DeckCard[];
-  onAddCard: (cardId: string) => void;
-  onRemoveCard: (cardId: string) => void;
-  onRemoveAllCopies: (cardId: string) => void;
-  maxCopies: number;
+  sideboardCards: DeckCard[];
+  onAddCard: (cardId: string, section: DeckSection) => void;
+  onRemoveCard: (cardId: string, section: DeckSection) => void;
+  onRemoveAllCopies: (cardId: string, section: DeckSection) => void;
+  onMoveCard: (cardId: string, from: DeckSection) => void;
 }
 
 type ViewMode = "list" | "compact" | "large";
 type SortMode = "default" | "mana" | "attack" | "defense";
 
+function sortCards(
+  sortMode: SortMode,
+  a: { card: Card; quantity: number },
+  b: { card: Card; quantity: number }
+) {
+  switch (sortMode) {
+    case "mana":
+      return a.card.manaCost - b.card.manaCost;
+    case "attack":
+      return (a.card.stats?.power || 0) - (b.card.stats?.power || 0);
+    case "defense":
+      return (a.card.stats?.defense || 0) - (b.card.stats?.defense || 0);
+    default:
+      return a.card.manaCost - b.card.manaCost;
+  }
+}
+
+function buildGroupedCards(
+  sourceCards: DeckCard[],
+  cards: Card[],
+  sortMode: SortMode
+) {
+  const groupedCards: Record<string, { card: Card; quantity: number }[]> = {};
+
+  sourceCards.forEach((deckCard) => {
+    const card = cards.find((entry) => entry.id === deckCard.cardId);
+    if (!card) {
+      return;
+    }
+
+    const groupKey =
+      sortMode === "default" ? card.typeAndAttributes.mainType : "Cards";
+
+    if (!groupedCards[groupKey]) {
+      groupedCards[groupKey] = [];
+    }
+
+    groupedCards[groupKey].push({ card, quantity: deckCard.quantity });
+  });
+
+  return Object.fromEntries(
+    Object.entries(groupedCards).map(([key, value]) => [
+      key,
+      [...value].sort((a, b) => sortCards(sortMode, a, b)),
+    ])
+  );
+}
+
 export default function DeckViewer({
   cards,
   deckCards,
+  sideboardCards,
   onAddCard,
   onRemoveCard,
   onRemoveAllCopies,
-  maxCopies,
+  onMoveCard,
 }: DeckViewerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("compact");
   const [sortMode, setSortMode] = useState<SortMode>("default");
+  const [mobileSection, setMobileSection] = useState<DeckSection>("main");
 
-  // Function to sort cards based on the current sort mode
-  const sortCards = (
-    a: { card: Card; quantity: number },
-    b: { card: Card; quantity: number }
+  const mainDeckGroups = useMemo(
+    () => buildGroupedCards(deckCards, cards, sortMode),
+    [deckCards, cards, sortMode]
+  );
+  const sideboardGroups = useMemo(
+    () => buildGroupedCards(sideboardCards, cards, sortMode),
+    [sideboardCards, cards, sortMode]
+  );
+
+  const mainDeckCount = getDeckSectionTotal(deckCards);
+  const sideboardCount = getDeckSectionTotal(sideboardCards);
+
+  const sections: Array<{
+    key: DeckSection;
+    title: string;
+    cards: DeckCard[];
+    groupedCards: Record<string, { card: Card; quantity: number }[]>;
+    countLabel: string;
+    emptyTitle: string;
+    emptyDescription: string;
+  }> = [
+    {
+      key: "main",
+      title: "Main Deck",
+      cards: deckCards,
+      groupedCards: mainDeckGroups,
+      countLabel: `${mainDeckCount} cards`,
+      emptyTitle: "Your main deck is empty.",
+      emptyDescription: "Add cards from the card browser above.",
+    },
+    {
+      key: "sideboard",
+      title: "Sideboard",
+      cards: sideboardCards,
+      groupedCards: sideboardGroups,
+      countLabel: `${sideboardCount}/${DECK_CONSTRUCTION_RULES.maxSideboardCards}`,
+      emptyTitle: "No sideboard cards yet.",
+      emptyDescription: "Add cards to Sideboard from the browser or move them from the main deck.",
+    },
+  ];
+
+  const renderCardActions = (
+    card: Card,
+    quantity: number,
+    section: DeckSection
   ) => {
-    switch (sortMode) {
-      case "mana":
-        return a.card.manaCost - b.card.manaCost;
-      case "attack":
-        return (a.card.stats?.power || 0) - (b.card.stats?.power || 0);
-      case "defense":
-        return (a.card.stats?.defense || 0) - (b.card.stats?.defense || 0);
-      default:
-        return a.card.manaCost - b.card.manaCost; // Default sort by mana cost
-    }
+    const canIncrement = canAddCardToSection({
+      section,
+      cards: deckCards,
+      sideboard: sideboardCards,
+      cardId: card.id,
+      amount: 1,
+    });
+    const canMove = canMoveCardBetweenSections({
+      from: section,
+      cards: deckCards,
+      sideboard: sideboardCards,
+      cardId: card.id,
+      amount: 1,
+    });
+    const moveLabel = section === "main" ? "To SB" : "To Deck";
+
+    return (
+      <>
+        <div className='flex items-center gap-1'>
+          <button
+            type='button'
+            onClick={() => onRemoveCard(card.id, section)}
+            className='rounded-md border border-white/10 p-1 text-gray-300 transition-colors hover:border-white/20 hover:text-white'
+            title='Remove one copy'
+            aria-label={`Remove one copy of ${card.name}`}>
+            <MinusIcon className='h-4 w-4' aria-hidden='true' />
+          </button>
+          <span
+            className='min-w-10 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-center text-sm text-white'
+            aria-label={`${quantity} copies`}>
+            {quantity}/{DECK_CONSTRUCTION_RULES.maxCopiesPerCardPerZone}
+          </span>
+          <button
+            type='button'
+            onClick={() => onAddCard(card.id, section)}
+            disabled={!canIncrement}
+            className='rounded-md border border-white/10 p-1 text-gray-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
+            title='Add one copy'
+            aria-label={`Add one copy of ${card.name}`}>
+            <PlusIcon className='h-4 w-4' aria-hidden='true' />
+          </button>
+        </div>
+        <div className='flex items-center gap-2'>
+          <button
+            type='button'
+            onClick={() => onMoveCard(card.id, section)}
+            disabled={!canMove}
+            className='rounded-md border border-algomancy-gold/30 px-2 py-1 text-xs font-medium text-white transition-colors hover:border-algomancy-gold hover:bg-algomancy-gold/10 disabled:cursor-not-allowed disabled:opacity-40'>
+            {moveLabel}
+          </button>
+          <button
+            type='button'
+            onClick={() => onRemoveAllCopies(card.id, section)}
+            className='rounded-md border border-red-500/30 px-2 py-1 text-xs font-medium text-white transition-colors hover:border-red-400 hover:bg-red-500/10'>
+            Remove
+          </button>
+        </div>
+      </>
+    );
   };
 
-  // Prepare cards based on sort mode
-  let preparedCards: { card: Card; quantity: number }[] = [];
+  const renderSection = (section: (typeof sections)[number]) => {
+    const groupedCards = section.groupedCards;
+    const displayedTypes = Object.keys(groupedCards).sort();
+    const totalCards = getDeckSectionTotal(section.cards);
 
-  // Map deck cards to actual cards
-  deckCards.forEach((deckCard) => {
-    const card = cards.find((c) => c.id === deckCard.cardId);
-    if (card) {
-      preparedCards.push({ card, quantity: deckCard.quantity });
-    }
-  });
+    return (
+      <div
+        key={section.key}
+        className='rounded-lg border border-algomancy-purple/25 bg-black/10 p-4'>
+        <div className='mb-4 flex items-center justify-between gap-3'>
+          <div>
+            <h4 className='text-lg font-semibold text-white'>{section.title}</h4>
+            <p className='text-sm text-gray-400'>{section.countLabel}</p>
+          </div>
+          {section.key === "sideboard" && (
+            <span className='rounded-md border border-algomancy-gold/25 px-2 py-1 text-xs text-gray-300'>
+              Optional
+            </span>
+          )}
+        </div>
 
-  // Sort all cards if not in default mode
-  if (sortMode !== "default") {
-    preparedCards.sort(sortCards);
-  }
+        {totalCards === 0 ? (
+          <div className='rounded-md border border-dashed border-white/10 py-8 text-center text-gray-400'>
+            <p>{section.emptyTitle}</p>
+            <p className='mt-2 text-sm'>{section.emptyDescription}</p>
+          </div>
+        ) : (
+          <div className='space-y-6'>
+            {displayedTypes.map((type) => (
+              <div key={`${section.key}-${type}`} className='space-y-2'>
+                <h5 className='border-b border-algomancy-gold/30 pb-1 text-sm font-medium text-algomancy-gold'>
+                  {type} (
+                  {groupedCards[type].reduce(
+                    (sum, item) => sum + item.quantity,
+                    0
+                  )}
+                  )
+                </h5>
 
-  // Group cards by type for default view
-  const groupedCards: Record<string, { card: Card; quantity: number }[]> = {};
+                {viewMode === "list" && (
+                  <div className='space-y-2'>
+                    {groupedCards[type].map(({ card, quantity }) => (
+                      <div
+                        key={`${section.key}-${card.id}`}
+                        className='flex flex-col gap-3 rounded-md border border-white/5 px-2 py-2 md:flex-row md:items-center md:justify-between'>
+                        <div className='flex items-center gap-2'>
+                          <CardHoverPreview card={card}>
+                            <div className='relative h-7 w-7 flex-shrink-0 overflow-hidden rounded border border-white/10'>
+                              <Image
+                                src={card.imageUrl}
+                                alt={`${card.name} card`}
+                                fill
+                                className='object-cover'
+                              />
+                            </div>
+                          </CardHoverPreview>
+                          <span className='truncate text-sm text-white'>
+                            {card.name}
+                          </span>
+                        </div>
+                        <div className='flex flex-wrap items-center justify-end gap-2'>
+                          {renderCardActions(card, quantity, section.key)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-  if (sortMode === "default") {
-    // Group by type for default view
-    deckCards.forEach((deckCard) => {
-      const card = cards.find((c) => c.id === deckCard.cardId);
-      if (card) {
-        const type = card.typeAndAttributes.mainType;
-        if (!groupedCards[type]) {
-          groupedCards[type] = [];
-        }
-        groupedCards[type].push({ card, quantity: deckCard.quantity });
-      }
-    });
-  } else {
-    // For other sort modes, create a single group called "Cards"
-    groupedCards["Cards"] = preparedCards;
-  }
+                {viewMode === "compact" && (
+                  <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+                    {groupedCards[type].map(({ card, quantity }) => (
+                      <div
+                        key={`${section.key}-${card.id}`}
+                        className='overflow-hidden rounded-md border border-white/10 bg-algomancy-dark/70'>
+                        <CardHoverPreview card={card}>
+                          <div className='relative aspect-[3/4] w-full'>
+                            <Image
+                              src={card.imageUrl}
+                              alt={`${card.name} card`}
+                              fill
+                              className='object-cover'
+                              sizes='(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw'
+                            />
+                          </div>
+                        </CardHoverPreview>
+                        <div className='space-y-2 p-2'>
+                          <p className='truncate text-sm text-white'>{card.name}</p>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            {renderCardActions(card, quantity, section.key)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
-  // Sort card types
-  const sortedTypes = Object.keys(groupedCards).sort();
-
-  // Calculate total cards
-  const totalCards = deckCards.reduce((sum, card) => sum + card.quantity, 0);
+                {viewMode === "large" && (
+                  <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
+                    {groupedCards[type].map(({ card, quantity }) => (
+                      <div
+                        key={`${section.key}-${card.id}`}
+                        className='overflow-hidden rounded-md border border-white/10 bg-algomancy-dark/70'>
+                        <CardHoverPreview card={card}>
+                          <div className='relative aspect-[3/4] w-full'>
+                            <Image
+                              src={card.imageUrl}
+                              alt={`${card.name} card`}
+                              fill
+                              className='object-cover'
+                              sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                            />
+                          </div>
+                        </CardHoverPreview>
+                        <div className='space-y-3 p-3'>
+                          <div>
+                            <p className='truncate text-base font-medium text-white'>
+                              {card.name}
+                            </p>
+                            <p className='text-xs text-gray-400'>
+                              Mana {card.manaCost}
+                            </p>
+                          </div>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            {renderCardActions(card, quantity, section.key)}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <section
       className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4 mt-6'
       aria-labelledby='deck-viewer-heading'>
-      <div className='flex flex-col space-y-3 mb-4'>
-        <div className='flex justify-between items-center'>
+      <div className='mb-4 flex flex-col gap-3'>
+        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
           <h3
             id='deck-viewer-heading'
             className='text-lg font-semibold text-white'>
-            Deck ({totalCards} cards)
+            Deck Builder
           </h3>
-          <div
-            className='flex space-x-2'
-            role='toolbar'
-            aria-label='View options'>
+          <div className='flex space-x-2' role='toolbar' aria-label='View options'>
             <button
               onClick={() => setViewMode("list")}
               className={`p-2 rounded ${
@@ -151,9 +392,32 @@ export default function DeckViewer({
           </div>
         </div>
 
-        <div className='flex justify-end'>
+        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+          <div className='flex rounded-lg bg-algomancy-dark p-1 lg:hidden'>
+            <button
+              type='button'
+              onClick={() => setMobileSection("main")}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                mobileSection === "main"
+                  ? "bg-algomancy-purple text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}>
+              Main Deck ({mainDeckCount})
+            </button>
+            <button
+              type='button'
+              onClick={() => setMobileSection("sideboard")}
+              className={`rounded-md px-3 py-1.5 text-sm ${
+                mobileSection === "sideboard"
+                  ? "bg-algomancy-purple text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}>
+              Sideboard ({sideboardCount})
+            </button>
+          </div>
+
           <div
-            className='flex space-x-1 bg-algomancy-dark rounded-lg p-1'
+            className='flex space-x-1 rounded-lg bg-algomancy-dark p-1'
             role='toolbar'
             aria-label='Sort options'>
             <button
@@ -211,203 +475,15 @@ export default function DeckViewer({
         </div>
       </div>
 
-      {totalCards === 0 ? (
-        <div className='text-center py-8 text-gray-400' aria-live='polite'>
-          <p>Your deck is empty.</p>
-          <p className='text-sm mt-2'>Add cards from the card browser above.</p>
-        </div>
-      ) : (
-        <div className='space-y-6'>
-          {sortedTypes.map((type) => (
-            <div key={type} className='space-y-2'>
-              <h4
-                className='text-sm font-medium text-algomancy-gold border-b border-algomancy-gold/30 pb-1'
-                id={`deck-section-${type.toLowerCase().replace(/\s+/g, "-")}`}>
-                {type} (
-                {groupedCards[type].reduce(
-                  (sum, item) => sum + item.quantity,
-                  0
-                )}
-                )
-              </h4>
+      <div className='space-y-4 lg:hidden'>
+        {renderSection(
+          sections.find((section) => section.key === mobileSection) || sections[0]
+        )}
+      </div>
 
-              {/* List View */}
-              {viewMode === "list" && (
-                <div
-                  className='space-y-1'
-                  aria-labelledby={`deck-section-${type
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`}
-                  role='list'>
-                  {groupedCards[type]
-                    .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                    .map(({ card, quantity }) => (
-                      <div
-                        key={card.id}
-                        className='flex items-center justify-between py-1 px-2 hover:bg-algomancy-purple/10 rounded'
-                        role='listitem'>
-                        <div className='flex items-center space-x-2'>
-                          <CardHoverPreview card={card}>
-                            <div className='w-6 h-6 flex-shrink-0 relative'>
-                              <Image
-                                src={card.imageUrl}
-                                alt={`${card.name} card`}
-                                fill
-                                className='object-cover rounded'
-                              />
-                            </div>
-                          </CardHoverPreview>
-                          <span className='text-sm text-white truncate max-w-[150px]'>
-                            {card.name}
-                          </span>
-                        </div>
-                        <div className='flex items-center space-x-1'>
-                          <button
-                            onClick={() => onRemoveCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white cursor-pointer'
-                            title='Remove one copy'
-                            aria-label={`Remove one copy of ${card.name}`}>
-                            <MinusIcon className='w-4 h-4' aria-hidden='true' />
-                          </button>
-                          <span
-                            className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-1.5 py-0.5 min-w-8 text-center'
-                            aria-label={`${quantity} copies`}>
-                            {quantity}/{maxCopies}
-                          </span>
-                          <button
-                            onClick={() => onAddCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white cursor-pointer'
-                            title='Add one copy'
-                            aria-label={`Add one copy of ${card.name}`}>
-                            <PlusIcon className='w-4 h-4' aria-hidden='true' />
-                          </button>
-                          <button
-                            onClick={() => onRemoveAllCopies(card.id)}
-                            className='p-1 text-gray-400 hover:text-white ml-1 cursor-pointer'
-                            title='Remove all copies'
-                            aria-label={`Remove all copies of ${card.name}`}>
-                            <XMarkIcon className='w-4 h-4' aria-hidden='true' />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Compact Grid View */}
-              {viewMode === "compact" && (
-                <div
-                  className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3'
-                  aria-labelledby={`deck-section-${type
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`}
-                  role='grid'>
-                  {groupedCards[type]
-                    .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                    .map(({ card, quantity }) => (
-                      <div key={card.id} className='flex flex-col'>
-                        <CardHoverPreview
-                          card={card}
-                          onClick={() => onAddCard(card.id)}>
-                          <div
-                            className='relative cursor-pointer'
-                            role='gridcell'
-                            aria-label={`${card.name} card`}>
-                            <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                              <Image
-                                src={card.imageUrl}
-                                alt={`${card.name} card`}
-                                fill
-                                className='object-cover'
-                                sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
-                              />
-                            </div>
-                          </div>
-                        </CardHoverPreview>
-
-                        {/* Controls beneath the card */}
-                        <div className='flex items-center justify-center mt-2 space-x-2'>
-                          <button
-                            onClick={() => onAddCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                            title='Add one copy'
-                            aria-label={`Add one copy of ${card.name}`}>
-                            <PlusIcon className='w-4 h-4' aria-hidden='true' />
-                          </button>
-                          <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
-                            {quantity}/{maxCopies}
-                          </span>
-                          <button
-                            onClick={() => onRemoveCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                            title='Remove one copy'
-                            aria-label={`Remove one copy of ${card.name}`}>
-                            <MinusIcon className='w-4 h-4' aria-hidden='true' />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {/* Large Grid View */}
-              {viewMode === "large" && (
-                <div
-                  className='grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4'
-                  aria-labelledby={`deck-section-${type
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`}
-                  role='grid'>
-                  {groupedCards[type]
-                    .sort((a, b) => a.card.manaCost - b.card.manaCost)
-                    .map(({ card, quantity }) => (
-                      <div key={card.id} className='flex flex-col'>
-                        <div
-                          className='relative cursor-pointer'
-                          onClick={() => onAddCard(card.id)}
-                          role='gridcell'
-                          aria-label={`${card.name} card`}>
-                          <div className='relative w-full aspect-[3/4] rounded-md overflow-hidden'>
-                            <Image
-                              src={card.imageUrl}
-                              alt={`${card.name} card`}
-                              fill
-                              className='object-cover'
-                              sizes='(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw'
-                              loading='lazy'
-                              priority={false}
-                            />
-                          </div>
-                        </div>
-
-                        {/* Controls beneath the card */}
-                        <div className='flex items-center justify-center mt-2 space-x-2'>
-                          <button
-                            onClick={() => onAddCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                            title='Add one copy'
-                            aria-label={`Add one copy of ${card.name}`}>
-                            <PlusIcon className='w-5 h-5' aria-hidden='true' />
-                          </button>
-                          <span className='text-sm text-white bg-black/70 backdrop-blur-sm border border-white/20 rounded-md px-2 py-1 min-w-12 text-center'>
-                            {quantity}/{maxCopies}
-                          </span>
-                          <button
-                            onClick={() => onRemoveCard(card.id)}
-                            className='p-1 text-gray-400 hover:text-white transition-colors cursor-pointer'
-                            title='Remove one copy'
-                            aria-label={`Remove one copy of ${card.name}`}>
-                            <MinusIcon className='w-5 h-5' aria-hidden='true' />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+      <div className='hidden space-y-4 lg:block'>
+        {sections.map(renderSection)}
+      </div>
     </section>
   );
 }

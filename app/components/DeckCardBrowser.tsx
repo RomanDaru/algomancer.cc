@@ -56,7 +56,7 @@ export default function DeckCardBrowser({
   canAddToDeck,
   canAddToSideboard,
   useHoverPreview = true,
-  maxHeightClassName = "max-h-[320px]",
+  maxHeightClassName = "max-h-[800px]",
   gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5",
 }: DeckCardBrowserProps) {
   return (
@@ -77,12 +77,12 @@ export default function DeckCardBrowser({
               const deckQuantity = getDeckCardQuantity(deckCards, card.id);
               const sideboardQuantity = getDeckCardQuantity(
                 sideboardCards,
-                card.id
+                card.id,
               );
               const totalQuantity = getCardTotalQuantityAcrossSections(
                 deckCards,
                 sideboardCards,
-                card.id
+                card.id,
               );
 
               return (
@@ -147,7 +147,9 @@ export default function DeckCardBrowser({
             <p className='text-xl text-gray-400'>
               No cards found matching your search criteria.
             </p>
-            <p className='text-gray-500 mt-2'>Try adjusting your search terms.</p>
+            <p className='text-gray-500 mt-2'>
+              Try adjusting your search terms.
+            </p>
           </div>
         )}
       </div>

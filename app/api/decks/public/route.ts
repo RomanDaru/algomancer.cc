@@ -8,6 +8,7 @@ import {
   PUBLIC_DECKS_PAGE_SIZE,
 } from "@/app/lib/constants";
 import { ElementType } from "@/app/lib/utils/elements";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 const VALID_ELEMENTS = new Set<ElementType>([
   "Fire",
@@ -97,7 +98,7 @@ export async function GET(request: NextRequest) {
         searchQuery
       );
 
-      return NextResponse.json(decksWithUserInfo);
+      return NextResponse.json(serializeDeckPayload(decksWithUserInfo));
     }
 
     const response = await deckService.getPublicDecksPage({
@@ -114,7 +115,7 @@ export async function GET(request: NextRequest) {
       warnings,
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(serializeDeckPayload(response));
   } catch (error) {
     if (error instanceof Error && error.message === "Invalid cursor") {
       return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });

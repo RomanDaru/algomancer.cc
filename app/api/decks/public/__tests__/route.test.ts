@@ -81,4 +81,38 @@ describe("GET /api/decks/public", () => {
     });
     expect(console.warn).toHaveBeenCalledTimes(1);
   });
+
+  it("does not expose viewer or liker identifiers", async () => {
+    (deckService.getPublicDecksPage as jest.Mock).mockResolvedValue({
+      decks: [
+        {
+          deck: {
+            _id: "deck-1",
+            name: "Public deck",
+            viewedBy: ["203.0.113.10-session"],
+            likedBy: ["user-123"],
+            cards: [],
+          },
+          user: { name: "Player", username: "player" },
+          isLikedByCurrentUser: true,
+        },
+      ],
+      total: 1,
+      hasMore: false,
+      nextCursor: null,
+      effectiveLimit: 36,
+      warnings: [],
+    });
+
+    const response = await GET({
+      url: "http://localhost/api/decks/public?withMeta=1",
+    } as Request);
+    const payload = await response.json();
+
+    expect(payload.decks[0].deck).not.toHaveProperty("viewedBy");
+    expect(payload.decks[0].deck).not.toHaveProperty("likedBy");
+    expect(payload.decks[0]).toMatchObject({
+      isLikedByCurrentUser: true,
+    });
+  });
 });

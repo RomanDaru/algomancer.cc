@@ -3,6 +3,7 @@ import { deckService } from "@/app/lib/services/deckService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { validateDeckSections } from "@/app/lib/utils/deckSections";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 /**
  * PUT /api/decks/[id]/cards
@@ -67,7 +68,7 @@ export async function PUT(
       sideboard
     );
 
-    return NextResponse.json(updatedDeck);
+    return NextResponse.json(serializeDeckPayload(updatedDeck));
   } catch (error) {
     console.error(`Error updating cards in deck:`, error);
     return NextResponse.json(
@@ -139,7 +140,7 @@ export async function POST(
       zone
     );
 
-    return NextResponse.json(updatedDeck);
+    return NextResponse.json(serializeDeckPayload(updatedDeck));
   } catch (error) {
     console.error(`Error adding card to deck:`, error);
     return NextResponse.json(

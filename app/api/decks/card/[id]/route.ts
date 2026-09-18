@@ -6,6 +6,7 @@ import {
   PUBLIC_DECKS_MAX_PAGE_SIZE,
   PUBLIC_DECKS_PAGE_SIZE,
 } from "@/app/lib/constants";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 /**
  * GET /api/decks/card/[id]
@@ -53,7 +54,7 @@ export async function GET(
         currentUserId
       );
 
-      return NextResponse.json(decksWithUserInfo);
+      return NextResponse.json(serializeDeckPayload(decksWithUserInfo));
     }
 
     const response = await deckService.getDecksContainingCardPage({
@@ -65,7 +66,7 @@ export async function GET(
       warnings,
     });
 
-    return NextResponse.json(response);
+    return NextResponse.json(serializeDeckPayload(response));
   } catch (error) {
     if (error instanceof Error && error.message === "Invalid cursor") {
       return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });

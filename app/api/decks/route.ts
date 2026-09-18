@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { ObjectId } from 'mongodb';
 import { DECK_BADGES } from "@/app/lib/constants";
 import { validateDeckSections } from "@/app/lib/utils/deckSections";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 /**
  * GET /api/decks
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
     }
     
     const decks = await deckService.getUserDecks(session.user.id);
-    return NextResponse.json(decks);
+    return NextResponse.json(serializeDeckPayload(decks));
   } catch (error) {
     console.error('Error getting decks:', error);
     return NextResponse.json(
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
       console.error("Error refreshing XP after deck creation:", error);
     }
     
-    return NextResponse.json(deck, { status: 201 });
+    return NextResponse.json(serializeDeckPayload(deck), { status: 201 });
   } catch (error) {
     console.error('Error creating deck:', error);
     return NextResponse.json(

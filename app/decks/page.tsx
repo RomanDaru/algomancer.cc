@@ -5,6 +5,7 @@ import { deckService } from "@/app/lib/services/deckService";
 import { cardService } from "@/app/lib/services/cardService";
 import { PUBLIC_DECKS_PAGE_SIZE } from "@/app/lib/constants";
 import { buildE2EPublicDeckResponse } from "./e2eMockData";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 type InitialDeckPageResponse = Awaited<
   ReturnType<typeof deckService.getPublicDecksPage>
@@ -53,7 +54,7 @@ export default async function PublicDecksPage({
   }
 
   // Ensure we only pass plain JSON-serializable data to the client
-  const initialResponseSerializable = JSON.parse(JSON.stringify(initialResponse));
+  const initialResponseSerializable = serializeDeckPayload(initialResponse);
   const filteredCardSerializable = filteredCard
     ? JSON.parse(JSON.stringify(filteredCard))
     : undefined;

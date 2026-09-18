@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { DECK_BADGES } from "@/app/lib/constants";
 import { validateDeckSections } from "@/app/lib/utils/deckSections";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 /**
  * GET /api/decks/[id]
@@ -42,7 +43,7 @@ export async function GET(
     // Get the full deck with card details
     const deckWithCards = await deckService.getDeckWithCards(deckId);
 
-    return NextResponse.json(deckWithCards);
+    return NextResponse.json(serializeDeckPayload(deckWithCards));
   } catch (error) {
     console.error(`Error getting deck:`, error);
     return NextResponse.json({ error: "Failed to get deck" }, { status: 500 });
@@ -128,7 +129,7 @@ export async function PUT(
     // Update the deck
     const updatedDeck = await deckService.updateDeck(deckId, deckData);
 
-    return NextResponse.json(updatedDeck);
+    return NextResponse.json(serializeDeckPayload(updatedDeck));
   } catch (error) {
     console.error(`Error updating deck:`, error);
     return NextResponse.json(

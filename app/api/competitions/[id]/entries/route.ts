@@ -7,6 +7,7 @@ import { ObjectId } from "mongodb";
 import { COMPETITION_STATUS } from "@/app/lib/constants";
 import { connectToDatabase } from "@/app/lib/db/mongodb";
 import { validateDeckSubmission } from "@/app/lib/utils/competitionValidation";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 // Batch fetch functions to avoid N+1 queries
 async function getBatchDecks(deckIds: ObjectId[]): Promise<Map<string, any>> {
@@ -223,7 +224,9 @@ export async function POST(
       user: deckDetails.user,
     };
 
-    return NextResponse.json(entryWithDetails, { status: 201 });
+    return NextResponse.json(serializeDeckPayload(entryWithDetails), {
+      status: 201,
+    });
   } catch (error) {
     console.error("Error submitting deck to competition:", error);
     return NextResponse.json(

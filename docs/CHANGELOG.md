@@ -2,6 +2,11 @@
 
 ## 2026-09-18
 
+### `hotfix/redact-deck-identifiers`
+- Removed `viewedBy` and `likedBy` identifiers from every deck payload sent to the browser while preserving internal view and like behavior.
+  - Areas: `app/lib/utils/deckSerialization.ts`, deck API routes, public/profile deck pages, competition entry responses, regression tests
+  - Verification: targeted serializer/public deck route tests passed (4/4); `npm run build`; full Jest suite passed 91/93 tests, with two unrelated admin card integration fixture failures
+
 ### `hotfix/disable-vercel-image-optimization`
 - Disabled Next/Vercel Image Optimization globally so Cloudinary-optimized card images are served directly without redundant paid Vercel transformations.
   - Areas: `next.config.js`, `docs/CHANGELOG.md`

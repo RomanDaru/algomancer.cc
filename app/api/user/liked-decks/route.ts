@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { deckService } from "@/app/lib/services/deckService";
 import { ObjectId } from "mongodb";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 /**
  * GET /api/user/liked-decks
@@ -26,7 +27,7 @@ export async function GET() {
       userId.toString()
     );
 
-    return NextResponse.json(likedDecks);
+    return NextResponse.json(serializeDeckPayload(likedDecks));
   } catch (error) {
     console.error("Error getting user liked decks:", error);
     return NextResponse.json(

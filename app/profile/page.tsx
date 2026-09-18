@@ -14,6 +14,7 @@ import {
   getAchievementXp,
 } from "@/app/lib/achievements/definitions";
 import { getRankProgress } from "@/app/lib/achievements/ranks";
+import { serializeDeckPayload } from "@/app/lib/utils/deckSerialization";
 
 type LikedDeckItem = {
   deck: Deck;
@@ -21,8 +22,6 @@ type LikedDeckItem = {
   isLikedByCurrentUser: boolean;
   deckElements?: string[];
 };
-
-const toSerializable = <T,>(value: T): T => JSON.parse(JSON.stringify(value));
 
 export default async function Profile() {
   const session = await getServerSession(authOptions);
@@ -53,8 +52,8 @@ export default async function Profile() {
       deckService.getUserDecks(session.user.id),
       deckService.getUserLikedDecksWithUserInfo(session.user.id),
     ]);
-    decks = toSerializable(userDecks);
-    likedDecks = toSerializable(likedDeckItems);
+    decks = serializeDeckPayload(userDecks);
+    likedDecks = serializeDeckPayload(likedDeckItems);
   } catch (error) {
     console.error("Error loading profile decks:", error);
   }

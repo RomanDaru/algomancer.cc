@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-18
+
+### `hotfix/disable-vercel-image-optimization`
+- Disabled Next/Vercel Image Optimization globally so Cloudinary-optimized card images are served directly without redundant paid Vercel transformations.
+  - Areas: `next.config.js`, `docs/CHANGELOG.md`
+  - Verification: loaded production Next config reports `images.unoptimized: true`; targeted image optimization tests passed; `pnpm build`
+
 ## 2026-03-25
 
 ### `feature/deck-builder-sideboard`

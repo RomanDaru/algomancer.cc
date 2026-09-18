@@ -12,6 +12,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    // Card images are already transformed and served by Cloudinary. Bypass
+    // Vercel's Image Optimization pipeline to avoid redundant transformations.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

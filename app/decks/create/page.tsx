@@ -28,10 +28,7 @@ function CreateDeckForm() {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch all cards (with cache control)
-        const cardsResponse = await fetch("/api/cards?clearCache=true", {
-          cache: "no-store",
-        });
+        const cardsResponse = await fetch("/api/cards");
         if (!cardsResponse.ok) {
           throw new Error("Failed to fetch cards");
         }

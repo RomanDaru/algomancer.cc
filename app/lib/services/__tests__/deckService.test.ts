@@ -9,12 +9,14 @@ jest.mock("@/app/lib/db/services/deckDbService", () => ({
   deckDbService: {
     getPublicDecksWithUserInfoPage: jest.fn(),
     countPublicDecks: jest.fn(),
+    findUserIdsBySearch: jest.fn(),
   },
 }));
 
 jest.mock("@/app/lib/services/cardService", () => ({
   cardService: {
     getCardsByIds: jest.fn(),
+    getAllCards: jest.fn(),
   },
 }));
 
@@ -91,14 +93,17 @@ describe("deckService.getPublicDecksPage", () => {
     jest.clearAllMocks();
   });
 
-  it("filters Dark decks using hydrated card data instead of stale stored deckElements", async () => {
+  it("passes element filters to MongoDB before pagination", async () => {
     (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock).mockResolvedValue([
       buildDeckWithUserInfo(1, "Dark Deck", "dark-card", "2026-03-01T12:00:00.000Z"),
-      buildDeckWithUserInfo(2, "Fire Deck", "fire-card", "2026-02-01T12:00:00.000Z"),
+    ]);
+    (deckDbService.countPublicDecks as jest.Mock).mockResolvedValue(1);
+    (cardService.getAllCards as jest.Mock).mockResolvedValue([
+      buildCard("dark-card", "Dark"),
+      buildCard("fire-card", "Fire"),
     ]);
     (cardService.getCardsByIds as jest.Mock).mockResolvedValue([
       buildCard("dark-card", "Dark"),
-      buildCard("fire-card", "Fire"),
     ]);
 
     const response = await deckService.getPublicDecksPage({
@@ -112,14 +117,16 @@ describe("deckService.getPublicDecksPage", () => {
     expect(response.total).toBe(1);
     expect(response.decks).toHaveLength(1);
     expect(response.decks[0].deck.name).toBe("Dark Deck");
-    expect(deckDbService.countPublicDecks).not.toHaveBeenCalled();
 
     const dbFiltersArg = (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock)
       .mock.calls[0][4];
-    expect(dbFiltersArg).not.toHaveProperty("elements");
+    expect(dbFiltersArg).toMatchObject({
+      elementCardIdGroups: [["dark-card"]],
+    });
+    expect(deckDbService.countPublicDecks).toHaveBeenCalledWith(dbFiltersArg);
   });
 
-  it("matches search queries against sideboard card names", async () => {
+  it("resolves card-name searches before querying a single MongoDB page", async () => {
     (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock).mockResolvedValue([
       buildDeckWithUserInfo(
         3,
@@ -128,16 +135,15 @@ describe("deckService.getPublicDecksPage", () => {
         "2026-03-02T12:00:00.000Z",
         "sideboard-answer"
       ),
-      buildDeckWithUserInfo(
-        4,
-        "Aggro Deck",
-        "main-card-2",
-        "2026-03-01T12:00:00.000Z"
-      ),
+    ]);
+    (deckDbService.countPublicDecks as jest.Mock).mockResolvedValue(1);
+    (deckDbService.findUserIdsBySearch as jest.Mock).mockResolvedValue([]);
+    (cardService.getAllCards as jest.Mock).mockResolvedValue([
+      { ...buildCard("sideboard-answer", "Dark"), name: "Answer Card" },
+      buildCard("main-card", "Water"),
     ]);
     (cardService.getCardsByIds as jest.Mock).mockResolvedValue([
       buildCard("main-card", "Water"),
-      buildCard("main-card-2", "Fire"),
       {
         ...buildCard("sideboard-answer", "Dark"),
         name: "Answer Card",
@@ -155,5 +161,14 @@ describe("deckService.getPublicDecksPage", () => {
     expect(response.total).toBe(1);
     expect(response.decks).toHaveLength(1);
     expect(response.decks[0].deck.name).toBe("Control Deck");
+    expect(cardService.getAllCards).toHaveBeenCalledTimes(1);
+    expect(deckDbService.findUserIdsBySearch).toHaveBeenCalledWith("answer");
+    expect(
+      (deckDbService.getPublicDecksWithUserInfoPage as jest.Mock).mock.calls[0][4]
+    ).toMatchObject({
+      searchQuery: "answer",
+      searchCardIds: ["sideboard-answer"],
+      searchUserIds: [],
+    });
   });
 });

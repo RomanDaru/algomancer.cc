@@ -48,13 +48,13 @@ export async function GET(
     }
 
     if (!withMeta) {
-      const decksWithUserInfo = await deckService.getDecksContainingCardWithUserInfo(
+      const response = await deckService.getDecksContainingCardPage({
         cardId,
-        effectiveLimit,
-        currentUserId
-      );
+        limit: effectiveLimit,
+        currentUserId,
+      });
 
-      return NextResponse.json(serializeDeckPayload(decksWithUserInfo));
+      return NextResponse.json(serializeDeckPayload(response.decks));
     }
 
     const response = await deckService.getDecksContainingCardPage({

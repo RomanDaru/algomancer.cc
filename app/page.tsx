@@ -229,29 +229,39 @@ export default async function Home() {
           )}
         </div>
 
-        {/* Promote the official Algomancy game */}
-        <div className='w-full max-w-6xl mt-8'>
-          <div className='group relative overflow-hidden rounded-lg transition-all duration-300 p-5 md:p-6'>
-            <div className='flex flex-col md:flex-row items-center justify-between gap-4'>
-              <div className='flex items-center'>
-                <div>
-                  <h2 className='text-lg md:text-xl text-center font-bold text-white pb-2'>
-                    Play Algomancy
-                  </h2>
-                  <p className='text-gray-300 text-sm md:text-base'>
-                    Get your physical copy of Algomancy and support the creator!
-                  </p>
-                </div>
-              </div>
-              <a
-                href='https://algomancy.io/'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='inline-flex items-center px-4 py-2 rounded-md bg-algomancy-purple hover:bg-algomancy-purple-dark text-white font-medium transition-colors cursor-pointer'>
-                Visit algomancy.io
-                <ArrowRightIcon className='w-4 h-4 ml-2 group-hover:translate-x-0.5 transition-transform' />
-              </a>
+        <div className='mt-8 grid w-full max-w-6xl grid-cols-1 gap-4 border-t border-white/10 pt-8 md:grid-cols-2 md:gap-8'>
+          <div className='flex flex-col items-center justify-between gap-4 px-4 text-center md:flex-row md:text-left'>
+            <div>
+              <h2 className='text-lg font-bold text-white'>Buy Algomancy</h2>
+              <p className='mt-1 text-sm text-gray-300'>
+                Get the physical game and support its creator.
+              </p>
             </div>
+            <a
+              href='https://algomancy.io/'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex shrink-0 items-center rounded-md bg-algomancy-purple px-4 py-2 font-medium text-white transition-colors hover:bg-algomancy-purple-dark'>
+              Visit algomancy.io
+              <ArrowRightIcon className='ml-2 h-4 w-4' />
+            </a>
+          </div>
+
+          <div className='flex flex-col items-center justify-between gap-4 border-t border-white/10 px-4 pt-4 text-center md:flex-row md:border-l md:border-t-0 md:pl-8 md:pt-0 md:text-left'>
+            <div>
+              <h2 className='text-lg font-bold text-white'>Play Algomancy</h2>
+              <p className='mt-1 text-sm text-gray-300'>
+                Play online with the community-made digital client.
+              </p>
+            </div>
+            <a
+              href='https://algomancy.online/'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='inline-flex shrink-0 items-center rounded-md border border-algomancy-gold/60 px-4 py-2 font-medium text-algomancy-gold transition-colors hover:border-algomancy-gold hover:text-white'>
+              Open digital client
+              <ArrowRightIcon className='ml-2 h-4 w-4' />
+            </a>
           </div>
         </div>
       </div>

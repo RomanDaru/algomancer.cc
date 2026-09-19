@@ -1,29 +1,23 @@
 import { Card } from "../types/card";
 import { cardDbService } from "../db/services/cardDbService";
+import { revalidateTag, unstable_cache } from "next/cache";
 
-// Cache for cards to avoid excessive database calls
-let cachedCards: Card[] | null = null;
-let lastCacheTime = 0;
-const CACHE_TTL = 60 * 1000; // 1 minute cache TTL
+export const CARD_CATALOG_CACHE_TAG = "card-catalog";
+const CARD_CATALOG_REVALIDATE_SECONDS = 60 * 60;
+
+const getCachedCardCatalog = unstable_cache(
+  async () => cardDbService.getAllCards(),
+  [CARD_CATALOG_CACHE_TAG],
+  {
+    revalidate: CARD_CATALOG_REVALIDATE_SECONDS,
+    tags: [CARD_CATALOG_CACHE_TAG],
+  }
+);
 
 // Get the active card set
 const getActiveCards = async (): Promise<Card[]> => {
-  const now = Date.now();
-
-  // Use cache if available and not expired
-  if (cachedCards && now - lastCacheTime < CACHE_TTL) {
-    return cachedCards;
-  }
-
   try {
-    // Fetch cards from database
-    const cards = await cardDbService.getAllCards();
-
-    // Update cache
-    cachedCards = cards;
-    lastCacheTime = now;
-
-    return cards;
+    return await getCachedCardCatalog();
   } catch (error) {
     console.error("Error fetching cards from database:", error);
 
@@ -41,11 +35,6 @@ export const cardService = {
   // Get card by ID
   getCardById: async (id: string): Promise<Card | undefined> => {
     try {
-      // Try to get directly from the database first for freshest data
-      const card = await cardDbService.getCardById(id);
-      if (card) return card;
-
-      // Fall back to cached cards if not found
       const cards = await getActiveCards();
       return cards.find((card) => card.id === id);
     } catch (error) {
@@ -58,17 +47,11 @@ export const cardService = {
   getCardsByIds: async (ids: string[]): Promise<Card[]> => {
     try {
       if (ids.length === 0) return [];
-
-      const now = Date.now();
-
-      // Use cached cards if available and fresh.
-      if (cachedCards && now - lastCacheTime < CACHE_TTL) {
-        return ids
-          .map((id) => cachedCards!.find((card) => card.id === id))
-          .filter((card) => card !== undefined) as Card[];
-      }
-
-      return await cardDbService.getCardsByIds(ids);
+      const cards = await getActiveCards();
+      const cardMap = new Map(cards.map((card) => [card.id, card]));
+      return ids
+        .map((id) => cardMap.get(id))
+        .filter((card): card is Card => card !== undefined);
     } catch (error) {
       console.error(`Error getting cards by IDs ${ids.join(", ")}:`, error);
       return [];
@@ -104,11 +87,9 @@ export const cardService = {
   // Save a card
   saveCard: async (card: Card): Promise<Card> => {
     try {
-      // Clear cache to ensure fresh data
-      cachedCards = null;
-
-      // Save to database
-      return await cardDbService.saveCard(card);
+      const savedCard = await cardDbService.saveCard(card);
+      revalidateTag(CARD_CATALOG_CACHE_TAG);
+      return savedCard;
     } catch (error) {
       console.error(`Error saving card ${card.id}:`, error);
       throw error;
@@ -118,11 +99,9 @@ export const cardService = {
   // Import cards in bulk
   importCards: async (cards: Card[]): Promise<number> => {
     try {
-      // Clear cache to ensure fresh data
-      cachedCards = null;
-
-      // Import to database
-      return await cardDbService.importCards(cards);
+      const importedCount = await cardDbService.importCards(cards);
+      revalidateTag(CARD_CATALOG_CACHE_TAG);
+      return importedCount;
     } catch (error) {
       console.error("Error importing cards:", error);
       throw error;
@@ -141,7 +120,6 @@ export const cardService = {
 
   // Clear the card cache
   clearCache: (): void => {
-    cachedCards = null;
-    lastCacheTime = 0;
+    revalidateTag(CARD_CATALOG_CACHE_TAG);
   },
 };

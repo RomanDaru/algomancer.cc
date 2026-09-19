@@ -24,6 +24,12 @@ import {
 } from "../../utils/deckSections";
 
 type DbConnection = Awaited<ReturnType<typeof connectToDatabase>>;
+type DbDeckBrowseFilters = Omit<DeckBrowseFilters, "searchQuery"> & {
+  searchQuery?: string;
+  searchCardIds?: string[];
+  searchUserIds?: ObjectId[];
+  elementCardIdGroups?: string[][];
+};
 
 // Single database connection instance
 let dbConnection: DbConnection | null = null;
@@ -113,11 +119,11 @@ function normalizeDeckBrowseMatch({
   cardId,
   elements,
   badges,
-}: {
-  cardId?: string;
-  elements?: string[];
-  badges?: string[];
-}) {
+  searchQuery,
+  searchCardIds,
+  searchUserIds,
+  elementCardIdGroups,
+}: DbDeckBrowseFilters & { cardId?: string }) {
   const match: Record<string, unknown> = {
     isPublic: true,
   };
@@ -126,7 +132,14 @@ function normalizeDeckBrowseMatch({
     Object.assign(match, buildDeckCardMatch(cardId));
   }
 
-  if (elements && elements.length > 0) {
+  if (elementCardIdGroups && elementCardIdGroups.length > 0) {
+    match.$and = [
+      ...(Array.isArray(match.$and) ? match.$and : []),
+      ...elementCardIdGroups.map((cardIds) => ({
+        "cards.cardId": { $in: cardIds },
+      })),
+    ];
+  } else if (elements && elements.length > 0) {
     match.deckElements = { $all: elements };
   }
 
@@ -141,6 +154,34 @@ function normalizeDeckBrowseMatch({
             ],
           }
         : { deckBadges: { $all: badges } },
+    ];
+  }
+
+  const normalizedSearchQuery = searchQuery?.trim();
+  if (normalizedSearchQuery) {
+    const escapedSearchQuery = normalizedSearchQuery.replace(
+      /[.*+?^${}()|[\]\\]/g,
+      "\\$&"
+    );
+    const searchRegex = new RegExp(escapedSearchQuery, "i");
+    const searchConditions: Record<string, unknown>[] = [
+      { name: searchRegex },
+    ];
+
+    if (searchCardIds && searchCardIds.length > 0) {
+      searchConditions.push(
+        { "cards.cardId": { $in: searchCardIds } },
+        { "sideboard.cardId": { $in: searchCardIds } }
+      );
+    }
+
+    if (searchUserIds && searchUserIds.length > 0) {
+      searchConditions.push({ userId: { $in: searchUserIds } });
+    }
+
+    match.$and = [
+      ...(Array.isArray(match.$and) ? match.$and : []),
+      { $or: searchConditions },
     ];
   }
 
@@ -226,7 +267,7 @@ export const deckDbService = {
     }
   },
 
-  async countPublicDecks(filters: Omit<DeckBrowseFilters, "searchQuery"> = {}) {
+  async countPublicDecks(filters: DbDeckBrowseFilters = {}) {
     try {
       await ensureDbConnection();
       const match = normalizeDeckBrowseMatch(filters);
@@ -237,9 +278,43 @@ export const deckDbService = {
     }
   },
 
+  async findUserIdsBySearch(searchQuery: string): Promise<ObjectId[]> {
+    try {
+      const normalizedSearchQuery = searchQuery.trim();
+      if (!normalizedSearchQuery) {
+        return [];
+      }
+
+      const escapedSearchQuery = normalizedSearchQuery.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&"
+      );
+      const searchRegex = new RegExp(escapedSearchQuery, "i");
+      const connection = await ensureDbConnection();
+      if (!connection?.db) {
+        return [];
+      }
+
+      const users = await connection.db
+        .collection("users")
+        .find(
+          {
+            $or: [{ name: searchRegex }, { username: searchRegex }],
+          },
+          { projection: { _id: 1 } }
+        )
+        .toArray();
+
+      return users.map((user) => user._id as ObjectId);
+    } catch (error) {
+      console.error("Error finding users for deck search:", error);
+      throw error;
+    }
+  },
+
   async countDecksContainingCard(
     cardId: string,
-    filters: Omit<DeckBrowseFilters, "searchQuery"> = {}
+    filters: DbDeckBrowseFilters = {}
   ) {
     try {
       await ensureDbConnection();
@@ -259,7 +334,7 @@ export const deckDbService = {
     limit?: number,
     cursor?: DecodedDeckCursor,
     currentUserId?: string,
-    filters: Omit<DeckBrowseFilters, "searchQuery"> = {}
+    filters: DbDeckBrowseFilters = {}
   ): Promise<DeckWithUserInfo[]> {
     try {
       await ensureDbConnection();
@@ -276,6 +351,8 @@ export const deckDbService = {
               }
             : baseMatch,
         },
+        { $sort: sortOptions },
+        ...(limit !== undefined ? [{ $limit: limit }] : []),
         {
           $lookup: {
             from: "users",
@@ -320,11 +397,11 @@ export const deckDbService = {
               : false,
           },
         },
-        { $sort: sortOptions },
-        ...(limit !== undefined ? [{ $limit: limit }] : []),
         {
           $project: {
             userInfo: 0,
+            viewedBy: 0,
+            likedBy: 0,
           },
         },
       ];
@@ -839,6 +916,8 @@ export const deckDbService = {
               }
             : baseMatch,
         },
+        { $sort: getDeckSortOptions("newest") },
+        ...(limit !== undefined ? [{ $limit: limit }] : []),
         {
           $lookup: {
             from: "users",
@@ -883,11 +962,11 @@ export const deckDbService = {
               : false,
           },
         },
-        { $sort: getDeckSortOptions("newest") },
-        ...(limit !== undefined ? [{ $limit: limit }] : []),
         {
           $project: {
             userInfo: 0,
+            viewedBy: 0,
+            likedBy: 0,
           },
         },
       ];

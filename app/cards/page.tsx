@@ -3,8 +3,7 @@ import CardGrid from "@/app/components/CardGrid";
 import ScrollToTop from "@/app/components/ScrollToTop";
 import { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Algomancy Card Catalogue - Complete Card Collection",
@@ -29,7 +28,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CardsPage() {
-  cardService.clearCache();
   const cards = await cardService.getAllCards();
 
   return (

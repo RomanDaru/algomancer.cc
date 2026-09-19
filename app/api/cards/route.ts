@@ -7,25 +7,16 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 /**
  * GET /api/cards
  * Get all cards
- * Query params:
- * - clearCache=true: Clear the card cache before fetching
  */
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
-    // Check if cache should be cleared
-    const { searchParams } = new URL(request.url);
-    const clearCache = searchParams.get("clearCache") === "true";
-
-    if (clearCache) {
-      cardService.clearCache();
-    }
-
     const cards = await cardService.getAllCards();
 
     const response = NextResponse.json(cards);
 
-    // Card data changes through imports and admin edits; keep responses fresh.
-    response.headers.set("Cache-Control", "no-store, max-age=0");
+    // cardService owns the tagged data cache. Do not keep a separate HTTP
+    // response cache that can outlive catalog invalidation after writes.
+    response.headers.set("Cache-Control", "no-store");
     response.headers.set("Content-Type", "application/json; charset=utf-8");
 
     return response;

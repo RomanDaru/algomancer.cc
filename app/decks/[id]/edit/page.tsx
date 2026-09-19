@@ -36,10 +36,7 @@ export default function EditDeckPage({ params }: EditDeckPageProps) {
   useEffect(() => {
     async function fetchData() {
       try {
-        // Fetch all cards
-        const cardsResponse = await fetch("/api/cards?clearCache=true", {
-          cache: "no-store",
-        });
+        const cardsResponse = await fetch("/api/cards");
         if (!cardsResponse.ok) {
           throw new Error("Failed to fetch cards");
         }

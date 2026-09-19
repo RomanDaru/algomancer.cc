@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-09-19
+
+### `feature/performance-homepage`
+- Prepared the homepage/performance release: separate physical-game and digital-client homepage links, shared tagged card catalog caching with write invalidation, MongoDB deck search/element filtering before pagination, earlier aggregation limits, and Colorless card search support.
+  - Areas: homepage, card catalog/API/search, deck browse API/services/indexes, regression tests
+  - Verification: final Jest suite passed 104/104 tests across 18 suites; current production build passed in an isolated directory; live local deck API checks passed for pagination without duplicates, Fire/Dark filtering, and identifier redaction; existing standalone TypeScript blocker and build validation settings remain as documented below
+  - Release: user authorized commit and production deployment through the connected `origin/main` Vercel integration; local screenshots excluded from the release
+- Added `Colorless` to the shared card search element list, so typing it matches actual colorless cards and the Elements quick filters include a Colorless button in the catalog and deckbuilder.
+  - Areas: `app/components/CardSearch.tsx`, `app/components/__tests__/CardSearch.test.tsx`
+  - Verification: four component tests passed (case-insensitive search, card-type combination, quick-filter toggle, any/all element matching); targeted ESLint passed; local `/cards` returned HTTP 200 with the Colorless filter and `/decks/create` returned HTTP 200
+- Routed bulk card imports through the catalog service so successful writes invalidate the shared card cache; disabled independent HTTP/CDN caching on `/api/cards` while retaining the tagged server data cache. Added explicit `Colorless` support to the card element type without changing filtering behavior.
+  - Areas: `app/api/cards/import/route.ts`, `app/api/cards/route.ts`, `app/lib/types/card.ts`, catalog API regression tests
+  - Verification: all 100 Jest tests across 17 suites passed; isolated production `pnpm build` passed; targeted ESLint had no errors (one existing unused request warning); local API returned HTTP 200, `Cache-Control: no-store`, 511 cards including 18 Colorless; homepage HTTP 200 with both CTA links
+  - Also corrected two admin integration fixtures to respect the two-copy limit and mocked Next's request-scoped cache boundary, with assertions that admin edits invalidate the catalog.
+  - Limitation: standalone TypeScript checking still stops at the pre-existing `_tmp_page.tsx:394` syntax error; the existing build config skips type validation and lint. Dev preview remains at `http://127.0.0.1:3000`; no deployment performed.
+- Corrected the earlier Colorless review finding after checking actual catalog data: `/api/cards` returns 18 cards explicitly marked `element.type: "Colorless"` out of 511. The new filter can match these cards; the earlier claim that Colorless should mean an unrecognized element was incorrect. The card TypeScript union omits this valid value, and existing deck-element helpers also use it as a fallback; these are separate inconsistencies, not evidence that the new filter is broken.
+  - Areas: `docs/CHANGELOG.md`; application code unchanged
+  - Verification: read-only local catalog API request and review of card types, MongoDB schema, filter construction, and element helpers
+- Reviewed the September 18 hotfix commits and pending homepage/performance changes; started local preview at `http://127.0.0.1:3000` using Next's webpack dev mode because Turbopack rejects the shared `node_modules` junction.
+  - Areas: local dev runtime, ignored environment/log files, `docs/CHANGELOG.md`; application code unchanged
+  - Verification: homepage HTTP 200 with both new CTA sections; Jest 94/96 passing (two existing admin card fixture failures); TypeScript blocked by tracked `_tmp_page.tsx:394`; `git diff --check` passed
+  - Review findings: card import route bypasses catalog invalidation; independently cached `/api/cards` responses can remain stale after tag invalidation; Colorless API filtering no longer follows derived deck-element semantics. Production build and visual browser checks not completed; no deployment performed.
+
 ## 2026-09-18
 
 ### `hotfix/redact-deck-identifiers`

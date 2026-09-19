@@ -13,7 +13,6 @@ import {
 import {
   decodeDeckCursor,
   encodeDeckCursor,
-  isDeckAfterCursor,
 } from "../utils/deckPagination";
 import { getDeckCardIds } from "../utils/deckSections";
 
@@ -135,84 +134,44 @@ async function hydrateDeckResults(
   });
 }
 
-async function filterDeckResultsBySearch(
-  results: DeckWithUserInfo[],
-  searchQuery?: string
-) {
-  const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
-  if (!normalizedSearchQuery) {
-    return results;
+async function resolveDeckBrowseFilters(filters: DeckBrowseFilters) {
+  const searchQuery = filters.searchQuery?.trim();
+  const elements = filters.elements?.filter(Boolean) || [];
+  if (!searchQuery && elements.length === 0) {
+    return {
+      badges: filters.badges,
+    };
   }
 
-  const uniqueCardIds = new Set<string>();
-  for (const item of results) {
-    for (const deckCard of [
-      ...(item.deck.cards || []),
-      ...(item.deck.sideboard || []),
-    ]) {
-      uniqueCardIds.add(deckCard.cardId);
-    }
-  }
-
-  const cards = uniqueCardIds.size
-    ? await cardService.getCardsByIds([...uniqueCardIds])
+  const [catalogCards, searchUserIds] = await Promise.all([
+    cardService.getAllCards(),
+    searchQuery
+      ? deckDbService.findUserIdsBySearch(searchQuery)
+      : Promise.resolve([]),
+  ]);
+  const normalizedSearchQuery = searchQuery?.toLowerCase();
+  const matchingCards = normalizedSearchQuery
+    ? catalogCards.filter((card) =>
+        card.name.toLowerCase().includes(normalizedSearchQuery)
+      )
     : [];
-  const cardMap = new Map(cards.map((card) => [card.id, card]));
-
-  return results.filter((item) => {
-    const deckName = item.deck.name?.toLowerCase() || "";
-    const userName = item.user.name?.toLowerCase() || "";
-    const username = item.user.username?.toLowerCase() || "";
-    const cardNames = [...(item.deck.cards || []), ...(item.deck.sideboard || [])]
-      .map((deckCard) => cardMap.get(deckCard.cardId)?.name?.toLowerCase() || "")
-      .filter(Boolean);
-
-    return (
-      deckName.includes(normalizedSearchQuery) ||
-      userName.includes(normalizedSearchQuery) ||
-      username.includes(normalizedSearchQuery) ||
-      cardNames.some((cardName) => cardName.includes(normalizedSearchQuery))
-    );
-  });
-}
-
-function filterDeckResultsByElements(
-  results: DeckWithUserInfo[],
-  elements?: string[]
-) {
-  if (!elements || elements.length === 0) {
-    return results;
-  }
-
-  return results.filter((item) => {
-    const deckElements = item.deckElements || [];
-    return elements.every((element) => deckElements.includes(element));
-  });
-}
-
-function paginateDeckResults(
-  results: DeckWithUserInfo[],
-  sortBy: DeckSortBy,
-  limit: number,
-  cursor?: string
-) {
-  const decodedCursor = cursor ? decodeDeckCursor(cursor, sortBy) : undefined;
-  const cursorFilteredResults = decodedCursor
-    ? results.filter((item) => isDeckAfterCursor(item, decodedCursor, sortBy))
-    : results;
-
-  const decks = cursorFilteredResults.slice(0, limit);
-  const hasMore = cursorFilteredResults.length > limit;
-  const nextCursor =
-    hasMore && decks.length > 0
-      ? encodeDeckCursor(decks[decks.length - 1], sortBy)
-      : null;
+  const elementCardIdGroups = elements.map((element) =>
+    catalogCards
+      .filter((card) =>
+        card.element.type
+          .split("/")
+          .map((part) => part.trim())
+          .includes(element)
+      )
+      .map((card) => card.id)
+  );
 
   return {
-    decks,
-    hasMore,
-    nextCursor,
-    total: results.length,
+    badges: filters.badges,
+    searchQuery,
+    searchCardIds: matchingCards.map((card) => card.id),
+    searchUserIds,
+    elementCardIdGroups,
   };
 }
 
@@ -385,28 +344,27 @@ export const deckService = {
     }[]
   > {
     try {
-      const normalizedSearchQuery = searchQuery?.trim().toLowerCase();
-      const shouldSearch = Boolean(normalizedSearchQuery);
+      const normalizedSearchQuery = searchQuery?.trim();
+
+      if (normalizedSearchQuery) {
+        const dbFilters = await resolveDeckBrowseFilters({ searchQuery });
+        const results = await deckDbService.getPublicDecksWithUserInfoPage(
+          sortBy,
+          limit,
+          undefined,
+          currentUserId,
+          dbFilters
+        );
+        return hydrateDeckResults(results);
+      }
 
       const results = await deckDbService.getPublicDecksWithUserInfo(
         sortBy,
-        shouldSearch ? undefined : limit,
-        shouldSearch ? undefined : skip,
+        limit,
+        skip,
         currentUserId
       );
-      const hydratedResults = await hydrateDeckResults(results);
-
-      if (!shouldSearch || !normalizedSearchQuery) {
-        return hydratedResults;
-      }
-
-      const filteredResults = await filterDeckResultsBySearch(
-        hydratedResults,
-        normalizedSearchQuery
-      );
-      const start = skip || 0;
-      const end = limit !== undefined ? start + limit : undefined;
-      return filteredResults.slice(start, end);
+      return hydrateDeckResults(results);
     } catch (error) {
       console.error("Error getting public decks with user info:", error);
       throw error;
@@ -431,38 +389,7 @@ export const deckService = {
     warnings?: string[];
   }): Promise<PaginatedDeckResponse> {
     try {
-      const { searchQuery, elements, badges } = filters;
-      const dbFilters = { badges };
-      const shouldFilterInMemory =
-        Boolean(searchQuery?.trim()) || Boolean(elements?.length);
-
-      if (shouldFilterInMemory) {
-        const hydratedResults = await hydrateDeckResults(
-          await deckDbService.getPublicDecksWithUserInfoPage(
-            sortBy,
-            undefined,
-            undefined,
-            currentUserId,
-            dbFilters
-          )
-        );
-        const elementFilteredResults = filterDeckResultsByElements(
-          hydratedResults,
-          elements
-        );
-        const searchedResults = await filterDeckResultsBySearch(
-          elementFilteredResults,
-          searchQuery
-        );
-        const page = paginateDeckResults(searchedResults, sortBy, limit, cursor);
-
-        return {
-          ...page,
-          effectiveLimit: limit,
-          requestedLimit,
-          warnings,
-        };
-      }
+      const dbFilters = await resolveDeckBrowseFilters(filters);
 
       const [results, total] = await Promise.all([
         deckDbService.getPublicDecksWithUserInfoPage(

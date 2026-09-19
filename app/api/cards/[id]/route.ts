@@ -3,6 +3,7 @@ import { cardDbService } from "@/app/lib/db/services/cardDbService";
 import { adminCardService } from "@/app/lib/services/adminCardService";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { cardService } from "@/app/lib/services/cardService";
 
 /**
  * GET /api/cards/[id]
@@ -149,6 +150,8 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    cardService.clearCache();
 
     return NextResponse.json({
       success: true,

@@ -3,6 +3,13 @@ import { MongoMemoryServer } from "mongodb-memory-server";
 import { ObjectId } from "mongodb";
 import { Card } from "@/app/lib/types/card";
 
+// Next's request-scoped cache is unavailable in this MongoDB integration test.
+// Keep the real admin/database flow and mock only the cache boundary.
+jest.mock("next/cache", () => ({
+  unstable_cache: jest.fn((callback: () => unknown) => callback),
+  revalidateTag: jest.fn(),
+}));
+
 jest.setTimeout(20000);
 
 function createCard(overrides: Partial<Card> = {}): Card {
@@ -59,11 +66,13 @@ describe("adminCardService.updateCardWithReview", () => {
   let adminCardService: typeof import("@/app/lib/services/adminCardService").adminCardService;
   let CardModel: typeof import("@/app/lib/db/models/Card").CardModel;
   let DeckModel: typeof import("@/app/lib/db/models/Deck").DeckModel;
+  let revalidateTag: typeof import("next/cache").revalidateTag;
 
   beforeAll(async () => {
     mongo = await MongoMemoryServer.create();
     process.env.MONGODB_URI = mongo.getUri();
     jest.resetModules();
+    ({ revalidateTag } = await import("next/cache"));
 
     const mongodb = await import("@/app/lib/db/mongodb");
     connectToDatabase = mongodb.connectToDatabase;
@@ -86,6 +95,7 @@ describe("adminCardService.updateCardWithReview", () => {
   });
 
   beforeEach(async () => {
+    jest.clearAllMocks();
     await Promise.all([CardModel.deleteMany({}), DeckModel.deleteMany({})]);
   });
 
@@ -99,9 +109,9 @@ describe("adminCardService.updateCardWithReview", () => {
       {
         name: "Judgement Build",
         userId: ownerId,
-        cards: [{ cardId: baseCard.id, quantity: 3 }],
+        cards: [{ cardId: baseCard.id, quantity: 2 }],
         deckElements: ["Light", "Earth"],
-        totalCards: 3,
+        totalCards: 2,
         isPublic: true,
       },
       {
@@ -131,6 +141,7 @@ describe("adminCardService.updateCardWithReview", () => {
     expect(result?.flaggedDecksCount).toBe(2);
     expect(result?.flaggedPublicDecksCount).toBe(1);
     expect(result?.card.rulesVersion).toBe(2);
+    expect(revalidateTag).toHaveBeenCalledWith("card-catalog");
 
     const updatedDecks = await DeckModel.find().sort({ name: 1 });
     expect(updatedDecks).toHaveLength(2);
@@ -149,9 +160,9 @@ describe("adminCardService.updateCardWithReview", () => {
     await DeckModel.create({
       name: "Judgement Build",
       userId: new ObjectId(),
-      cards: [{ cardId: baseCard.id, quantity: 3 }],
+      cards: [{ cardId: baseCard.id, quantity: 2 }],
       deckElements: ["Light", "Earth"],
-      totalCards: 3,
+      totalCards: 2,
       isPublic: true,
     });
 
@@ -166,6 +177,7 @@ describe("adminCardService.updateCardWithReview", () => {
     expect(result?.changeScope).toBe("asset");
     expect(result?.flaggedDecksCount).toBe(0);
     expect(result?.card.rulesVersion).toBe(1);
+    expect(revalidateTag).toHaveBeenCalledWith("card-catalog");
 
     const updatedDeck = await DeckModel.findOne({ name: "Judgement Build" });
     expect(updatedDeck?.needsReview).toBe(false);

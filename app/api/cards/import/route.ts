@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cardDbService } from '@/app/lib/db/services/cardDbService';
+import { cardService } from '@/app/lib/services/cardService';
 import { Card } from '@/app/lib/types/card';
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const count = await cardDbService.importCards(cards);
+    const count = await cardService.importCards(cards);
     return NextResponse.json({ success: true, count });
   } catch (error) {
     console.error('Error importing cards:', error);

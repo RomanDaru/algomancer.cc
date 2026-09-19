@@ -90,15 +90,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (!withMeta) {
-      const decksWithUserInfo = await deckService.getPublicDecksWithUserInfo(
-        validSortBy,
-        effectiveLimit,
-        undefined,
+      const response = await deckService.getPublicDecksPage({
+        sortBy: validSortBy,
+        limit: effectiveLimit,
         currentUserId,
-        searchQuery
-      );
+        filters: { searchQuery, elements, badges },
+      });
 
-      return NextResponse.json(serializeDeckPayload(decksWithUserInfo));
+      return NextResponse.json(serializeDeckPayload(response.decks));
     }
 
     const response = await deckService.getPublicDecksPage({

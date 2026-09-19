@@ -10,8 +10,8 @@ export type PrimaryElementType = BasicElementType | SpecialElementType;
 // Hybrid elements (all possible combinations of two basic elements)
 export type HybridElementType = `${PrimaryElementType}/${PrimaryElementType}`;
 
-// Combined element type (either basic or hybrid)
-export type ElementType = PrimaryElementType | HybridElementType;
+// Card elements include explicitly colorless cards as well as colored hybrids.
+export type ElementType = PrimaryElementType | HybridElementType | "Colorless";
 export type TimingType = "Standard" | "Haste" | "Battle" | "Virus";
 export type CardType =
   | "Unit"

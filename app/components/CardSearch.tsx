@@ -14,7 +14,11 @@ import {
   FunnelIcon,
 } from "@heroicons/react/24/outline";
 
-const ELEMENT_TYPES = [...Object.values(BASIC_ELEMENTS), ...Object.values(SPECIAL_ELEMENTS)];
+const ELEMENT_TYPES = [
+  ...Object.values(BASIC_ELEMENTS),
+  ...Object.values(SPECIAL_ELEMENTS),
+  "Colorless",
+];
 const ELEMENT_TERM_SET = new Set(
   ELEMENT_TYPES.map((element) => element.toLowerCase())
 );

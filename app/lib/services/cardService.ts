@@ -4,10 +4,13 @@ import { revalidateTag, unstable_cache } from "next/cache";
 
 export const CARD_CATALOG_CACHE_TAG = "card-catalog";
 const CARD_CATALOG_REVALIDATE_SECONDS = 60 * 60;
+// The reviewed oracle batch was applied outside Next's request cache lifecycle.
+// Keep the shared invalidation tag, but do not reuse pre-import catalog entries.
+const CARD_CATALOG_CACHE_VERSION = "oracle-approved-2026-09-21";
 
 const getCachedCardCatalog = unstable_cache(
   async () => cardDbService.getAllCards(),
-  [CARD_CATALOG_CACHE_TAG],
+  [CARD_CATALOG_CACHE_TAG, CARD_CATALOG_CACHE_VERSION],
   {
     revalidate: CARD_CATALOG_REVALIDATE_SECONDS,
     tags: [CARD_CATALOG_CACHE_TAG],

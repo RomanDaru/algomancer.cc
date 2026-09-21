@@ -62,9 +62,7 @@ export default function Card({
 
           {/* Mana Cost */}
           <span className='text-sm text-algomancy-gold font-medium min-w-[20px] ml-4 mr-3'>
-            {card.manaCost === 0 && card.typeAndAttributes.mainType === "Spell"
-              ? "X"
-              : card.manaCost}
+            {card.manaCost}
           </span>
 
           {/* Card Name */}

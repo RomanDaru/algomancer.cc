@@ -1,5 +1,6 @@
 "use client";
 
+import { compareCardValues } from "@/app/lib/utils/cardValues";
 import { useMemo, useState } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
@@ -42,13 +43,13 @@ function sortCards(
 ) {
   switch (sortMode) {
     case "mana":
-      return a.card.manaCost - b.card.manaCost;
+      return compareCardValues(a.card.manaCost, b.card.manaCost);
     case "attack":
-      return (a.card.stats?.power || 0) - (b.card.stats?.power || 0);
+      return compareCardValues(a.card.stats?.power ?? 0, b.card.stats?.power ?? 0);
     case "defense":
-      return (a.card.stats?.defense || 0) - (b.card.stats?.defense || 0);
+      return compareCardValues(a.card.stats?.defense ?? 0, b.card.stats?.defense ?? 0);
     default:
-      return a.card.manaCost - b.card.manaCost;
+      return compareCardValues(a.card.manaCost, b.card.manaCost);
   }
 }
 

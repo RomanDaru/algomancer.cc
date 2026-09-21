@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
@@ -28,11 +29,42 @@ interface DeckPageProps {
   params: { id: string };
 }
 
+const DECK_TABS = ["Deck", "Stats", "Results"] as const;
+type DeckTab = (typeof DECK_TABS)[number];
+
 export default function DeckPage({ params }: DeckPageProps) {
   const [deckId, setDeckId] = useState<string | null>(null);
   const { data: session } = useSession();
   const router = useRouter();
   const exportTargetRef = useRef<HTMLDivElement | null>(null);
+  const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
+  const [activeTab, setActiveTab] = useState<DeckTab>("Deck");
+
+  const handleTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    index: number
+  ) => {
+    let nextIndex: number;
+    switch (event.key) {
+      case "ArrowRight":
+        nextIndex = (index + 1) % DECK_TABS.length;
+        break;
+      case "ArrowLeft":
+        nextIndex = (index - 1 + DECK_TABS.length) % DECK_TABS.length;
+        break;
+      case "Home":
+        nextIndex = 0;
+        break;
+      case "End":
+        nextIndex = DECK_TABS.length - 1;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    setActiveTab(DECK_TABS[nextIndex]);
+    tabRefs.current[nextIndex]?.focus();
+  };
 
   const [deck, setDeck] = useState<Deck | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
@@ -53,6 +85,7 @@ export default function DeckPage({ params }: DeckPageProps) {
 
   useEffect(() => {
     if (!deckId) return;
+    setActiveTab("Deck");
 
     async function fetchData() {
       try {
@@ -199,24 +232,24 @@ export default function DeckPage({ params }: DeckPageProps) {
               </div>
 
               {/* Bottom row: Date, Views, Likes, Share, Options */}
-              <div className='flex items-center mt-2 text-sm text-white'>
-                <span>
+              <div className='flex flex-wrap items-center gap-x-3 gap-y-2 mt-2 text-sm text-white'>
+                <span className='whitespace-nowrap'>
                   {formatDistanceToNow(new Date(deck.createdAt), { addSuffix: true })}
                 </span>
-                <span className='ml-3 flex items-center'>
+                <span className='flex items-center shrink-0'>
                   <svg xmlns='http://www.w3.org/2000/svg' className='h-4 w-4 mr-1' fill='none' viewBox='0 0 24 24' stroke='currentColor'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
                   </svg>
                   {typeof deck.views === "number" ? deck.views : 0}
                 </span>
-                <span className='ml-3'>
+                <span className='shrink-0'>
                   <LikeButton deckId={deck._id.toString()} initialLikes={deck.likes || 0} size='sm' showCount={true} className='text-white' />
                 </span>
-                <span className='ml-3'>
+                <span className='shrink-0'>
                   <ShareButton deckId={deck._id.toString()} deckName={deck.name} size='sm' className='text-white' />
                 </span>
-                <div className='ml-2'>
+                <div className='shrink-0'>
                   {deckId && (
                     <DeckOptionsMenu
                       deck={deck}
@@ -224,12 +257,15 @@ export default function DeckPage({ params }: DeckPageProps) {
                       deckId={deckId}
                       isOwner={isOwner}
                       exportTargetRef={exportTargetRef}
+                      onBeforeImageExport={() => {
+                        // The capture target must be visible even when export
+                        // is opened from Stats or Results.
+                        flushSync(() => setActiveTab("Deck"));
+                      }}
                     />
                   )}
                 </div>
               </div>
-
-              {deck.description && <p className='text-gray-300 mt-3'>{deck.description}</p>}
 
               {deck.needsReview && (
                 <DeckReviewNotice
@@ -242,31 +278,91 @@ export default function DeckPage({ params }: DeckPageProps) {
           </div>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
-          <div className='lg:col-span-1'>
-            <DeckStats cards={cards} deckCards={deck.cards} />
-          </div>
-
-          <div className='lg:col-span-2'>
-            <div ref={exportTargetRef}>
-              <DeckDetailViewer
-                mainDeckGroupedCards={groupedCards}
-                sideboardGroupedCards={groupedSideboardCards}
-                mainDeckTotalCards={totalCards}
-                sideboardTotalCards={totalSideboardCards}
-              />
-            </div>
-          </div>
+        <div
+          role='tablist'
+          aria-label='Deck details'
+          className='flex gap-6 border-b border-algomancy-purple/30 mb-6'
+        >
+          {DECK_TABS.map((tab, index) => (
+            <button
+              key={tab}
+              ref={(element) => { tabRefs.current[index] = element; }}
+              type='button'
+              role='tab'
+              id={`deck-tab-${tab.toLowerCase()}`}
+              aria-controls={`deck-panel-${tab.toLowerCase()}`}
+              aria-selected={activeTab === tab}
+              tabIndex={activeTab === tab ? 0 : -1}
+              onClick={() => setActiveTab(tab)}
+              onKeyDown={(event) => handleTabKeyDown(event, index)}
+              className={`border-b-2 px-1 py-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-algomancy-purple focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
+                activeTab === tab
+                  ? "border-algomancy-gold text-algomancy-gold"
+                  : "border-transparent text-gray-400 hover:text-white"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
         </div>
 
-        {deck.youtubeUrl && (
-          <div className='mt-8'>
-            <div className='max-w-4xl mx-auto'>
-              <h2 className='text-2xl font-bold text-white mb-4 text-center'>Deck Showcase Video</h2>
-              <YouTubeEmbed url={deck.youtubeUrl} title={`${deck.name} - Deck Showcase`} showTitle={false} />
-            </div>
+        <section
+          role='tabpanel'
+          id='deck-panel-deck'
+          aria-labelledby='deck-tab-deck'
+          hidden={activeTab !== "Deck"}
+          tabIndex={0}
+        >
+          {deck.description && (
+            <p className='text-gray-300 whitespace-pre-line mb-6 max-w-4xl'>
+              {deck.description}
+            </p>
+          )}
+          <div ref={exportTargetRef}>
+            <DeckDetailViewer
+              mainDeckGroupedCards={groupedCards}
+              sideboardGroupedCards={groupedSideboardCards}
+              mainDeckTotalCards={totalCards}
+              sideboardTotalCards={totalSideboardCards}
+            />
           </div>
-        )}
+
+          {deck.youtubeUrl && (
+            <div className='mt-8'>
+              <div className='max-w-4xl mx-auto'>
+                <h2 className='text-2xl font-bold text-white mb-4 text-center'>Deck Showcase Video</h2>
+                <YouTubeEmbed url={deck.youtubeUrl} title={`${deck.name} - Deck Showcase`} showTitle={false} />
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section
+          role='tabpanel'
+          id='deck-panel-stats'
+          aria-labelledby='deck-tab-stats'
+          hidden={activeTab !== "Stats"}
+          tabIndex={0}
+        >
+          {activeTab === "Stats" && (
+            <DeckStats cards={cards} deckCards={deck.cards} layout='grid' />
+          )}
+        </section>
+
+        <section
+          role='tabpanel'
+          id='deck-panel-results'
+          aria-labelledby='deck-tab-results'
+          hidden={activeTab !== "Results"}
+          tabIndex={0}
+        >
+          <div className='py-10'>
+            <h2 className='text-lg font-semibold text-white'>Game results</h2>
+            <p className='mt-2 text-sm text-gray-400'>
+              Results tracking for this deck is not available yet.
+            </p>
+          </div>
+        </section>
       </div>
       </div>
     </div>

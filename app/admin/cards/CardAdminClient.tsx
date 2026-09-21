@@ -13,6 +13,8 @@ import {
   CARD_TYPES,
   TIMING,
 } from "@/app/lib/types/card";
+import { parseCardValue, parseAffinity } from "@/app/lib/utils/cardValues";
+import { affinityText } from "@/app/lib/utils/oracleReview";
 import { resolveCardChangeScope } from "@/app/lib/utils/cardChange";
 
 interface CardUsageSummary {
@@ -47,6 +49,14 @@ interface CardFormState {
   affinityEarth: string;
   affinityWood: string;
   affinityMetal: string;
+  affinityDark: string;
+  affinityLight: string;
+  affinityPrismite: string;
+  prophecyEnabled: string;
+  prophecyManaCost: string;
+  prophecyAffinity: string;
+  prophecyCondition: string;
+  augmentTransfersText: string;
   timingType: string;
   timingDescription: string;
   mainType: string;
@@ -58,7 +68,7 @@ interface CardFormState {
   setComplexity: string;
 }
 
-const COMPLEXITY_OPTIONS = ["Common", "Uncommon", "Rare", "Mythic"];
+const COMPLEXITY_OPTIONS = ["Common", "Complex", "Uncommon", "Rare", "Mythic"];
 
 function toFormState(card: Card): CardFormState {
   return {
@@ -94,6 +104,20 @@ function toFormState(card: Card): CardFormState {
       typeof card.stats.affinity.metal === "number"
         ? String(card.stats.affinity.metal)
         : "",
+    affinityDark:
+      typeof card.stats.affinity.dark === "number"
+        ? String(card.stats.affinity.dark)
+        : "",
+    affinityLight:
+      typeof card.stats.affinity.light === "number"
+        ? String(card.stats.affinity.light)
+        : "",
+    affinityPrismite: String(card.stats.affinity.prismite ?? ""),
+    prophecyEnabled: card.prophecy ? "yes" : "",
+    prophecyManaCost: String(card.prophecy?.manaCost ?? 0),
+    prophecyAffinity: affinityText({ ...card.prophecy?.affinity }),
+    prophecyCondition: card.prophecy?.condition || "",
+    augmentTransfersText: (card.augmentTransfers || []).join(", "),
     timingType: card.timing.type || "Standard",
     timingDescription: card.timing.description || "",
     mainType: card.typeAndAttributes.mainType || "Unit",
@@ -121,7 +145,7 @@ function fromFormState(form: CardFormState, originalCard: Card): Card {
     ...originalCard,
     id: form.id.trim(),
     name: form.name.trim(),
-    manaCost: Number(form.manaCost || 0),
+    manaCost: parseCardValue(form.manaCost),
     imageUrl: form.imageUrl.trim(),
     flavorText: form.flavorText.trim() || undefined,
     currentIndex: parseOptionalNumber(form.currentIndex),
@@ -131,14 +155,17 @@ function fromFormState(form: CardFormState, originalCard: Card): Card {
       secondarySymbol: form.elementSecondarySymbol.trim() || undefined,
     },
     stats: {
-      power: Number(form.power || 0),
-      defense: Number(form.defense || 0),
+      power: parseCardValue(form.power, true),
+      defense: parseCardValue(form.defense, true),
       affinity: {
         fire: parseOptionalNumber(form.affinityFire),
         water: parseOptionalNumber(form.affinityWater),
         earth: parseOptionalNumber(form.affinityEarth),
         wood: parseOptionalNumber(form.affinityWood),
         metal: parseOptionalNumber(form.affinityMetal),
+        dark: parseOptionalNumber(form.affinityDark),
+        light: parseOptionalNumber(form.affinityLight),
+        prismite: parseOptionalNumber(form.affinityPrismite),
       },
     },
     timing: {
@@ -157,6 +184,12 @@ function fromFormState(form: CardFormState, originalCard: Card): Card {
       .split("\n")
       .map((ability) => ability.trim())
       .filter(Boolean),
+    prophecy: form.prophecyEnabled ? {
+      manaCost: parseCardValue(form.prophecyManaCost),
+      affinity: parseAffinity(form.prophecyAffinity),
+      condition: form.prophecyCondition.trim(),
+    } : null,
+    augmentTransfers: form.augmentTransfersText.split(",").map(value => value.trim()).filter(Boolean),
     set: {
       symbol: form.setSymbol.trim(),
       name: form.setName.trim(),
@@ -259,8 +292,14 @@ export default function CardAdminClient() {
     );
   });
 
-  const previewCard =
-    form && selectedCard ? fromFormState(form, selectedCard) : null;
+  let previewCard: Card | null = null;
+  let validationError = "";
+  try {
+    previewCard = form && selectedCard ? fromFormState(form, selectedCard) : null;
+    if (previewCard?.prophecy && !previewCard.prophecy.condition) validationError = "Enter the Prophecy condition.";
+  } catch (error) {
+    validationError = error instanceof Error ? error.message : "Check the card values.";
+  }
   const previewScope =
     previewCard && selectedCard
       ? resolveCardChangeScope(selectedCard, previewCard, changeMode)
@@ -367,7 +406,11 @@ export default function CardAdminClient() {
       return;
     }
 
-    const nextCard = fromFormState(form, selectedCard);
+    if (!previewCard || validationError) {
+      toast.error(validationError || "Check the card values.");
+      return;
+    }
+    const nextCard = previewCard;
 
     if (!nextCard.name || !nextCard.id || !nextCard.imageUrl) {
       toast.error("Card ID, name, and image URL are required.");
@@ -659,10 +702,10 @@ export default function CardAdminClient() {
                     />
                   </div>
                   <div>
-                    <FieldLabel htmlFor='mana-cost' label='Mana Cost' />
+                    <FieldLabel htmlFor='mana-cost' label='Mana Cost' hint='Whole number or X' />
                     <input
                       id='mana-cost'
-                      type='number'
+                      type='text'
                       value={form.manaCost}
                       onChange={(event) =>
                         updateField("manaCost", event.target.value)
@@ -735,6 +778,47 @@ export default function CardAdminClient() {
               </Section>
 
               <Section title='Rules Data'>
+                {validationError && <p role='alert' className='text-sm text-red-400'>{validationError}</p>}
+                <div className='grid gap-4 md:grid-cols-2'>
+                  <div>
+                    <FieldLabel htmlFor='affinity-prismite' label='Affinity Prismite' />
+                    <input id='affinity-prismite' type='number' min='0' value={form.affinityPrismite}
+                      onChange={event => updateField("affinityPrismite", event.target.value)}
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white' />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor='augment-transfers' label='Augment transfers' hint='Comma-separated attributes' />
+                    <input id='augment-transfers' value={form.augmentTransfersText}
+                      onChange={event => updateField("augmentTransfersText", event.target.value)}
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white' />
+                  </div>
+                </div>
+                <label className='flex items-center gap-2 text-sm text-white'>
+                  <input type='checkbox' checked={!!form.prophecyEnabled}
+                    onChange={event => updateField("prophecyEnabled", event.target.checked ? "yes" : "")} />
+                  Alternative Prophecy cost
+                </label>
+                {form.prophecyEnabled && <div className='grid gap-4 md:grid-cols-2'>
+                  <div>
+                    <FieldLabel htmlFor='prophecy-cost' label='Prophecy mana cost' hint='Whole number or X' />
+                    <input id='prophecy-cost' value={form.prophecyManaCost}
+                      onChange={event => updateField("prophecyManaCost", event.target.value)}
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white' />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor='prophecy-affinity' label='Prophecy affinity' hint='For example light: 1, wood: 1' />
+                    <input id='prophecy-affinity' value={form.prophecyAffinity}
+                      onChange={event => updateField("prophecyAffinity", event.target.value)}
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white' />
+                  </div>
+                  <div className='md:col-span-2'>
+                    <FieldLabel htmlFor='prophecy-condition' label='Prophecy condition' />
+                    <textarea id='prophecy-condition' value={form.prophecyCondition}
+                      onChange={event => updateField("prophecyCondition", event.target.value)}
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white' />
+                  </div>
+                </div>}
+
                 <div className='grid gap-4 md:grid-cols-3 xl:grid-cols-5'>
                   <div>
                     <FieldLabel
@@ -783,7 +867,7 @@ export default function CardAdminClient() {
                     <FieldLabel htmlFor='power' label='Power' />
                     <input
                       id='power'
-                      type='number'
+                      type='text'
                       value={form.power}
                       onChange={(event) => updateField("power", event.target.value)}
                       className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white outline-none focus:border-algomancy-purple'
@@ -793,7 +877,7 @@ export default function CardAdminClient() {
                     <FieldLabel htmlFor='defense' label='Defense' />
                     <input
                       id='defense'
-                      type='number'
+                      type='text'
                       value={form.defense}
                       onChange={(event) =>
                         updateField("defense", event.target.value)
@@ -803,7 +887,7 @@ export default function CardAdminClient() {
                   </div>
                 </div>
 
-                <div className='grid gap-4 md:grid-cols-5'>
+                <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
                   <div>
                     <FieldLabel htmlFor='affinity-fire' label='Affinity Fire' />
                     <input
@@ -860,6 +944,34 @@ export default function CardAdminClient() {
                       value={form.affinityMetal}
                       onChange={(event) =>
                         updateField("affinityMetal", event.target.value)
+                      }
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white outline-none focus:border-algomancy-purple'
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor='affinity-dark' label='Affinity Dark' />
+                    <input
+                      id='affinity-dark'
+                      type='number'
+                      min={0}
+                      step={1}
+                      value={form.affinityDark}
+                      onChange={(event) =>
+                        updateField("affinityDark", event.target.value)
+                      }
+                      className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white outline-none focus:border-algomancy-purple'
+                    />
+                  </div>
+                  <div>
+                    <FieldLabel htmlFor='affinity-light' label='Affinity Light' />
+                    <input
+                      id='affinity-light'
+                      type='number'
+                      min={0}
+                      step={1}
+                      value={form.affinityLight}
+                      onChange={(event) =>
+                        updateField("affinityLight", event.target.value)
                       }
                       className='mt-2 w-full rounded-md border border-algomancy-purple/25 bg-algomancy-dark px-3 py-2 text-sm text-white outline-none focus:border-algomancy-purple'
                     />

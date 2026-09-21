@@ -20,7 +20,7 @@ export type CardType =
   | "Token"
   | "Spell Token"
   | "Spell Unit";
-export type ComplexityType = "Common" | "Uncommon" | "Rare" | "Mythic";
+export type ComplexityType = "Common" | "Complex" | "Uncommon" | "Rare" | "Mythic";
 
 export interface Element {
   type: ElementType;
@@ -34,11 +34,26 @@ export interface Affinity {
   earth?: number;
   wood?: number;
   metal?: number;
+  dark?: number;
+  light?: number;
+  prismite?: number;
+}
+
+export const AFFINITY_ELEMENTS = [
+  "fire", "water", "earth", "wood", "metal", "dark", "light", "prismite",
+] as const satisfies readonly (keyof Affinity)[];
+
+export type CardValue = number | "X";
+
+export interface ProphecyCost {
+  manaCost: CardValue;
+  affinity: Affinity;
+  condition: string;
 }
 
 export interface Stats {
-  power: number;
-  defense: number;
+  power: CardValue;
+  defense: CardValue;
   affinity: Affinity;
 }
 
@@ -124,12 +139,21 @@ export type CardChangeMode = "auto" | Exclude<CardChangeScope, "none">;
 export interface Card {
   id: string;
   name: string;
-  manaCost: number;
+  manaCost: CardValue;
   element: Element;
   stats: Stats;
   timing: Timing;
   typeAndAttributes: TypeAndAttributes;
   abilities: string[];
+  prophecy?: ProphecyCost | null;
+  augmentTransfers?: string[];
+  oracleImport?: {
+    batchId: string;
+    reviewHash: string;
+    approvedRulesText: string;
+    approvedProphecyCondition?: string;
+    importedAt: Date;
+  };
   set: Set;
   imageUrl: string;
   flavorText?: string;

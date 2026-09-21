@@ -1,5 +1,6 @@
 import mongoose, { Schema, HydratedDocument } from "mongoose";
 import { Card as CardType } from "../../types/card";
+import { isCardValue } from "../../utils/cardValues";
 
 type CardDocRaw = Omit<CardType, "id"> & {
   originalId: string;
@@ -25,6 +26,9 @@ const AffinitySchema = new Schema(
     earth: { type: Number, min: 0 },
     wood: { type: Number, min: 0 },
     metal: { type: Number, min: 0 },
+    dark: { type: Number, min: 0 },
+    light: { type: Number, min: 0 },
+    prismite: { type: Number, min: 0 },
   },
   { _id: false }
 );
@@ -32,8 +36,8 @@ const AffinitySchema = new Schema(
 // Schema for the Stats subdocument
 const StatsSchema = new Schema(
   {
-    power: { type: Number, required: true },
-    defense: { type: Number, required: true },
+    power: { type: Schema.Types.Mixed, required: true, validate: isCardValue },
+    defense: { type: Schema.Types.Mixed, required: true, validate: isCardValue },
     affinity: { type: AffinitySchema, required: true },
   },
   { _id: false }
@@ -43,7 +47,7 @@ const StatsSchema = new Schema(
 const TimingSchema = new Schema(
   {
     type: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String, default: "" },
   },
   { _id: false }
 );
@@ -52,7 +56,7 @@ const TimingSchema = new Schema(
 const TypeAndAttributesSchema = new Schema(
   {
     mainType: { type: String, required: true },
-    subType: { type: String, required: true },
+    subType: { type: String, default: "" },
     attributes: { type: [String], default: [] },
   },
   { _id: false }
@@ -74,12 +78,25 @@ const CardSchema = new Schema(
     // We'll use MongoDB's _id as our primary key, but we'll also store the original id
     originalId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    manaCost: { type: Number, required: true },
+    manaCost: { type: Schema.Types.Mixed, required: true, validate: (value: unknown) => isCardValue(value) && (value === "X" || value >= 0) },
     element: { type: ElementSchema, required: true },
     stats: { type: StatsSchema, required: true },
     timing: { type: TimingSchema, required: true },
     typeAndAttributes: { type: TypeAndAttributesSchema, required: true },
     abilities: { type: [String], default: [] },
+    prophecy: { type: new Schema({
+      manaCost: { type: Schema.Types.Mixed, required: true, validate: (value: unknown) => isCardValue(value) && (value === "X" || value >= 0) },
+      affinity: { type: AffinitySchema, required: true },
+      condition: { type: String, required: true },
+    }, { _id: false }), default: null },
+    augmentTransfers: { type: [String], default: [] },
+    oracleImport: { type: new Schema({
+      batchId: { type: String, required: true },
+      reviewHash: { type: String, required: true },
+      approvedRulesText: { type: String, default: "" },
+      approvedProphecyCondition: String,
+      importedAt: { type: Date, required: true },
+    }, { _id: false }) },
     set: { type: SetSchema, required: true },
     imageUrl: { type: String, required: true },
     flavorText: { type: String },
@@ -119,6 +136,9 @@ export function convertDocumentToCard(doc: CardDocument): CardType {
     timing: card.timing,
     typeAndAttributes: card.typeAndAttributes,
     abilities: card.abilities,
+    prophecy: card.prophecy ?? null,
+    augmentTransfers: card.augmentTransfers || [],
+    oracleImport: card.oracleImport,
     set: card.set,
     imageUrl: card.imageUrl,
     flavorText: card.flavorText,
@@ -142,6 +162,9 @@ export function convertCardToDocument(card: CardType): CardDocRaw {
     timing: card.timing,
     typeAndAttributes: card.typeAndAttributes,
     abilities: card.abilities,
+    ...(card.prophecy !== undefined ? { prophecy: card.prophecy } : {}),
+    ...(card.augmentTransfers !== undefined ? { augmentTransfers: card.augmentTransfers } : {}),
+    ...(card.oracleImport !== undefined ? { oracleImport: card.oracleImport } : {}),
     set: card.set,
     imageUrl: card.imageUrl,
     ...(card.flavorText !== undefined ? { flavorText: card.flavorText } : {}),

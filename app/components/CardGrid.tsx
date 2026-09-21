@@ -1,5 +1,6 @@
 "use client";
 
+import { compareCardValues } from "@/app/lib/utils/cardValues";
 import { Card as CardType } from "@/app/lib/types/card";
 import Card from "./Card";
 import { useState, useRef, useEffect, useMemo } from "react";
@@ -51,6 +52,8 @@ const DEFAULT_SORT_PRIORITY: SortKey[] = ACTIVE_SORT_OPTIONS.map(
 const EXCLUDED_SUBTYPES = new Set([
   "Stolen Card !Resource",
   "Effect !Resource",
+  "Stolen Card !",
+  "Effect !",
 ]);
 const BASE_ELEMENT_PRIORITY = [
   "Fire",
@@ -87,25 +90,14 @@ const getElementSortValue = (elementType?: string) => {
 };
 
 const compareNumbers = (
-  aValue: number | undefined,
-  bValue: number | undefined,
+  aValue: number | "X" | undefined,
+  bValue: number | "X" | undefined,
   direction: SortDirection
 ) => {
-  const safeA =
-    typeof aValue === "number"
-      ? aValue
-      : direction === "asc"
-      ? Number.MAX_SAFE_INTEGER
-      : Number.MIN_SAFE_INTEGER;
-  const safeB =
-    typeof bValue === "number"
-      ? bValue
-      : direction === "asc"
-      ? Number.MAX_SAFE_INTEGER
-      : Number.MIN_SAFE_INTEGER;
-
-  if (safeA === safeB) return 0;
-  return direction === "asc" ? safeA - safeB : safeB - safeA;
+  if (aValue === undefined) return bValue === undefined ? 0 : 1;
+  if (bValue === undefined) return -1;
+  const result = compareCardValues(aValue, bValue);
+  return direction === "asc" ? result : -result;
 };
 
 const sortCards = (

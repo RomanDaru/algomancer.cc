@@ -15,6 +15,7 @@ import {
 import CardImageSkeleton from "./CardImageSkeleton";
 import { optimizeCardDetail } from "@/app/lib/utils/imageOptimization";
 import UserNameWithRank from "./UserNameWithRank";
+import { formatAffinity, hasCombatStats } from "@/app/lib/utils/cardValues";
 
 interface CardDetailsProps {
   card: CardType;
@@ -158,12 +159,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
               Mana Cost
             </h3>
             <p className='text-white'>
-              {/* Display X instead of 0 for Spell cards with 0 mana cost, but not for tokens */}
-              {card.manaCost === 0 &&
-              card.typeAndAttributes.mainType === "Spell" &&
-              !(card.typeAndAttributes.subType?.toLowerCase()?.includes("token") ?? false)
-                ? "X"
-                : card.manaCost}
+              {card.manaCost}
             </p>
           </div>
           <div>
@@ -179,8 +175,7 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
               {card.typeAndAttributes.subType} {card.typeAndAttributes.mainType}
             </p>
           </div>
-          {/* Only show Power/Defense stats for non-Spell cards */}
-          {!card.typeAndAttributes.mainType.includes("Spell") && (
+          {hasCombatStats(card) && (
             <div>
               <h3 className='font-semibold text-algomancy-blue-light'>Stats</h3>
               <p>
@@ -192,6 +187,12 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
             <h3 className='font-semibold text-algomancy-blue-light'>Timing</h3>
             <p>{card.timing.type}</p>
           </div>
+          {card.typeAndAttributes.attributes?.length > 0 && (
+            <div>
+              <h3 className='font-semibold text-algomancy-blue-light'>Attributes</h3>
+              <p>{card.typeAndAttributes.attributes.join(", ")}</p>
+            </div>
+          )}
         </div>
 
         <div className='mt-4'>
@@ -202,6 +203,26 @@ export default function CardDetails({ card, onClose }: CardDetailsProps) {
             ))}
           </ul>
         </div>
+
+        <div className='mt-4'>
+          <h3 className='font-semibold text-algomancy-blue-light'>Affinity</h3>
+          <p>{formatAffinity(card.stats.affinity) || "None"}</p>
+        </div>
+
+        {card.prophecy && (
+          <div className='mt-4'>
+            <h3 className='font-semibold text-algomancy-blue-light'>Prophecy</h3>
+            <p>Cost: {card.prophecy.manaCost}{formatAffinity(card.prophecy.affinity) && ` · ${formatAffinity(card.prophecy.affinity)}`}</p>
+            <p>{card.prophecy.condition}</p>
+          </div>
+        )}
+
+        {!!card.augmentTransfers?.length && (
+          <div className='mt-4'>
+            <h3 className='font-semibold text-algomancy-blue-light'>Augment transfers</h3>
+            <p>{card.augmentTransfers.join(", ")}</p>
+          </div>
+        )}
 
         {card.flavorText && (
           <div className='mt-4'>

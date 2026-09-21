@@ -25,6 +25,7 @@ interface DeckOptionsMenuProps {
   isOwner: boolean;
   className?: string;
   exportTargetRef?: React.RefObject<HTMLElement | null>;
+  onBeforeImageExport?: () => void;
 }
 
 export default function DeckOptionsMenu({
@@ -34,6 +35,7 @@ export default function DeckOptionsMenu({
   isOwner,
   className = "",
   exportTargetRef,
+  onBeforeImageExport,
 }: DeckOptionsMenuProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -112,7 +114,7 @@ export default function DeckOptionsMenu({
         throw new Error(err.error || "Failed to copy deck");
       }
       const created = await res.json();
-      toast.success("Deck copied");
+      toast.success("Private copy saved to your decks.");
       setOpen(false);
       router.push(`/decks/${created._id}`);
     } catch (e) {
@@ -198,6 +200,7 @@ export default function DeckOptionsMenu({
   };
 
   const handleOpenExportImage = async () => {
+    onBeforeImageExport?.();
     setOpen(false);
     setIsExportModalOpen(true);
     setExportImageError(null);
@@ -315,8 +318,15 @@ export default function DeckOptionsMenu({
               className='w-full text-left px-4 py-2 text-sm text-white hover:bg-algomancy-purple/30 focus:outline-none focus:ring-1 focus:ring-algomancy-purple/40 disabled:opacity-50 flex items-center'
               role='menuitem'
             >
-              <DocumentDuplicateIcon className='w-4 h-4 mr-2' />
-              {isCopying ? "Copying Deck…" : "Copy Deck"}
+              <DocumentDuplicateIcon className='w-4 h-4 mr-2 shrink-0' />
+              <span>
+                <span className='block'>
+                  {isCopying ? "Creating your copy…" : "Make a personal copy"}
+                </span>
+                <span className='block mt-1 text-xs text-gray-300'>
+                  Creates a private copy in your account. Existing game results are not copied.
+                </span>
+              </span>
             </button>
             <button
               onClick={handleOpenExportImage}

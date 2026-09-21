@@ -153,6 +153,39 @@ describe("adminCardService.updateCardWithReview", () => {
     );
   });
 
+  it("persists Dark/Light affinity, flags rules changes and retains it on later image edits", async () => {
+    const baseCard = createCard({ stats: { power: 1, defense: 1, affinity: { dark: 1, light: 2 } } });
+    await CardModel.create(toCardDocument(baseCard));
+    await DeckModel.create({
+      name: "Expansion affinity deck",
+      userId: new ObjectId(),
+      cards: [{ cardId: baseCard.id, quantity: 1 }],
+      totalCards: 1,
+      isPublic: false,
+    });
+
+    const result = await adminCardService.updateCardWithReview({
+      card: { ...baseCard, stats: { ...baseCard.stats, affinity: { dark: 2, light: 3 } } },
+    });
+    expect(result?.card.stats.affinity).toMatchObject({ dark: 2, light: 3 });
+    expect(result?.card.rulesVersion).toBe(2);
+    expect(result?.changeScope).toBe("rules");
+    expect(result?.changeSummary).toContain("Affinity requirements updated");
+    expect(result?.flaggedDecksCount).toBe(1);
+
+    const imageEdit = await adminCardService.updateCardWithReview({
+      card: { ...result!.card, imageUrl: "https://example.com/expansion-v2.jpg" },
+    });
+    expect(imageEdit?.changeScope).toBe("asset");
+    expect(imageEdit?.card.rulesVersion).toBe(2);
+    expect(imageEdit?.card.stats.affinity).toMatchObject({ dark: 2, light: 3 });
+    const stored = await CardModel.findOne({ originalId: baseCard.id });
+    expect(stored.stats.affinity.toObject()).toMatchObject({ dark: 2, light: 3 });
+    const deck = await DeckModel.findOne({ name: "Expansion affinity deck" });
+    expect(deck.needsReview).toBe(true);
+    expect(deck.reviewFlags).toHaveLength(1);
+  });
+
   it("updates asset metadata without flagging decks for image-only changes", async () => {
     const baseCard = createCard();
     await CardModel.create(toCardDocument(baseCard));

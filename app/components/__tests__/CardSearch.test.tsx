@@ -63,6 +63,19 @@ describe("CardSearch Colorless support", () => {
     expect(results()).toEqual(["Generic Unit", "Neutral Token"]);
   });
 
+  it("separates zero, X and Prophecy costs and searches the Prophecy condition", async () => {
+    const costCards: Card[] = [
+      { ...card("free", "Light", "Spell"), manaCost: 0 },
+      { ...card("variable", "Light", "Spell"), manaCost: "X" },
+      { ...card("foretold", "Light", "Unit"), manaCost: 7, prophecy: { manaCost: 0, affinity: { light: 1 }, condition: "Four unique costs." } },
+    ];
+    await act(async () => root.render(<CardSearch cards={costCards} onSearchResults={onSearchResults} />));
+    await search("mana:0"); expect(results()).toEqual(["free"]);
+    await search("mana:X"); expect(results()).toEqual(["variable"]);
+    await search("prophecy:0"); expect(results()).toEqual(["foretold"]);
+    await search('"four unique costs"'); expect(results()).toEqual(["foretold"]);
+  });
+
   it("combines Colorless with a card type", async () => {
     await search("Colorless Token");
     expect(results()).toEqual(["Neutral Token"]);

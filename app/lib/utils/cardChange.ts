@@ -4,8 +4,12 @@ import {
   CardChangeScope,
 } from "../types/card";
 
+function normalizeAffinity(affinity: Card["stats"]["affinity"]) {
+  return Object.fromEntries(Object.entries(affinity).filter(([, value]) => value !== undefined && value !== 0).sort(([a], [b]) => a.localeCompare(b)));
+}
+
 function normalizeAbilities(abilities: string[]): string[] {
-  return abilities.map((ability) => ability.trim()).filter(Boolean);
+  return abilities.map((ability) => ability.replace(/\s+/g, " ").trim()).filter(Boolean);
 }
 
 function normalizeAttributes(attributes: string[]): string[] {
@@ -17,12 +21,14 @@ function getRulesFingerprint(card: Card) {
     name: card.name,
     manaCost: card.manaCost,
     element: card.element,
-    stats: card.stats,
+    stats: { power: card.stats.power, defense: card.stats.defense, affinity: normalizeAffinity(card.stats.affinity) },
     timing: card.timing,
     mainType: card.typeAndAttributes.mainType,
     subType: card.typeAndAttributes.subType,
     attributes: normalizeAttributes(card.typeAndAttributes.attributes || []),
     abilities: normalizeAbilities(card.abilities || []),
+    prophecy: card.prophecy ? { ...card.prophecy, affinity: normalizeAffinity(card.prophecy.affinity) } : null,
+    augmentTransfers: normalizeAttributes(card.augmentTransfers || []),
   });
 }
 
@@ -99,6 +105,8 @@ export function buildCardChangeSummary(
   }
 
   const changes: string[] = [];
+  addIfChanged(changes, JSON.stringify(previousCard.prophecy ?? null) !== JSON.stringify(nextCard.prophecy ?? null), "Prophecy cost or condition changed");
+  addIfChanged(changes, JSON.stringify(normalizeAttributes(previousCard.augmentTransfers || [])) !== JSON.stringify(normalizeAttributes(nextCard.augmentTransfers || [])), "Augment transfers changed");
 
   addIfChanged(
     changes,
@@ -115,6 +123,11 @@ export function buildCardChangeSummary(
     previousCard.stats.power !== nextCard.stats.power ||
       previousCard.stats.defense !== nextCard.stats.defense,
     `Stats: ${previousCard.stats.power}/${previousCard.stats.defense} -> ${nextCard.stats.power}/${nextCard.stats.defense}`
+  );
+  addIfChanged(
+    changes,
+    JSON.stringify(normalizeAffinity(previousCard.stats.affinity)) !== JSON.stringify(normalizeAffinity(nextCard.stats.affinity)),
+    "Affinity requirements updated"
   );
   addIfChanged(
     changes,

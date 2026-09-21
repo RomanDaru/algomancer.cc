@@ -1,5 +1,63 @@
 # Changelog
 
+## 2026-09-21
+
+### `main`
+- Prepared the approved oracle import and end-to-end support for explicit X costs/stats, Prophecy, Prismite affinity and Augment transfers. Card search, sorting, deck mana curves and admin edits retain these fields; Spell Units retain combat stats. The pinned 340-entry review preserves stable IDs/artwork and the user's Animated Spark edit; known source notation is rendered without stripping costs/choices. Import uses baseline/concurrency checks, BSON backups, a transaction for cards/deck review flags and idempotence guards.
+  - Areas: card model/types, card/admin/deck components, oracle utilities, `scripts/apply-oracle-review.cjs`, shared maintenance loader, approved JSON and documentation. Also includes the previously reviewed personal-copy wording, deck tabs and Oracle review page.
+  - Verification: 115 Jest tests and 7 Mongo replica-set import tests passed, including stale input, rollback, backup failure and repeat import. Live read-only preflight: 340 writes, 285 rules revisions, 174 affected decks. Production build passed in an isolated local copy (the original `.next/trace` has a Windows access error); Chrome desktop/mobile checks passed with fixture data, separate X/0 curve buckets, working tabs and no page errors or settled-layout overflow. Changed production TypeScript files report no errors; the repository-wide check still reports existing unrelated route/model/test errors. Deployment/database completion will be recorded separately after verification.
+- Audited the user-supplied `app/cards/oracle-approved-drafts.json` against the pinned oracle source and current local/public catalogs. All 340 approved entries validate with unchanged baselines; the other 171 catalog cards already match the review proposals. Found one deliberate spelling edit (Animated Spark), retained all Prophecy/X data, and documented remaining model/rendering requirements and source notation. The 340 drafts are still not imported into live cards.
+  - Areas: `docs/oracle-review.md`; read-only audit snapshots/differences under ignored `backups/oracle-review-audit-2026-09-21/`. User export preserved byte-for-byte.
+  - Verification: duplicate-key/schema/batch/ID checks, all 511 matched cards compared, zero stale approvals, matching local/public catalog fields/images/revisions, `git diff --check`. No application code or database writes; no build required for this audit.
+- Completed the local Google sign-in fix by running the dev server on `http://localhost:3000`, matching `NEXTAUTH_URL` and Google's callback, instead of the earlier `127.0.0.1:3210` preview. The user confirmed login works; existing authentication and admin permissions are unchanged.
+  - Areas: local dev runtime, local access instructions in `docs/oracle-review.md`.
+  - Verification: `/api/auth/providers` returns the matching localhost:3000 sign-in/callback URLs; user completed the card review through the authenticated page.
+- Added an admin-only Oracle review page for the supplied 2026-09-21 snapshot: one-card comparison with the current image/catalog, editable proposals, approve/keep/defer decisions, notes, search and filters. Reviews persist per admin/source batch in browser storage, with backup/restore and approved-only export; stale catalog baselines invalidate approval. Prophecy stays a separate alternative cost/condition; X, Augment transfers and source attribution are retained. This is draft review only and does not write to the live catalog.
+  - Areas: `app/admin/oracle-review`, `AdminTabs`, `app/lib/utils/oracleReview.ts`, supplied `data/oracle` snapshot/notices, `docs/oracle-review.md`.
+  - Verification: 15 targeted Jest tests, scoped TypeScript check, validation of all 511 matched proposals, desktop/mobile browser checks of approval/edit/refresh/backup/restore, no horizontal overflow or browser errors and no Card API writes; anonymous admin route redirects to sign-in. Temporary local preview fixture removed after QA; `git diff --check`.
+- Updated ten existing cards from the supplied images: Sarcophage, Stalwart Sentinel, Debt Plant, Deathcoil Construct, Blob of the Dark Order, Greed Angel, Feed to Hooba, Deferral Drone, Tithe Enforcer and Proph. Uploaded immutable Cloudinary originals and replaced gameplay fields while preserving card IDs/indices; rules versions advanced to 2 and 12 affected decks received review flags. Source dates and image hashes are recorded, with unknown years left unset.
+  - Areas: `scripts/card-updates/2026-09-21.json`, transactional import CLI and tests, configured MongoDB card/deck data, Cloudinary images, `docs/card-image-updates.md`. Added `Complex` to card types/admin choices and exposed separate attributes in card details.
+  - Verification: 3 MongoDB replica-set tests cover atomic rollback, stale/missing records, preserved identities, sideboards and idempotence; 11 targeted Jest tests passed, with the admin round-trip rerun after adding Complex assertions. Local and public catalog APIs matched all 10 entries; all 10 downloaded Cloudinary originals matched source SHA-256 hashes. Database readback verified unchanged decklists/visibility and one current review flag per changed card. Browser review verified all ten card details/images/abilities, Flying attributes, mobile width and no page errors; `git diff --check`.
+  - Runtime: backed up originals and transaction inputs under ignored `backups/2026-09-21-card-images-1789962223831/`; restarted local preview at `http://127.0.0.1:3210` with a fresh fetch cache. Card data is visible online; application code changes are local and have not been deployed.
+
+## 2026-09-20
+
+### `main`
+- Added Dark and Light affinity to the card model, admin editor, shared calculations and deck affinity curves (including the 10+ cost bucket). Affinity edits retain rules-version/deck-review behavior and now have a specific change summary. Documented image symbols, Augment 1x versus Graft 1, and the confirmed Sarcophage source timestamp (2025-12-30 11:26, timezone unspecified).
+  - Areas: card types/schema, card admin, affinity utilities, `DeckStats`, card-change summaries, regression tests, `docs/card-image-updates.md`. Also corrected Augment/once replacement order in the existing local, git-ignored `scripts/convert-creator-cards.js`.
+  - Verification: 11 targeted Jest tests passed (including temporary MongoDB and admin-form round trips); local Chrome fixture review of desktop/mobile Dark/Light curves, including 10+ costs, passed without page errors or mobile overflow; isolated converter checks preserve Augment 1X versus Graft1; `git diff --check`.
+  - Existing card data was not imported or backfilled. The local dev server was restarted to load the schema change; production was not changed.
+- Removed the Main Deck/Sideboard switch from deck details. Both sections now render once, stacked on desktop and mobile, using the existing view and sort controls.
+  - Areas: `app/components/DeckDetailViewer.tsx`
+  - Verification: local Chrome fixture checks at 1440px and 390px confirmed both sections in compact, list and large views, no switch or duplicate sections, no page errors or horizontal overflow; `git diff --check`.
+- Reduced the default deck card grid to five columns on desktop, four on tablets and two on phones. Card-type pie charts now use the deck's most represented element colors, including hybrid elements, with distinct shades for mono-element decks; card counts and percentages are unchanged.
+  - Areas: `app/components/DeckDetailViewer.tsx`, `app/components/DeckStats.tsx`
+  - Verification: local Chrome fixture review confirmed five desktop columns, mobile layout without horizontal overflow, and deck-derived chart colors; no page errors; `git diff --check`.
+- Added Deck/Stats/Results tabs to deck details. Deck uses the full content width, Stats retains the existing composition calculations in a responsive grid, and Results clearly states tracking is not available yet. Added keyboard tab navigation and preserved card-view settings and image export across tabs; mobile viewer controls can wrap.
+  - Areas: `app/decks/[id]/page.tsx`, `app/components/DeckStats.tsx`, `app/components/DeckDetailViewer.tsx`, `app/components/DeckOptionsMenu.tsx`, `app/decks/__tests__/DeckPage.test.tsx`, integration plan
+  - Verification: 4 targeted Jest tests passed; local Chrome review with fixture API responses at desktop (1440px) and mobile (390px) widths, with no page errors or mobile horizontal overflow; `git diff --check`. Targeted ESLint blocked by missing local `eslint-plugin-react-hooks`. No results backend, account linking, or statistics calculations changed.
+- Clarified the tab layout: Stats contains only the existing Deck Statistics component; moving it out gives Deck more room for card images. Game outcomes belong in Results.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: checked against the user's correction; `git diff --check`; documentation only
+- Recorded the revised deck-centric results design: Deck/Stats/Results tabs, no pilot-view toggle, anonymous public-deck results independent of account linking, and private-copy isolation. Flagged the required model change because existing Game Logs require a user ID.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: reviewed against the user's latest decisions; `git diff --check`; no application changes
+- Renamed the deck action to "Make a personal copy", clarified the pending/success messages, and added visible guidance that the copy is private and excludes existing game results. Copy behavior remains unchanged.
+  - Areas: `app/components/DeckOptionsMenu.tsx`, `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: reviewed the focused UI diff; `git diff --check` passed; targeted ESLint blocked by missing local `eslint-plugin-react-hooks`; no new tests for wording-only changes
+- Verified the existing Copy Deck UI creates a private deck under the signed-in user with a fresh ID, both card zones, and no copied game history; documented its differences from the separate copy endpoint and proposed clearer personal-copy wording.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: static trace through UI, create/copy routes, database creation and deck-stat grouping; `git diff --check`; no runtime changes
+- Reviewed partner repository commit `473866987bd9201535afdc209f05abe494831436`; documented server-side import fields, name mapping, maybeboard semantics, editable imported copies, UUID accounts/Discord linking, saved game data, historical identity attribution, and result-finality/delivery gaps. Updated integration questions and TODOs.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: static source inspection with commit-pinned references; `git diff --check`; partner code/dependencies not executed and production behavior not tested
+- Recorded the partner's confirmation that deck imports extract the ID from the URL and fetch `/api/decks/<id>`; updated remaining questions and TODOs to preserve the existing API consumer's compatibility.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: checked against the supplied partner message; `git diff --check`; documentation only, no live import test or application changes
+- Documented the agreed Algomancy.online integration behavior, repository findings, unresolved partner contracts, proposed architecture, and ordered implementation TODOs. No application changes or implementation started.
+  - Areas: `docs/integrations/algomancy-online.md`, `docs/CHANGELOG.md`
+  - Verification: reviewed against user decisions and inspected repository code; local documentation links checked; `git diff --check`; no application tests required for documentation-only changes
+
 ## 2026-09-19
 
 ### `feature/performance-homepage`

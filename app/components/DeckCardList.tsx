@@ -1,5 +1,6 @@
 "use client";
 
+import { compareCardValues } from "@/app/lib/utils/cardValues";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import Image from "next/image";
@@ -69,7 +70,7 @@ export default function DeckCardList({
               </h4>
               <div className='space-y-1'>
                 {groupedCards[type]
-                  .sort((a, b) => a.card.manaCost - b.card.manaCost)
+                  .sort((a, b) => compareCardValues(a.card.manaCost, b.card.manaCost))
                   .map(({ card, quantity }) => (
                     <div
                       key={card.id}

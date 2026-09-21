@@ -1,11 +1,12 @@
 "use client";
 
-import { Card, BASIC_ELEMENTS } from "@/app/lib/types/card";
+import { manaBucket } from "@/app/lib/utils/cardValues";
+import { Card, AFFINITY_ELEMENTS } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import { useMemo, useState, useEffect } from "react";
 import { ElementType, ELEMENTS } from "@/app/lib/utils/elements";
 import ElementIcon from "./ElementIcon";
-import { AffinityRequirements } from "@/app/lib/utils/affinityUtils";
+import { AffinityRequirements, createEmptyAffinityRequirements } from "@/app/lib/utils/affinityUtils";
 import dynamic from "next/dynamic";
 
 // Dynamically import Chart.js components for better performance
@@ -149,9 +150,14 @@ function AffinityColorBar({
 interface DeckStatsProps {
   cards: Card[];
   deckCards: DeckCard[];
+  layout?: "stacked" | "grid";
 }
 
-export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
+export default function DeckStats({
+  cards,
+  deckCards,
+  layout = "stacked",
+}: DeckStatsProps) {
   // Calculate statistics
   const stats = useMemo(() => {
     // Map deck cards to actual cards with quantities
@@ -173,14 +179,7 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
     const manaCurveByElement: Record<number, Record<string, number>> = {};
 
     deckCardsWithDetails.forEach(({ card, quantity }) => {
-      // For X-cost spells, we'll put them in a special "X" category (using -1 as the key)
-      const isXCostSpell =
-        card.manaCost === 0 &&
-        card.typeAndAttributes.mainType === "Spell" &&
-        !card.typeAndAttributes.subType.toLowerCase().includes("token");
-
-      // Use -1 as the key for X-cost spells, otherwise use the actual mana cost
-      const cost = isXCostSpell ? -1 : card.manaCost;
+      const cost = manaBucket(card);
       const element = card.element.type;
 
       // Update total count for this mana cost
@@ -211,72 +210,69 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
       typeDistribution[type] = (typeDistribution[type] || 0) + quantity;
     });
 
+    // Theme the type chart with the deck's most represented elements.
+    // Hybrid cards contribute equally to each of their element colors.
+    const paletteWeights: Record<string, number> = {};
+    Object.entries(elementDistribution).forEach(([element, count]) => {
+      const parts = element.split("/");
+      parts.forEach((part) => {
+        const color = ELEMENTS[part.trim() as ElementType]?.color || ELEMENTS.Colorless.color;
+        paletteWeights[color] = (paletteWeights[color] || 0) + count / parts.length;
+      });
+    });
+    const palette = Object.entries(paletteWeights)
+      .sort(([a, countA], [b, countB]) => countB - countA || a.localeCompare(b))
+      .map(([color]) => color);
+    if (palette.length === 0) palette.push(ELEMENTS.Colorless.color);
+
+    const cardTypes = Object.entries(typeDistribution).sort(([a], [b]) => a.localeCompare(b));
+    const typeColors = cardTypes.map((_, index) => {
+      const color = palette[index % palette.length];
+      const shade = Math.floor(index / palette.length);
+      if (shade === 0) return color;
+
+      // Keep types distinguishable in mono-element decks using related shades.
+      const rgb = [1, 3, 5].map((offset) => parseInt(color.slice(offset, offset + 2), 16));
+      const brightness = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+      const target = brightness > 180 ? 0 : 255;
+      const mix = 1 - Math.pow(0.6, shade);
+      return `#${rgb.map((channel) =>
+        Math.round(channel + (target - channel) * mix).toString(16).padStart(2, "0")
+      ).join("")}`;
+    });
+
     return {
       totalCards,
       manaCurve,
       manaCurveByElement,
       elementDistribution,
-      typeDistribution,
+      cardTypes,
+      typeColors,
     };
   }, [cards, deckCards]);
 
   // Calculate affinity curve (peak affinity by mana cost)
   const affinityCurve = useMemo(() => {
-    const affinityCurve: Record<
-      number,
-      {
-        fire: number;
-        water: number;
-        earth: number;
-        wood: number;
-        metal: number;
-      }
-    > = {};
+    const affinityCurve: Record<number, AffinityRequirements> = {};
 
     deckCards.forEach((deckCard) => {
       const card = cards.find((c) => c.id === deckCard.cardId);
       if (card && card.stats.affinity) {
-        // For X-cost spells, use -1 as the key
-        const isXCostSpell =
-          card.manaCost === 0 &&
-          card.typeAndAttributes.mainType === "Spell" &&
-          !card.typeAndAttributes.subType.toLowerCase().includes("token");
-
-        const cost = isXCostSpell ? -1 : card.manaCost;
+        const cost = manaBucket(card);
         const affinity = card.stats.affinity;
 
         // Initialize mana cost entry if it doesn't exist
         if (!affinityCurve[cost]) {
-          affinityCurve[cost] = {
-            fire: 0,
-            water: 0,
-            earth: 0,
-            wood: 0,
-            metal: 0,
-          };
+          affinityCurve[cost] = createEmptyAffinityRequirements();
         }
 
         // Update peak values for this mana cost
-        affinityCurve[cost].fire = Math.max(
-          affinityCurve[cost].fire,
-          affinity.fire || 0
-        );
-        affinityCurve[cost].water = Math.max(
-          affinityCurve[cost].water,
-          affinity.water || 0
-        );
-        affinityCurve[cost].earth = Math.max(
-          affinityCurve[cost].earth,
-          affinity.earth || 0
-        );
-        affinityCurve[cost].wood = Math.max(
-          affinityCurve[cost].wood,
-          affinity.wood || 0
-        );
-        affinityCurve[cost].metal = Math.max(
-          affinityCurve[cost].metal,
-          affinity.metal || 0
-        );
+        for (const element of AFFINITY_ELEMENTS) {
+          affinityCurve[cost][element] = Math.max(
+            affinityCurve[cost][element],
+            affinity[element] || 0
+          );
+        }
       }
     });
 
@@ -309,7 +305,11 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
           <p>Add cards to see deck statistics.</p>
         </div>
       ) : (
-        <div className='space-y-10'>
+        <div className={
+          layout === "grid"
+            ? "grid grid-cols-1 lg:grid-cols-2 gap-10"
+            : "space-y-10"
+        }>
           {/* Mana Curve */}
           <div>
             <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
@@ -507,20 +507,12 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
                           .reduce(
                             (acc, [_, affinity]) => {
                               // Combine all affinities for costs >= 10 (take max values)
-                              acc.fire = Math.max(acc.fire, affinity.fire);
-                              acc.water = Math.max(acc.water, affinity.water);
-                              acc.earth = Math.max(acc.earth, affinity.earth);
-                              acc.wood = Math.max(acc.wood, affinity.wood);
-                              acc.metal = Math.max(acc.metal, affinity.metal);
+                              for (const element of AFFINITY_ELEMENTS) {
+                                acc[element] = Math.max(acc[element], affinity[element]);
+                              }
                               return acc;
                             },
-                            {
-                              fire: 0,
-                              water: 0,
-                              earth: 0,
-                              wood: 0,
-                              metal: 0,
-                            } as AffinityRequirements
+                            createEmptyAffinityRequirements()
                           )}
                         maxValue={maxAffinityValue}
                       />
@@ -551,7 +543,11 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
             <h4 className='text-sm font-medium text-algomancy-gold mb-4'>
               Element Distribution
             </h4>
-            <div className='grid grid-cols-2 gap-3'>
+            <div className={
+              layout === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 gap-3"
+                : "grid grid-cols-2 gap-3"
+            }>
               {Object.entries(stats.elementDistribution)
                 .sort(([a], [b]) => a.localeCompare(b))
                 .map(([element, count]) => {
@@ -608,29 +604,15 @@ export default function DeckStats({ cards, deckCards }: DeckStatsProps) {
                 <LazyPieChart
                   data={{
                     // Create custom labels with counts included
-                    labels: Object.entries(stats.typeDistribution).map(
+                    labels: stats.cardTypes.map(
                       ([type, count]) => `${type} (${count})`
                     ),
                     datasets: [
                       {
-                        data: Object.values(stats.typeDistribution),
-                        backgroundColor: [
-                          "#EC2826", // Fire color
-                          "#5ACBF3", // Water color
-                          "#F38F30", // Earth color
-                          "#6DBF59", // Wood color
-                          "#D7D9D9", // Metal color
-                          "#9B7CB9", // Colorless/Purple color
-                        ],
-                        borderColor: [
-                          "rgba(236, 40, 38, 0.8)",
-                          "rgba(90, 203, 243, 0.8)",
-                          "rgba(243, 143, 48, 0.8)",
-                          "rgba(109, 191, 89, 0.8)",
-                          "rgba(215, 217, 217, 0.8)",
-                          "rgba(155, 124, 185, 0.8)",
-                        ],
-                        borderWidth: 1,
+                        data: stats.cardTypes.map(([, count]) => count),
+                        backgroundColor: stats.typeColors,
+                        borderColor: stats.typeColors.map(() => "#171d28"),
+                        borderWidth: 2,
                         hoverOffset: 10,
                       },
                     ],

@@ -1,5 +1,6 @@
 "use client";
 
+import { compareCardValues } from "@/app/lib/utils/cardValues";
 import { useState } from "react";
 import { Card } from "@/app/lib/types/card";
 import Image from "next/image";
@@ -31,13 +32,13 @@ function sortCards(
 ) {
   switch (sortMode) {
     case "mana":
-      return a.card.manaCost - b.card.manaCost;
+      return compareCardValues(a.card.manaCost, b.card.manaCost);
     case "attack":
-      return (a.card.stats?.power || 0) - (b.card.stats?.power || 0);
+      return compareCardValues(a.card.stats?.power ?? 0, b.card.stats?.power ?? 0);
     case "defense":
-      return (a.card.stats?.defense || 0) - (b.card.stats?.defense || 0);
+      return compareCardValues(a.card.stats?.defense ?? 0, b.card.stats?.defense ?? 0);
     default:
-      return a.card.manaCost - b.card.manaCost;
+      return compareCardValues(a.card.manaCost, b.card.manaCost);
   }
 }
 
@@ -70,9 +71,6 @@ export default function DeckDetailViewer({
 }: DeckDetailViewerProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("compact");
   const [sortMode, setSortMode] = useState<SortMode>("default");
-  const [mobileSection, setMobileSection] = useState<"main" | "sideboard">(
-    "main"
-  );
 
   const sections = [
     {
@@ -154,7 +152,7 @@ export default function DeckDetailViewer({
                 )}
 
                 {viewMode === "compact" && (
-                  <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3'>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3'>
                     {section.groupedCards[type].map(({ card, quantity }) => (
                       <CardHoverPreview
                         key={`${section.key}-${card.id}`}
@@ -166,7 +164,7 @@ export default function DeckDetailViewer({
                               alt={`${card.name} card`}
                               fill
                               className='object-cover'
-                              sizes='(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw'
+                              sizes='(min-width: 1280px) 230px, (min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw'
                             />
                           </div>
                           <div className='absolute bottom-1 right-1 bg-black/70 backdrop-blur-sm border border-white/20 text-white text-xs font-medium rounded-md px-1.5 py-0.5 flex items-center justify-center'>
@@ -254,30 +252,7 @@ export default function DeckDetailViewer({
           </div>
         </div>
 
-        <div className='flex justify-between items-center gap-3'>
-          <div className='flex rounded-lg bg-algomancy-dark p-1 lg:hidden'>
-            <button
-              type='button'
-              onClick={() => setMobileSection("main")}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                mobileSection === "main"
-                  ? "bg-algomancy-purple text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}>
-              Main Deck ({mainDeckTotalCards})
-            </button>
-            <button
-              type='button'
-              onClick={() => setMobileSection("sideboard")}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                mobileSection === "sideboard"
-                  ? "bg-algomancy-purple text-white"
-                  : "text-gray-400 hover:text-white"
-              }`}>
-              Sideboard ({sideboardTotalCards})
-            </button>
-          </div>
-
+        <div className='flex justify-end'>
           <div
             className='flex space-x-1 bg-algomancy-dark rounded-lg p-1'
             role='toolbar'
@@ -337,13 +312,7 @@ export default function DeckDetailViewer({
         </div>
       </div>
 
-      <div className='space-y-4 lg:hidden'>
-        {renderSection(
-          sections.find((section) => section.key === mobileSection) || sections[0]
-        )}
-      </div>
-
-      <div className='hidden space-y-4 lg:block'>
+      <div className='space-y-4'>
         {sections.map(renderSection)}
       </div>
     </div>

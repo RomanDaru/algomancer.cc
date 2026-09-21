@@ -98,7 +98,7 @@ export const cardDbService = {
       const cardDoc = await CardModel.findOneAndUpdate(
         { originalId: card.id },
         { $set: convertCardToDocument(card) },
-        { new: true }
+        { new: true, runValidators: true }
       );
       return cardDoc ? convertDocumentToCard(cardDoc) : null;
     } catch (error) {

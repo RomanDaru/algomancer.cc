@@ -1,0 +1,376 @@
+{
+  "batchId": "2026-09-21-card-images",
+  "notes": "Transcribed from the ten user-supplied images. Source dates have no known timezone; missing years remain null. Existing set name/symbol are retained because the expansion name is not established by the images. Gold set symbols mean Complex per the publisher's manual.",
+  "symbolReference": "https://calebgannon.com/wp-content/uploads/Algomancy-manual-copy.pdf",
+  "cards": [
+    {
+      "id": "sarcophage",
+      "name": "Sarcophage",
+      "imageFile": "Sarcophage_30-12_11-26.jpg",
+      "sourceChanged": {
+        "year": 2025,
+        "month": 12,
+        "day": 30,
+        "hour": 11,
+        "minute": 26,
+        "timezone": null
+      },
+      "manaCost": 3,
+      "element": {
+        "type": "Dark",
+        "symbol": "dark"
+      },
+      "stats": {
+        "power": 2,
+        "defense": 4,
+        "affinity": {
+          "dark": 1
+        }
+      },
+      "timingType": "Virus",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Alien",
+        "attributes": []
+      },
+      "abilities": [
+        "AUGMENT: Whenever a unit deals combat damage to a player, remove all counters from it."
+      ],
+      "complexity": "Complex",
+      "imageSha256": "998ec748c7e58985f4e6817a76fea4f578751cf9c6f11fbfee0a506919712981"
+    },
+    {
+      "id": "stalwart-sentinel",
+      "name": "Stalwart Sentinel",
+      "imageFile": "Stalwart_Sentinel_22-8_12-06.jpg",
+      "sourceChanged": {
+        "year": null,
+        "month": 8,
+        "day": 22,
+        "hour": 12,
+        "minute": 6,
+        "timezone": null
+      },
+      "manaCost": 1,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 1,
+        "defense": 1,
+        "affinity": {
+          "light": 1
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Nature",
+        "attributes": []
+      },
+      "abilities": [
+        "AUGMENT 1X: When you play a unit or spell from anywhere other than your hand, put two +1/+1 counters on me."
+      ],
+      "complexity": "Common",
+      "imageSha256": "fff0dbcf0d5159505e20d03b3b8a14c52319677f9033a328450b9e1b5c3a7793"
+    },
+    {
+      "id": "debt-plant",
+      "name": "Debt Plant",
+      "imageFile": "Debt_Plant_12-8-26_11-54.jpg",
+      "sourceChanged": {
+        "year": 2026,
+        "month": 8,
+        "day": 12,
+        "hour": 11,
+        "minute": 54,
+        "timezone": null
+      },
+      "manaCost": 3,
+      "element": {
+        "type": "Light/Wood",
+        "symbol": "light",
+        "secondarySymbol": "wood"
+      },
+      "stats": {
+        "power": 3,
+        "defense": 2,
+        "affinity": {
+          "light": 1,
+          "wood": 1
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Cosmic Plant",
+        "attributes": []
+      },
+      "abilities": [
+        "AUGMENT: At the end of the haste step, your units gain +1/+0 until regroup for every 2 expended resources you have."
+      ],
+      "complexity": "Complex",
+      "imageSha256": "0b63f37b116d96b7b9592a3fe9558a924a221da607e3289ce808bdf8bdc9aaa1"
+    },
+    {
+      "id": "deathcoil-construct",
+      "name": "Deathcoil Construct",
+      "imageFile": "Deathcoil_Construct_12-8-26_11-55.jpg",
+      "sourceChanged": {
+        "year": 2026,
+        "month": 8,
+        "day": 12,
+        "hour": 11,
+        "minute": 55,
+        "timezone": null
+      },
+      "manaCost": 5,
+      "element": {
+        "type": "Light/Metal",
+        "symbol": "light",
+        "secondarySymbol": "metal"
+      },
+      "stats": {
+        "power": 3,
+        "defense": 2,
+        "affinity": {
+          "light": 1,
+          "metal": 1
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Cosmic",
+        "attributes": []
+      },
+      "abilities": [
+        "When you gain or lose life, GRAFT1: Put a +1/+1 counter on each of your units."
+      ],
+      "complexity": "Complex",
+      "imageSha256": "22a03994844bd2b1508b23c7f9d2969e86ba9e1f6416324205466f19b3ef0928"
+    },
+    {
+      "id": "blob-of-the-dark-order",
+      "name": "Blob of the Dark Order",
+      "imageFile": "Blob_of_the_Dark_Order_12-8-26_11-55.jpg",
+      "sourceChanged": {
+        "year": 2026,
+        "month": 8,
+        "day": 12,
+        "hour": 11,
+        "minute": 55,
+        "timezone": null
+      },
+      "manaCost": 4,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 3,
+        "defense": 4,
+        "affinity": {
+          "light": 1
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Horror",
+        "attributes": []
+      },
+      "abilities": [
+        "AUGMENT: Pay 1 life: I gain piercing until regroup."
+      ],
+      "complexity": "Common",
+      "imageSha256": "a626fa269d8151a39bc09673f22dbd475d043bfadda9de5290445d9069d31a64"
+    },
+    {
+      "id": "greed-angel",
+      "name": "Greed Angel",
+      "imageFile": "Greed_Angel_12-8-26_11-56.jpg",
+      "sourceChanged": {
+        "year": 2026,
+        "month": 8,
+        "day": 12,
+        "hour": 11,
+        "minute": 56,
+        "timezone": null
+      },
+      "manaCost": 2,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 3,
+        "defense": 3,
+        "affinity": {
+          "light": 2
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Horror",
+        "attributes": [
+          "Flying"
+        ]
+      },
+      "abilities": [
+        "(Only flying units can block flying units.)",
+        "When I spawn, you gain 3 debt and draw a card."
+      ],
+      "complexity": "Common",
+      "imageSha256": "f94137fc1725de8c7b2908c6473639a57c4372b9d8425730c83147ae07150709"
+    },
+    {
+      "id": "feed-to-hooba",
+      "name": "Feed to Hooba",
+      "imageFile": "Feed_to_Hooba_12-8_11-59.jpg",
+      "sourceChanged": {
+        "year": null,
+        "month": 8,
+        "day": 12,
+        "hour": 11,
+        "minute": 59,
+        "timezone": null
+      },
+      "manaCost": 2,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 0,
+        "defense": 0,
+        "affinity": {
+          "light": 1
+        }
+      },
+      "timingType": "Battle",
+      "typeAndAttributes": {
+        "mainType": "Spell",
+        "subType": "Hooba",
+        "attributes": []
+      },
+      "abilities": [
+        "GRAFT1: Delete target unit. Its controller creates a 4/4 unit in its position in play."
+      ],
+      "complexity": "Common",
+      "imageSha256": "f8ec5fde6755b5711a07056dde9759117d6bb5f6ccceddf73aff2a761a5f376b"
+    },
+    {
+      "id": "deferral-drone",
+      "name": "Deferral Drone",
+      "imageFile": "Deferral_Drone_13-8_12-00.jpg",
+      "sourceChanged": {
+        "year": null,
+        "month": 8,
+        "day": 13,
+        "hour": 12,
+        "minute": 0,
+        "timezone": null
+      },
+      "manaCost": 2,
+      "element": {
+        "type": "Light/Metal",
+        "symbol": "light",
+        "secondarySymbol": "metal"
+      },
+      "stats": {
+        "power": 2,
+        "defense": 2,
+        "affinity": {
+          "light": 1,
+          "metal": 1
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Horror",
+        "attributes": []
+      },
+      "abilities": [
+        "AUGMENT 1X: Gain 4 debt: The next card you play this phase costs 3 less."
+      ],
+      "complexity": "Common",
+      "imageSha256": "df721e798eb5765aea4f813a3b42847ca612c06c4d58bd2b5472f1dc26ed5f8d"
+    },
+    {
+      "id": "tithe-enforcer",
+      "name": "Tithe Enforcer",
+      "imageFile": "Tithe_Enforcer_13-8_12-02.jpg",
+      "sourceChanged": {
+        "year": null,
+        "month": 8,
+        "day": 13,
+        "hour": 12,
+        "minute": 2,
+        "timezone": null
+      },
+      "manaCost": 7,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 4,
+        "defense": 6,
+        "affinity": {
+          "light": 2
+        }
+      },
+      "timingType": "Haste",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Angel Spirit",
+        "attributes": [
+          "Flying"
+        ]
+      },
+      "abilities": [],
+      "complexity": "Common",
+      "imageSha256": "a831aec58260de670995f3411008e6e0e2f68cd5bc3a36162eda666d29f5cc3a"
+    },
+    {
+      "id": "proph",
+      "name": "Proph",
+      "imageFile": "Proph_22-8_12-04.jpg",
+      "sourceChanged": {
+        "year": null,
+        "month": 8,
+        "day": 22,
+        "hour": 12,
+        "minute": 4,
+        "timezone": null
+      },
+      "manaCost": 2,
+      "element": {
+        "type": "Light",
+        "symbol": "light"
+      },
+      "stats": {
+        "power": 2,
+        "defense": 1,
+        "affinity": {
+          "light": 2
+        }
+      },
+      "timingType": "Standard",
+      "typeAndAttributes": {
+        "mainType": "Unit",
+        "subType": "Horror",
+        "attributes": []
+      },
+      "abilities": [
+        "When you play a unit or spell from anywhere other than your hand, GRAFT1: Draw a card."
+      ],
+      "complexity": "Common",
+      "imageSha256": "81420657a847bbc8c89bc8feba56073ae1354e4a33d5b42f0e2189d986fc257a"
+    }
+  ]
+}

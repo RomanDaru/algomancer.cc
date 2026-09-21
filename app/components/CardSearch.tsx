@@ -214,38 +214,16 @@ export default function CardSearch({
         // Search by rarity/complexity
         if (card.set.complexity.toLowerCase().includes(term)) return true;
 
-        // Search by mana cost
-        if (term.startsWith("mana:")) {
-          const costQuery = term.substring(5); // Remove "mana:" prefix
-
-          if (costQuery === "10+") {
-            // For 10+, check if mana cost is 10 or greater
-            return card.manaCost >= 10;
-          } else if (costQuery.toLowerCase() === "x") {
-            // For X cost, check if it's a Spell with 0 mana cost (not a token)
-            return (
-              card.manaCost === 0 &&
-              card.typeAndAttributes.mainType === "Spell" &&
-              !card.typeAndAttributes.subType.toLowerCase().includes("token")
-            );
-          } else {
-            // For specific mana costs, check for exact match
-            const cost = parseInt(costQuery, 10);
-            if (!isNaN(cost)) {
-              // For 0 cost, exclude X-cost spells
-              if (cost === 0) {
-                return !(
-                  card.manaCost === 0 &&
-                  card.typeAndAttributes.mainType === "Spell" &&
-                  !card.typeAndAttributes.subType
-                    .toLowerCase()
-                    .includes("token")
-                );
-              }
-              return card.manaCost === cost;
-            }
-          }
+        // Full mana cost and the alternative Prophecy cost are distinct.
+        if (term.startsWith("mana:") || term.startsWith("prophecy:")) {
+          const [kind, query] = term.split(":");
+          const cost = kind === "mana" ? card.manaCost : card.prophecy?.manaCost;
+          if (query === "x") return cost === "X";
+          if (query === "10+") return typeof cost === "number" && cost >= 10;
+          return /^\d+$/.test(query) && cost === Number(query);
         }
+        if (card.prophecy && (term === "prophecy" || card.prophecy.condition.toLowerCase().includes(term))) return true;
+        if (card.augmentTransfers?.some((attribute) => attribute.toLowerCase().includes(term))) return true;
 
         return false;
       });

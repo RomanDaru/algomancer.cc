@@ -1,16 +1,15 @@
-import { Card, Affinity } from "../types/card";
+import { Card, Affinity, AFFINITY_ELEMENTS } from "../types/card";
 import { DeckCard } from "../types/user";
+import { manaBucket } from "./cardValues";
 
 /**
  * Utility functions for calculating affinity requirements in decks
  */
 
-export interface AffinityRequirements {
-  fire: number;
-  water: number;
-  earth: number;
-  wood: number;
-  metal: number;
+export type AffinityRequirements = Required<Affinity>;
+
+export function createEmptyAffinityRequirements(): AffinityRequirements {
+  return { fire: 0, water: 0, earth: 0, wood: 0, metal: 0, dark: 0, light: 0, prismite: 0 };
 }
 
 export interface AffinityStats {
@@ -27,13 +26,7 @@ export function calculateTotalAffinity(
   cards: Card[],
   deckCards: DeckCard[]
 ): AffinityRequirements {
-  const totalAffinity: AffinityRequirements = {
-    fire: 0,
-    water: 0,
-    earth: 0,
-    wood: 0,
-    metal: 0,
-  };
+  const totalAffinity = createEmptyAffinityRequirements();
 
   deckCards.forEach((deckCard) => {
     const card = cards.find((c) => c.id === deckCard.cardId);
@@ -42,11 +35,9 @@ export function calculateTotalAffinity(
       const quantity = deckCard.quantity;
 
       // Add affinity requirements multiplied by quantity
-      totalAffinity.fire += (affinity.fire || 0) * quantity;
-      totalAffinity.water += (affinity.water || 0) * quantity;
-      totalAffinity.earth += (affinity.earth || 0) * quantity;
-      totalAffinity.wood += (affinity.wood || 0) * quantity;
-      totalAffinity.metal += (affinity.metal || 0) * quantity;
+      for (const element of AFFINITY_ELEMENTS) {
+        totalAffinity[element] += (affinity[element] || 0) * quantity;
+      }
     }
   });
 
@@ -61,13 +52,7 @@ export function calculatePeakAffinity(
   cards: Card[],
   deckCards: DeckCard[]
 ): AffinityRequirements {
-  const peakAffinity: AffinityRequirements = {
-    fire: 0,
-    water: 0,
-    earth: 0,
-    wood: 0,
-    metal: 0,
-  };
+  const peakAffinity = createEmptyAffinityRequirements();
 
   deckCards.forEach((deckCard) => {
     const card = cards.find((c) => c.id === deckCard.cardId);
@@ -75,11 +60,9 @@ export function calculatePeakAffinity(
       const affinity = card.stats.affinity;
 
       // Update peak values if this card has higher requirements
-      peakAffinity.fire = Math.max(peakAffinity.fire, affinity.fire || 0);
-      peakAffinity.water = Math.max(peakAffinity.water, affinity.water || 0);
-      peakAffinity.earth = Math.max(peakAffinity.earth, affinity.earth || 0);
-      peakAffinity.wood = Math.max(peakAffinity.wood, affinity.wood || 0);
-      peakAffinity.metal = Math.max(peakAffinity.metal, affinity.metal || 0);
+      for (const element of AFFINITY_ELEMENTS) {
+        peakAffinity[element] = Math.max(peakAffinity[element], affinity[element] || 0);
+      }
     }
   });
 
@@ -99,27 +82,19 @@ export function calculateAffinityByManaCost(
   deckCards.forEach((deckCard) => {
     const card = cards.find((c) => c.id === deckCard.cardId);
     if (card && card.stats.affinity) {
-      const manaCost = card.manaCost;
+      const manaCost = manaBucket(card);
       const affinity = card.stats.affinity;
       const quantity = deckCard.quantity;
 
       // Initialize mana cost entry if it doesn't exist
       if (!affinityByManaCost[manaCost]) {
-        affinityByManaCost[manaCost] = {
-          fire: 0,
-          water: 0,
-          earth: 0,
-          wood: 0,
-          metal: 0,
-        };
+        affinityByManaCost[manaCost] = createEmptyAffinityRequirements();
       }
 
       // Add affinity requirements for this mana cost
-      affinityByManaCost[manaCost].fire += (affinity.fire || 0) * quantity;
-      affinityByManaCost[manaCost].water += (affinity.water || 0) * quantity;
-      affinityByManaCost[manaCost].earth += (affinity.earth || 0) * quantity;
-      affinityByManaCost[manaCost].wood += (affinity.wood || 0) * quantity;
-      affinityByManaCost[manaCost].metal += (affinity.metal || 0) * quantity;
+      for (const element of AFFINITY_ELEMENTS) {
+        affinityByManaCost[manaCost][element] += (affinity[element] || 0) * quantity;
+      }
     }
   });
 
@@ -143,21 +118,17 @@ export function calculateAffinityStats(
 /**
  * Check if affinity requirements object has any non-zero values
  */
-export function hasAffinityRequirements(affinity: AffinityRequirements): boolean {
-  return (
-    affinity.fire > 0 ||
-    affinity.water > 0 ||
-    affinity.earth > 0 ||
-    affinity.wood > 0 ||
-    affinity.metal > 0
-  );
+export function hasAffinityRequirements(affinity: Affinity): boolean {
+  return AFFINITY_ELEMENTS.some((element) => (affinity[element] || 0) > 0);
 }
 
 /**
  * Get non-zero affinity requirements as an array of [element, value] pairs
  */
 export function getNonZeroAffinityEntries(
-  affinity: AffinityRequirements
+  affinity: Affinity
 ): Array<[string, number]> {
-  return Object.entries(affinity).filter(([_, value]) => value > 0);
+  return AFFINITY_ELEMENTS
+    .map((element): [string, number] => [element, affinity[element] || 0])
+    .filter(([, value]) => value > 0);
 }

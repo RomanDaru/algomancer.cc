@@ -2,6 +2,11 @@
 
 ## 2026-09-26
 
+### `feature/homepage-ux`
+- Rebuilt the landing artwork as scroll-only parallax: all four landscape assets now share the same opaque, overscanned crop; the character has a separate, fully visible slot beside the copy (below the actions on mobile). Cached measurements and direct compositor transforms replace per-scroll layout reads and inherited CSS-variable updates. No idle animation; reduced-motion and no-JavaScript visitors receive a static scene. Kept the creator-support area within the scenery, its gold purchase button, and the separate fan-project footer.
+  - Areas: `app/page.tsx`, `LandingBackdrop.tsx`, `LandingBackdrop.module.css`, existing optimized `public/images/landing` assets, `e2e/landing-parallax.spec.ts`; earlier homepage/footer work remains uncommitted on this branch.
+  - Verification: 12 local browser checks passed across Chromium and Firefox at 320, 390, 768 and 1440px, including image loading, matching layer frames, visible character, primary links, no horizontal overflow, scroll/reverse/idle behavior, live reduced-motion changes and JavaScript-disabled rendering. Desktop/mobile screenshots reviewed; Chromium render trace confirmed each artwork layer was painted once and composited during scrolling. Scoped ESLint and changed-file TypeScript diagnostics passed; the full TypeScript command is blocked by pre-existing syntax errors in `_tmp_page.tsx` and an ignored backup. Deployed commit `3eb4531` through Vercel and repeated all six Chromium landing checks successfully against `https://algomancer.cc`.
+
 ### `feature/mobile-deck-builder-ux`
 - Reworked the responsive deck editor into accessible Deck Builder, Deck Information and Deck Statistics tabs with a fixed mobile save summary and one shared card browser. Card filters are closed by default and open as a dismissible bottom sheet on mobile or an inline panel on desktop. Main-deck and sideboard actions use compact controls, copy limits show a deduplicated toast instead of permanent card text, and deck cards now have symmetric quantity, move and remove controls. Compact/Large layouts render 2/1 columns on mobile and 4/2 from tablet widths.
   - Areas: `DeckBuilder`, `DeckCardBrowser`, `DeckViewer`, shared `CardSearch`, focused component tests and a mobile Playwright regression test.

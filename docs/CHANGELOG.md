@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-09-26
+
+### `feature/mobile-deck-builder-ux`
+- Reworked the responsive deck editor into accessible Deck Builder, Deck Information and Deck Statistics tabs with a fixed mobile save summary and one shared card browser. Card filters are closed by default and open as a dismissible bottom sheet on mobile or an inline panel on desktop. Main-deck and sideboard actions use compact controls, copy limits show a deduplicated toast instead of permanent card text, and deck cards now have symmetric quantity, move and remove controls. Compact/Large layouts render 2/1 columns on mobile and 4/2 from tablet widths.
+  - Areas: `DeckBuilder`, `DeckCardBrowser`, `DeckViewer`, shared `CardSearch`, focused component tests and a mobile Playwright regression test.
+  - Verification: all 139 Jest tests on the production branch passed; targeted ESLint and `git diff --check` passed; production `next build` completed with one handled `/cards` MongoDB timeout; browser checks covered 390px, 800px and 1280px layouts, copy-limit toast behavior, centered card controls and the live 511-card catalog.
+
 ## 2026-09-21
 
 ### `main`

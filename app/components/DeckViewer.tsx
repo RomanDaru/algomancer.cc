@@ -5,7 +5,11 @@ import { useMemo, useState } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import Image from "next/image";
-import { PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  MinusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import {
   ViewColumnsIcon,
   ListBulletIcon,
@@ -160,18 +164,18 @@ export default function DeckViewer({
     const moveLabel = section === "main" ? "To SB" : "To Deck";
 
     return (
-      <>
-        <div className='flex items-center gap-1'>
+      <div className='grid w-full grid-cols-2 gap-1.5'>
+        <div className='col-span-2 grid grid-cols-[2rem_minmax(2.5rem,1fr)_2rem] gap-1.5'>
           <button
             type='button'
             onClick={() => onRemoveCard(card.id, section)}
-            className='rounded-md border border-white/10 p-1 text-gray-300 transition-colors hover:border-white/20 hover:text-white'
+            className='flex h-8 items-center justify-center rounded-md border border-white/10 text-gray-300 transition-colors hover:border-white/20 hover:text-white'
             title='Remove one copy'
             aria-label={`Remove one copy of ${card.name}`}>
             <MinusIcon className='h-4 w-4' aria-hidden='true' />
           </button>
           <span
-            className='min-w-10 rounded-md border border-white/10 bg-black/30 px-2 py-1 text-center text-sm text-white'
+            className='flex h-8 min-w-0 items-center justify-center rounded-md border border-white/10 bg-black/30 px-1 text-center text-sm text-white'
             aria-label={`${quantity} copies`}>
             {quantity}/{DECK_CONSTRUCTION_RULES.maxCopiesPerCardPerZone}
           </span>
@@ -179,28 +183,37 @@ export default function DeckViewer({
             type='button'
             onClick={() => onAddCard(card.id, section)}
             disabled={!canIncrement}
-            className='rounded-md border border-white/10 p-1 text-gray-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
-            title='Add one copy'
+            className='flex h-8 items-center justify-center rounded-md border border-white/10 text-gray-300 transition-colors hover:border-white/20 hover:text-white disabled:cursor-not-allowed disabled:opacity-40'
+            title={
+              canIncrement
+                ? "Add one copy"
+                : `Maximum copies reached for ${card.name}`
+            }
             aria-label={`Add one copy of ${card.name}`}>
             <PlusIcon className='h-4 w-4' aria-hidden='true' />
           </button>
         </div>
-        <div className='flex items-center gap-2'>
-          <button
-            type='button'
-            onClick={() => onMoveCard(card.id, section)}
-            disabled={!canMove}
-            className='rounded-md border border-algomancy-gold/30 px-2 py-1 text-xs font-medium text-white transition-colors hover:border-algomancy-gold hover:bg-algomancy-gold/10 disabled:cursor-not-allowed disabled:opacity-40'>
-            {moveLabel}
-          </button>
-          <button
-            type='button'
-            onClick={() => onRemoveAllCopies(card.id, section)}
-            className='rounded-md border border-red-500/30 px-2 py-1 text-xs font-medium text-white transition-colors hover:border-red-400 hover:bg-red-500/10'>
-            Remove
-          </button>
-        </div>
-      </>
+        <button
+          type='button'
+          onClick={() => onMoveCard(card.id, section)}
+          disabled={!canMove}
+          title={
+            canMove
+              ? `Move one copy to ${section === "main" ? "Sideboard" : "Main Deck"}`
+              : "Cannot move this card because a copy or sideboard limit was reached"
+          }
+          className='flex h-8 w-full items-center justify-center rounded-md border border-algomancy-gold/30 px-2 text-center text-xs font-medium leading-none text-white transition-colors hover:border-algomancy-gold hover:bg-algomancy-gold/10 disabled:cursor-not-allowed disabled:opacity-40'>
+          {moveLabel}
+        </button>
+        <button
+          type='button'
+          onClick={() => onRemoveAllCopies(card.id, section)}
+          className='flex h-8 w-full items-center justify-center rounded-md border border-red-500/30 px-2 text-center text-xs font-medium leading-none text-white transition-colors hover:border-red-400 hover:bg-red-500/10'
+          title={`Remove all copies of ${card.name}`}
+          aria-label={`Remove all copies of ${card.name}`}>
+          <TrashIcon className='h-4 w-4' aria-hidden='true' />
+        </button>
+      </div>
     );
   };
 
@@ -264,7 +277,7 @@ export default function DeckViewer({
                             {card.name}
                           </span>
                         </div>
-                        <div className='flex flex-wrap items-center justify-end gap-2'>
+                        <div className='w-full md:w-56 md:flex-shrink-0'>
                           {renderCardActions(card, quantity, section.key)}
                         </div>
                       </div>
@@ -273,7 +286,7 @@ export default function DeckViewer({
                 )}
 
                 {viewMode === "compact" && (
-                  <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3'>
+                  <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
                     {groupedCards[type].map(({ card, quantity }) => (
                       <div
                         key={`${section.key}-${card.id}`}
@@ -285,13 +298,13 @@ export default function DeckViewer({
                               alt={`${card.name} card`}
                               fill
                               className='object-cover'
-                              sizes='(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw'
+                              sizes='(max-width: 767px) 50vw, 25vw'
                             />
                           </div>
                         </CardHoverPreview>
                         <div className='space-y-2 p-2'>
                           <p className='truncate text-sm text-white'>{card.name}</p>
-                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <div className='w-full'>
                             {renderCardActions(card, quantity, section.key)}
                           </div>
                         </div>
@@ -301,7 +314,7 @@ export default function DeckViewer({
                 )}
 
                 {viewMode === "large" && (
-                  <div className='grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3'>
+                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                     {groupedCards[type].map(({ card, quantity }) => (
                       <div
                         key={`${section.key}-${card.id}`}
@@ -313,7 +326,7 @@ export default function DeckViewer({
                               alt={`${card.name} card`}
                               fill
                               className='object-cover'
-                              sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+                              sizes='(max-width: 767px) 100vw, 50vw'
                             />
                           </div>
                         </CardHoverPreview>
@@ -326,7 +339,7 @@ export default function DeckViewer({
                               Mana {card.manaCost}
                             </p>
                           </div>
-                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                          <div className='w-full'>
                             {renderCardActions(card, quantity, section.key)}
                           </div>
                         </div>
@@ -347,16 +360,20 @@ export default function DeckViewer({
       className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4 mt-6'
       aria-labelledby='deck-viewer-heading'>
       <div className='mb-4 flex flex-col gap-3'>
-        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+        <div className='flex items-center justify-between gap-3'>
           <h3
             id='deck-viewer-heading'
             className='text-lg font-semibold text-white'>
             Deck Builder
           </h3>
-          <div className='flex space-x-2' role='toolbar' aria-label='View options'>
+          <div
+            className='ml-auto flex gap-1'
+            role='toolbar'
+            aria-label='View options'>
             <button
+              type='button'
               onClick={() => setViewMode("list")}
-              className={`p-2 rounded ${
+              className={`rounded-md p-2 ${
                 viewMode === "list"
                   ? "bg-algomancy-purple text-white"
                   : "bg-algomancy-dark text-gray-400 hover:text-white"
@@ -367,8 +384,9 @@ export default function DeckViewer({
               <ListBulletIcon className='w-5 h-5' aria-hidden='true' />
             </button>
             <button
+              type='button'
               onClick={() => setViewMode("compact")}
-              className={`p-2 rounded ${
+              className={`rounded-md p-2 ${
                 viewMode === "compact"
                   ? "bg-algomancy-purple text-white"
                   : "bg-algomancy-dark text-gray-400 hover:text-white"
@@ -379,8 +397,9 @@ export default function DeckViewer({
               <Squares2X2Icon className='w-5 h-5' aria-hidden='true' />
             </button>
             <button
+              type='button'
               onClick={() => setViewMode("large")}
-              className={`p-2 rounded ${
+              className={`rounded-md p-2 ${
                 viewMode === "large"
                   ? "bg-algomancy-purple text-white"
                   : "bg-algomancy-dark text-gray-400 hover:text-white"
@@ -393,35 +412,41 @@ export default function DeckViewer({
           </div>
         </div>
 
-        <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-          <div className='flex rounded-lg bg-algomancy-dark p-1 lg:hidden'>
+        <div className='flex flex-wrap items-center gap-3'>
+          <div
+            className='inline-flex shrink-0 gap-2 lg:hidden'
+            role='group'
+            aria-label='Deck section'>
             <button
               type='button'
               onClick={() => setMobileSection("main")}
-              className={`rounded-md px-3 py-1.5 text-sm ${
+              aria-pressed={mobileSection === "main"}
+              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
                 mobileSection === "main"
-                  ? "bg-algomancy-purple text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "border-algomancy-purple bg-algomancy-purple text-white"
+                  : "border-white/10 bg-algomancy-dark text-gray-300 hover:border-white/20 hover:text-white"
               }`}>
               Main Deck ({mainDeckCount})
             </button>
             <button
               type='button'
               onClick={() => setMobileSection("sideboard")}
-              className={`rounded-md px-3 py-1.5 text-sm ${
+              aria-pressed={mobileSection === "sideboard"}
+              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
                 mobileSection === "sideboard"
-                  ? "bg-algomancy-purple text-white"
-                  : "text-gray-400 hover:text-white"
+                  ? "border-algomancy-purple bg-algomancy-purple text-white"
+                  : "border-white/10 bg-algomancy-dark text-gray-300 hover:border-white/20 hover:text-white"
               }`}>
               Sideboard ({sideboardCount})
             </button>
           </div>
 
           <div
-            className='flex space-x-1 rounded-lg bg-algomancy-dark p-1'
+            className='ml-auto flex max-w-full flex-wrap justify-end gap-1 rounded-md bg-algomancy-dark p-1'
             role='toolbar'
             aria-label='Sort options'>
             <button
+              type='button'
               onClick={() => setSortMode("default")}
               className={`px-3 py-1.5 rounded flex items-center space-x-1 text-xs ${
                 sortMode === "default"
@@ -434,6 +459,7 @@ export default function DeckViewer({
               <span>Default</span>
             </button>
             <button
+              type='button'
               onClick={() => setSortMode("mana")}
               className={`px-3 py-1.5 rounded flex items-center space-x-1 text-xs ${
                 sortMode === "mana"
@@ -447,6 +473,7 @@ export default function DeckViewer({
               <span>Mana</span>
             </button>
             <button
+              type='button'
               onClick={() => setSortMode("attack")}
               className={`px-3 py-1.5 rounded flex items-center space-x-1 text-xs ${
                 sortMode === "attack"
@@ -460,6 +487,7 @@ export default function DeckViewer({
               <span>Power</span>
             </button>
             <button
+              type='button'
               onClick={() => setSortMode("defense")}
               className={`px-3 py-1.5 rounded flex items-center space-x-1 text-xs ${
                 sortMode === "defense"

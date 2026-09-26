@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Card,
   CARD_TYPES,
@@ -28,6 +28,7 @@ interface CardSearchProps {
   onSearchResults: (filteredCards: Card[]) => void;
   onSearchActiveChange?: (isActive: boolean) => void;
   deckElements?: string[];
+  mobileFilterSheet?: boolean;
 }
 
 export default function CardSearch({
@@ -35,15 +36,17 @@ export default function CardSearch({
   onSearchResults,
   onSearchActiveChange,
   deckElements,
+  mobileFilterSheet = false,
 }: CardSearchProps) {
   const [elementMatchMode, setElementMatchMode] = useState<
     "any" | "all" | "exact"
   >("any");
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
   const [activeKeywords, setActiveKeywords] = useState<string[]>([]);
   const [onlyDeckElements, setOnlyDeckElements] = useState(false);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
 
   // Common filter categories
   const elementTypes = ELEMENT_TYPES;
@@ -59,12 +62,41 @@ export default function CardSearch({
     [deckElements]
   );
   const hasDeckElements = normalizedDeckElements.length > 0;
+  const activeFilterCount =
+    activeKeywords.length + (onlyDeckElements ? 1 : 0);
 
   useEffect(() => {
     if (!hasDeckElements && onlyDeckElements) {
       setOnlyDeckElements(false);
     }
   }, [hasDeckElements, onlyDeckElements]);
+
+  useEffect(() => {
+    if (!showFilters) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setShowFilters(false);
+        filterButtonRef.current?.focus();
+      }
+    };
+
+    const shouldLockPage =
+      mobileFilterSheet &&
+      (typeof window.matchMedia !== "function" ||
+        window.matchMedia("(max-width: 1023px)").matches);
+    const previousOverflow = document.body.style.overflow;
+    if (shouldLockPage) {
+      document.body.style.overflow = "hidden";
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      if (shouldLockPage) {
+        document.body.style.overflow = previousOverflow;
+      }
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [mobileFilterSheet, showFilters]);
 
   // Perform search whenever the search term changes
   useEffect(() => {
@@ -254,6 +286,11 @@ export default function CardSearch({
     setActiveKeywords([]);
   };
 
+  const clearAllFilters = () => {
+    clearSearch();
+    setOnlyDeckElements(false);
+  };
+
   // Helper function to parse search terms, preserving quoted phrases
   const parseSearchTerms = (input: string): string[] => {
     const terms: string[] = [];
@@ -326,9 +363,14 @@ export default function CardSearch({
         <input
           type='text'
           className='block w-full p-4 pl-10 pr-20 text-sm text-white border border-algomancy-purple/30 rounded-lg bg-algomancy-darker focus:ring-algomancy-purple focus:border-algomancy-purple'
-          placeholder='Search with multiple keywords (e.g., "Fire Swift", "Battle" timing, or "mana:3" for 3-cost cards)'
+          placeholder={
+            mobileFilterSheet
+              ? "Search cards..."
+              : 'Search with multiple keywords (e.g., "Fire Swift", "Battle" timing, or "mana:3" for 3-cost cards)'
+          }
           value={searchTerm}
           onChange={handleSearchChange}
+          aria-label='Search cards'
         />
         {activeKeywords.length > 1 && (
           <div className='absolute top-1/2 right-20 transform -translate-y-1/2 bg-algomancy-purple/80 text-white text-xs px-2 py-1 rounded-full'>
@@ -346,9 +388,15 @@ export default function CardSearch({
             </button>
           )}
           <button
+            ref={filterButtonRef}
             type='button'
             onClick={() => setShowFilters(!showFilters)}
-            title='Show filters'
+            title={showFilters ? "Hide filters" : "Show filters"}
+            aria-label={`${showFilters ? "Hide" : "Show"} card filters${
+              activeFilterCount ? ` (${activeFilterCount} active)` : ""
+            }`}
+            aria-expanded={showFilters}
+            aria-controls='card-search-filters'
             className={`${
               showFilters ? "text-algomancy-purple" : "text-gray-400"
             } hover:text-algomancy-purple-light`}>
@@ -358,8 +406,62 @@ export default function CardSearch({
       </div>
 
       {/* Quick Filters */}
+      {mobileFilterSheet && showFilters && (
+        <button
+          type='button'
+          className='fixed inset-0 z-40 bg-black/70 lg:hidden'
+          onClick={() => {
+            setShowFilters(false);
+            filterButtonRef.current?.focus();
+          }}
+          aria-label='Close card filters'
+        />
+      )}
+
       {showFilters && (
-        <div className='mt-4 p-4 bg-algomancy-darker border border-algomancy-purple/30 rounded-lg'>
+        <div
+          id='card-search-filters'
+          role={mobileFilterSheet && showFilters ? "dialog" : undefined}
+          aria-modal={mobileFilterSheet && showFilters ? "true" : undefined}
+          aria-labelledby={
+            mobileFilterSheet && showFilters
+              ? "card-search-filter-title"
+              : undefined
+          }
+          className={`bg-algomancy-darker border border-algomancy-purple/30 p-4 ${
+            mobileFilterSheet
+              ? "fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-y-auto rounded-t-lg lg:static lg:mt-4 lg:max-h-none lg:overflow-visible lg:rounded-lg"
+              : "mt-4 rounded-lg"
+          }`}>
+          {mobileFilterSheet && (
+            <div className='mb-4 flex items-center justify-between border-b border-white/10 pb-3'>
+              <h3
+                id='card-search-filter-title'
+                className='text-base font-semibold text-white'>
+                Filters
+              </h3>
+              <div className='flex items-center gap-3'>
+                {activeFilterCount > 0 && (
+                  <button
+                    type='button'
+                    onClick={clearAllFilters}
+                    className='text-sm text-algomancy-gold hover:text-algomancy-gold-light'>
+                    Clear all
+                  </button>
+                )}
+                <button
+                  type='button'
+                  onClick={() => {
+                    setShowFilters(false);
+                    filterButtonRef.current?.focus();
+                  }}
+                  className='rounded-md p-1 text-gray-300 hover:bg-white/5 hover:text-white'
+                  aria-label='Close filters'>
+                  <XMarkIcon className='h-5 w-5' aria-hidden='true' />
+                </button>
+              </div>
+            </div>
+          )}
           {deckElements && (
             <div className='mb-4'>
               <h3 className='text-sm font-semibold text-algomancy-gold mb-2'>
@@ -402,7 +504,9 @@ export default function CardSearch({
                 return (
                   <button
                     key={element}
+                    type='button'
                     onClick={() => applyFilter(element)}
+                    aria-pressed={isActive}
                     className={`px-3 py-1 text-sm rounded-md border cursor-pointer ${
                       isActive
                         ? "bg-algomancy-blue/40 border-algomancy-blue text-white"
@@ -454,7 +558,9 @@ export default function CardSearch({
                 return (
                   <button
                     key={type}
+                    type='button'
                     onClick={() => applyFilter(type)}
+                    aria-pressed={isActive}
                     className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-purple/40 border-algomancy-purple text-white"
@@ -480,7 +586,9 @@ export default function CardSearch({
                 return (
                   <button
                     key={timing}
+                    type='button'
                     onClick={() => applyFilter(timingString)}
+                    aria-pressed={isActive}
                     className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-cosmic/40 border-algomancy-cosmic text-white"
@@ -505,7 +613,9 @@ export default function CardSearch({
                 return (
                   <button
                     key={attr}
+                    type='button'
                     onClick={() => applyFilter(attr)}
+                    aria-pressed={isActive}
                     className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-teal/40 border-algomancy-teal text-white"
@@ -531,7 +641,9 @@ export default function CardSearch({
                 return (
                   <button
                     key={typeof cost === "number" ? cost : cost}
+                    type='button'
                     onClick={() => applyFilter(costString)}
+                    aria-pressed={isActive}
                     className={`px-3 py-1 text-sm rounded-md border ${
                       isActive
                         ? "bg-algomancy-gold/60 border-algomancy-gold text-white"
@@ -542,7 +654,9 @@ export default function CardSearch({
                 );
               })}
               <button
+                type='button'
                 onClick={() => applyFilter("mana:10+")}
+                aria-pressed={activeKeywords.some((k) => k === "mana:10+")}
                 className={`px-3 py-1 text-sm rounded-md border ${
                   activeKeywords.some((k) => k === "mana:10+")
                     ? "bg-algomancy-gold/60 border-algomancy-gold text-white"

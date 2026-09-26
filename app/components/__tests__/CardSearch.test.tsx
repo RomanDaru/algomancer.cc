@@ -82,6 +82,10 @@ describe("CardSearch Colorless support", () => {
   });
 
   it("offers a Colorless quick filter that can be toggled off", async () => {
+    const toggle = container.querySelector<HTMLButtonElement>(
+      '[aria-controls="card-search-filters"]'
+    )!;
+    await act(async () => toggle.click());
     const button = Array.from(container.querySelectorAll("button"))
       .find((item) => item.textContent === "Colorless")!;
     expect(button).toBeDefined();
@@ -94,11 +98,58 @@ describe("CardSearch Colorless support", () => {
   it("preserves any/all matching when Colorless is combined with another element", async () => {
     await search("Fire Colorless");
     expect(results()).toEqual(["Generic Unit", "Neutral Token", "Fire Unit"]);
+    const toggle = container.querySelector<HTMLButtonElement>(
+      '[aria-controls="card-search-filters"]'
+    )!;
+    await act(async () => toggle.click());
     const select = container.querySelector("select")!;
     await act(async () => {
       select.value = "all";
       select.dispatchEvent(new Event("change", { bubbles: true }));
     });
     expect(results()).toEqual([]);
+  });
+
+  it("opens deck-builder filters as a dismissible mobile sheet", async () => {
+    await act(async () => {
+      root.render(
+        <CardSearch
+          cards={cards}
+          onSearchResults={onSearchResults}
+          mobileFilterSheet={true}
+        />
+      );
+    });
+
+    const toggle = container.querySelector<HTMLButtonElement>(
+      '[aria-controls="card-search-filters"]'
+    )!;
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(container.querySelector("#card-search-filters")).not.toBeInTheDocument();
+
+    await act(async () => toggle.click());
+    const filters = container.querySelector<HTMLElement>("#card-search-filters")!;
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(filters).toHaveClass("fixed");
+    expect(filters).toHaveAttribute("role", "dialog");
+    expect(document.body).toHaveStyle({ overflow: "hidden" });
+
+    const closeButton = Array.from(filters.querySelectorAll("button")).find(
+      (button) => button.getAttribute("aria-label") === "Close filters"
+    )!;
+    await act(async () => closeButton.click());
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(container.querySelector("#card-search-filters")).not.toBeInTheDocument();
+    expect(toggle).toHaveFocus();
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
+
+    await act(async () => toggle.click());
+    await act(async () => {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(container.querySelector("#card-search-filters")).not.toBeInTheDocument();
+    expect(toggle).toHaveFocus();
+    expect(document.body).not.toHaveStyle({ overflow: "hidden" });
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, type KeyboardEvent } from "react";
 import { Card } from "@/app/lib/types/card";
 import { DeckCard } from "@/app/lib/types/user";
 import {
@@ -21,6 +21,8 @@ import {
   addCardToSection,
   canAddCardToSection,
   DeckSection,
+  getCardTotalQuantityAcrossSections,
+  getDeckCardQuantity,
   getDeckSectionTotal,
   moveCardBetweenSections,
   normalizeDeckSections,
@@ -28,6 +30,17 @@ import {
   removeCardFromSection,
   validateDeckSections,
 } from "@/app/lib/utils/deckSections";
+
+type MobileBuilderTab = "builder" | "information" | "statistics";
+
+const MOBILE_BUILDER_TABS: Array<{
+  id: MobileBuilderTab;
+  label: string;
+}> = [
+  { id: "builder", label: "Deck Builder" },
+  { id: "information", label: "Deck Information" },
+  { id: "statistics", label: "Deck Statistics" },
+];
 
 interface DeckBuilderProps {
   cards: Card[];
@@ -75,6 +88,8 @@ export default function DeckBuilder({
   const [isPublic, setIsPublic] = useState(initialIsPublic);
   const [isSaving, setIsSaving] = useState(false);
   const [showGuestPrompt, setShowGuestPrompt] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileBuilderTab>("builder");
+  const [deckFeedback, setDeckFeedback] = useState("");
 
   const deckCards = deckSections.cards;
   const sideboardCards = deckSections.sideboard;
@@ -99,6 +114,13 @@ export default function DeckBuilder({
 
   const deckBadgeOptions = DECK_BADGE_VALUES;
   const maxDeckBadges = 2;
+  const saveButtonLabel = isSaving
+    ? "Saving..."
+    : isGuestMode
+    ? "Sign In to Save"
+    : isEditing
+    ? "Update Deck"
+    : "Save Deck";
 
   const toggleDeckBadge = (badge: DeckBadge) => {
     setDeckBadges((prev) => {
@@ -167,6 +189,13 @@ export default function DeckBuilder({
     isEditing,
   ]);
 
+  useEffect(() => {
+    if (!deckFeedback) return;
+
+    const timeoutId = window.setTimeout(() => setDeckFeedback(""), 2400);
+    return () => window.clearTimeout(timeoutId);
+  }, [deckFeedback]);
+
   const canAddToSection = (cardId: string, section: DeckSection) =>
     canAddCardToSection({
       section,
@@ -176,7 +205,47 @@ export default function DeckBuilder({
       amount: 1,
     });
 
+  const getAddRestrictionReason = (
+    cardId: string,
+    section: DeckSection
+  ): string | null => {
+    const targetCards = section === "main" ? deckCards : sideboardCards;
+    const targetQuantity = getDeckCardQuantity(targetCards, cardId);
+    const totalQuantity = getCardTotalQuantityAcrossSections(
+      deckCards,
+      sideboardCards,
+      cardId
+    );
+
+    if (
+      targetQuantity >= DECK_CONSTRUCTION_RULES.maxCopiesPerCardPerZone
+    ) {
+      return `Maximum ${DECK_CONSTRUCTION_RULES.maxCopiesPerCardPerZone} copies in this section`;
+    }
+
+    if (totalQuantity >= DECK_CONSTRUCTION_RULES.maxCopiesPerCardTotal) {
+      return `Maximum ${DECK_CONSTRUCTION_RULES.maxCopiesPerCardTotal} copies across deck and sideboard`;
+    }
+
+    if (
+      section === "sideboard" &&
+      sideboardCount >= DECK_CONSTRUCTION_RULES.maxSideboardCards
+    ) {
+      return `Sideboard is full (${DECK_CONSTRUCTION_RULES.maxSideboardCards} cards)`;
+    }
+
+    return null;
+  };
+
   const handleAddCard = (cardId: string, section: DeckSection) => {
+    const restriction = getAddRestrictionReason(cardId, section);
+    if (restriction) {
+      toast.error(restriction, {
+        id: `deck-limit-${section}-${cardId}`,
+      });
+      return;
+    }
+
     setDeckSections((prev) => {
       if (
         !canAddCardToSection({
@@ -201,6 +270,11 @@ export default function DeckBuilder({
             : prev.sideboard,
       };
     });
+
+    const cardName = cards.find((card) => card.id === cardId)?.name || "Card";
+    setDeckFeedback(
+      `${cardName} added to ${section === "main" ? "Main Deck" : "Sideboard"}`
+    );
   };
 
   const handleRemoveCard = (cardId: string, section: DeckSection) => {
@@ -243,11 +317,13 @@ export default function DeckBuilder({
 
   const handleSaveDeck = async () => {
     if (!deckName.trim()) {
+      setMobileTab("information");
       toast.error("Please enter a deck name");
       return;
     }
 
     if (deckCards.length === 0) {
+      setMobileTab("builder");
       toast.error("Please add at least one card to your main deck");
       return;
     }
@@ -258,6 +334,7 @@ export default function DeckBuilder({
     });
 
     if (!validation.isValid) {
+      setMobileTab("builder");
       toast.error(validation.errors[0] || "Invalid deck configuration");
       return;
     }
@@ -266,6 +343,7 @@ export default function DeckBuilder({
     if (youtubeUrl.trim()) {
       const validatedUrl = validateAndNormalizeYouTubeUrl(youtubeUrl.trim());
       if (!validatedUrl) {
+        setMobileTab("information");
         toast.error("Please enter a valid YouTube URL");
         return;
       }
@@ -329,7 +407,37 @@ export default function DeckBuilder({
     }
   };
 
-  const renderDeckInfoPanel = (idSuffix: string) => (
+  const handleMobileTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number
+  ) => {
+    let nextIndex = currentIndex;
+
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % MOBILE_BUILDER_TABS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + MOBILE_BUILDER_TABS.length) %
+        MOBILE_BUILDER_TABS.length;
+    } else if (event.key === "Home") {
+      nextIndex = 0;
+    } else if (event.key === "End") {
+      nextIndex = MOBILE_BUILDER_TABS.length - 1;
+    } else {
+      return;
+    }
+
+    event.preventDefault();
+    const nextTab = MOBILE_BUILDER_TABS[nextIndex].id;
+    setMobileTab(nextTab);
+    document.getElementById(`mobile-deck-tab-${nextTab}`)?.focus();
+  };
+
+  const renderDeckInfoPanel = (
+    idSuffix: string,
+    showSaveButton = true,
+    saveButtonClassName = ""
+  ) => (
     <div className='bg-algomancy-darker border border-algomancy-purple/30 rounded-lg p-4'>
       <h3 className='text-lg font-semibold text-white mb-4'>Deck Information</h3>
 
@@ -424,17 +532,22 @@ export default function DeckBuilder({
           </p>
         </div>
 
-        <div className='flex items-center'>
+        <div>
+          <div className='flex items-center'>
           <input
             type='checkbox'
             id={`isPublic${idSuffix}`}
-            checked={!isPublic}
-            onChange={(e) => setIsPublic(!e.target.checked)}
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
             className='mr-2'
           />
           <label htmlFor={`isPublic${idSuffix}`} className='text-sm text-gray-300'>
-            Make this deck private
+            Public deck
           </label>
+          </div>
+          <p className='ml-6 mt-1 text-xs text-gray-400'>
+            Public decks can be discovered and viewed by the community.
+          </p>
         </div>
 
         <div className='rounded-md border border-white/10 bg-black/10 p-3 text-xs text-gray-300'>
@@ -454,30 +567,26 @@ export default function DeckBuilder({
           </p>
         </div>
 
-        <button
-          onClick={handleSaveDeck}
-          disabled={isSaving}
-          className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${
-            isGuestMode
-              ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
-              : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
-          }`}>
-          {isSaving
-            ? "Saving..."
-            : isGuestMode
-            ? "Sign In to Save Deck"
-            : isEditing
-            ? "Update Deck"
-            : "Save Deck"}
-        </button>
+        {showSaveButton && (
+          <button
+            onClick={handleSaveDeck}
+            disabled={isSaving}
+            className={`w-full py-2 rounded disabled:opacity-50 transition-colors cursor-pointer hover:cursor-pointer ${saveButtonClassName} ${
+              isGuestMode
+                ? "bg-algomancy-gold hover:bg-algomancy-gold-dark text-black"
+                : "bg-algomancy-purple hover:bg-algomancy-purple-dark text-white"
+            }`}>
+            {saveButtonLabel}
+          </button>
+        )}
       </div>
     </div>
   );
 
   return (
-    <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+    <div className='grid grid-cols-1 gap-6 pb-20 lg:grid-cols-3 lg:pb-0'>
       {isGuestMode && (
-        <div className='lg:col-span-3'>
+        <div className='hidden lg:col-span-3 lg:block'>
           <GuestModePrompt
             deckName={deckName}
             variant='banner'
@@ -499,7 +608,58 @@ export default function DeckBuilder({
         </div>
       )}
 
-      <div className='lg:hidden lg:col-span-2 order-1'>
+      <div
+        className='order-1 lg:hidden'
+        role='tablist'
+        aria-label='Deck editor sections'>
+        <div className='grid grid-cols-3 border-b border-white/10'>
+          {MOBILE_BUILDER_TABS.map((tab, index) => {
+            const isActive = mobileTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                id={`mobile-deck-tab-${tab.id}`}
+                type='button'
+                role='tab'
+                aria-selected={isActive}
+                aria-controls={`mobile-deck-panel-${tab.id}`}
+                tabIndex={isActive ? 0 : -1}
+                onClick={() => setMobileTab(tab.id)}
+                onKeyDown={(event) => handleMobileTabKeyDown(event, index)}
+                className={`min-h-12 border-b-2 px-2 py-2 text-xs font-medium transition-colors sm:text-sm ${
+                  isActive
+                    ? "border-algomancy-gold text-white"
+                    : "border-transparent text-gray-400 hover:text-white"
+                }`}>
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className='order-2 space-y-4 lg:order-1 lg:col-span-1'>
+        <div
+          id='mobile-deck-panel-information'
+          role='tabpanel'
+          aria-labelledby='mobile-deck-tab-information'
+          className={`${mobileTab === "information" ? "block" : "hidden"} lg:block`}>
+          {renderDeckInfoPanel("-responsive", true, "hidden lg:block")}
+        </div>
+        <div
+          id='mobile-deck-panel-statistics'
+          role='tabpanel'
+          aria-labelledby='mobile-deck-tab-statistics'
+          className={`${mobileTab === "statistics" ? "block" : "hidden"} lg:block`}>
+          <DeckStats cards={cards} deckCards={deckCards} />
+        </div>
+      </div>
+
+      <div
+        id='mobile-deck-panel-builder'
+        role='tabpanel'
+        aria-labelledby='mobile-deck-tab-builder'
+        className={`${mobileTab === "builder" ? "block" : "hidden"} order-2 lg:order-2 lg:col-span-2 lg:block`}>
         <DeckCardBrowser
           cards={cards}
           filteredCards={filteredCards}
@@ -511,46 +671,10 @@ export default function DeckBuilder({
           onAddToSideboard={(cardId) => handleAddCard(cardId, "sideboard")}
           canAddToDeck={(cardId) => canAddToSection(cardId, "main")}
           canAddToSideboard={(cardId) => canAddToSection(cardId, "sideboard")}
-          useHoverPreview={false}
-          maxHeightClassName='max-h-[600px]'
-          gridClassName='grid-cols-2 sm:grid-cols-3'
-        />
-      </div>
-
-      <div className='lg:hidden order-2'>
-        <DeckViewer
-          cards={cards}
-          deckCards={deckCards}
-          sideboardCards={sideboardCards}
-          onAddCard={handleAddCard}
-          onRemoveCard={handleRemoveCard}
-          onRemoveAllCopies={handleRemoveAllCopies}
-          onMoveCard={handleMoveCard}
-        />
-      </div>
-
-      <div className='lg:hidden space-y-4 order-3'>
-        {renderDeckInfoPanel("-mobile")}
-        <DeckStats cards={cards} deckCards={deckCards} />
-      </div>
-
-      <div className='hidden lg:block lg:col-span-1 space-y-4'>
-        {renderDeckInfoPanel("")}
-        <DeckStats cards={cards} deckCards={deckCards} />
-      </div>
-
-      <div className='hidden lg:block lg:col-span-2'>
-        <DeckCardBrowser
-          cards={cards}
-          filteredCards={filteredCards}
-          deckCards={deckCards}
-          sideboardCards={sideboardCards}
-          deckElements={deckElements}
-          onSearchResults={setFilteredCards}
-          onAddToDeck={(cardId) => handleAddCard(cardId, "main")}
-          onAddToSideboard={(cardId) => handleAddCard(cardId, "sideboard")}
-          canAddToDeck={(cardId) => canAddToSection(cardId, "main")}
-          canAddToSideboard={(cardId) => canAddToSection(cardId, "sideboard")}
+          getAddRestrictionReason={getAddRestrictionReason}
+          mobileFilterSheet={true}
+          maxHeightClassName='max-h-[600px] lg:max-h-[800px]'
+          gridClassName='grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5'
         />
 
         <DeckViewer
@@ -562,6 +686,38 @@ export default function DeckBuilder({
           onRemoveAllCopies={handleRemoveAllCopies}
           onMoveCard={handleMoveCard}
         />
+      </div>
+
+      <div className='fixed inset-x-0 bottom-0 z-30 order-3 border-t border-white/10 bg-algomancy-darker px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.25)] lg:hidden'>
+        <div className='flex items-center justify-between gap-3'>
+          <div className='min-w-0'>
+            <p className='text-sm font-medium text-white'>
+              Main {mainDeckCount} · Sideboard {sideboardCount}/{DECK_CONSTRUCTION_RULES.maxSideboardCards}
+            </p>
+            <p
+              className='truncate text-xs text-gray-400'
+              aria-live='polite'
+              aria-atomic='true'>
+              {deckFeedback ||
+                (!deckName.trim()
+                  ? "Deck name still needed"
+                  : isGuestMode
+                  ? "Draft saved in this browser"
+                  : "Ready to save")}
+            </p>
+          </div>
+          <button
+            type='button'
+            onClick={handleSaveDeck}
+            disabled={isSaving}
+            className={`shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              isGuestMode
+                ? "bg-algomancy-gold text-black hover:bg-algomancy-gold-dark"
+                : "bg-algomancy-purple text-white hover:bg-algomancy-purple-dark"
+            }`}>
+            {saveButtonLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

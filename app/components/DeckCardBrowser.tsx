@@ -23,6 +23,11 @@ interface DeckCardBrowserProps {
   onAddToSideboard: (cardId: string) => void;
   canAddToDeck: (cardId: string) => boolean;
   canAddToSideboard: (cardId: string) => boolean;
+  getAddRestrictionReason?: (
+    cardId: string,
+    section: "main" | "sideboard"
+  ) => string | null;
+  mobileFilterSheet?: boolean;
   useHoverPreview?: boolean;
   maxHeightClassName?: string;
   gridClassName?: string;
@@ -55,6 +60,8 @@ export default function DeckCardBrowser({
   onAddToSideboard,
   canAddToDeck,
   canAddToSideboard,
+  getAddRestrictionReason,
+  mobileFilterSheet = false,
   useHoverPreview = true,
   maxHeightClassName = "max-h-[800px]",
   gridClassName = "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5",
@@ -67,6 +74,7 @@ export default function DeckCardBrowser({
         cards={cards}
         onSearchResults={onSearchResults}
         deckElements={deckElements}
+        mobileFilterSheet={mobileFilterSheet}
       />
 
       <div className='mt-4'>
@@ -84,6 +92,13 @@ export default function DeckCardBrowser({
                 sideboardCards,
                 card.id,
               );
+              const deckRestriction = getAddRestrictionReason?.(card.id, "main");
+              const sideboardRestriction = getAddRestrictionReason?.(
+                card.id,
+                "sideboard"
+              );
+              const canAddDeck = canAddToDeck(card.id);
+              const canAddSideboardCard = canAddToSideboard(card.id);
 
               return (
                 <div
@@ -110,15 +125,25 @@ export default function DeckCardBrowser({
                       <button
                         type='button'
                         onClick={() => onAddToDeck(card.id)}
-                        disabled={!canAddToDeck(card.id)}
-                        className='rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-2 py-1.5 text-xs font-medium text-white transition-colors hover:border-algomancy-purple hover:bg-algomancy-purple/20 disabled:cursor-not-allowed disabled:opacity-40'>
+                        aria-disabled={!canAddDeck}
+                        title={deckRestriction || `Add ${card.name} to Main Deck`}
+                        className={`rounded-md border border-algomancy-purple/30 bg-algomancy-dark px-2 py-1.5 text-xs font-medium text-white transition-colors ${
+                          canAddDeck
+                            ? "hover:border-algomancy-purple hover:bg-algomancy-purple/20"
+                            : "cursor-not-allowed opacity-40"
+                        }`}>
                         + Deck
                       </button>
                       <button
                         type='button'
                         onClick={() => onAddToSideboard(card.id)}
-                        disabled={!canAddToSideboard(card.id)}
-                        className='rounded-md border border-algomancy-gold/30 bg-algomancy-dark px-2 py-1.5 text-xs font-medium text-white transition-colors hover:border-algomancy-gold hover:bg-algomancy-gold/15 disabled:cursor-not-allowed disabled:opacity-40'>
+                        aria-disabled={!canAddSideboardCard}
+                        title={sideboardRestriction || `Add ${card.name} to Sideboard`}
+                        className={`rounded-md border border-algomancy-gold/30 bg-algomancy-dark px-2 py-1.5 text-xs font-medium text-white transition-colors ${
+                          canAddSideboardCard
+                            ? "hover:border-algomancy-gold hover:bg-algomancy-gold/15"
+                            : "cursor-not-allowed opacity-40"
+                        }`}>
                         + SB
                       </button>
                     </div>

@@ -1,0 +1,189 @@
+.scene {
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: calc(100svh - 64px);
+  overflow: hidden;
+  background: #171d28;
+  isolation: isolate;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.landscape {
+  position: absolute;
+  inset: 0;
+  max-height: 1000px;
+}
+
+/* The supplied layers share a 1916 × 821 canvas. They MUST use the same
+   frame and crop, otherwise the scenery develops hard seams and cut edges. */
+.layer {
+  position: absolute;
+  inset: -120px -24px;
+  will-change: transform;
+}
+
+.landscapeImage {
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(8 14 24 / 88%) 0%, rgb(8 14 24 / 65%) 40%, rgb(8 14 24 / 12%) 75%),
+    linear-gradient(180deg, rgb(8 14 24 / 12%) 0%, transparent 45%, #171d28 100%);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 1200px;
+  min-height: 660px;
+  margin-inline: auto;
+  padding: 40px 32px;
+}
+
+.intro {
+  position: relative;
+  z-index: 1;
+  padding-block: 36px;
+}
+
+.tagline {
+  color: #e5e7eb;
+  font-size: clamp(1.125rem, 1.8vw, 1.5rem);
+  font-weight: 500;
+}
+
+.title {
+  margin-top: 4px;
+  color: #fff;
+  font-size: clamp(3rem, 6.5vw, 5.75rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.description {
+  max-width: 440px;
+  margin-top: 28px;
+  color: #e5e7eb;
+  font-size: 1.0625rem;
+  line-height: 1.75;
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 420px;
+  margin-top: 24px;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin-top: 28px;
+  color: #d1d5db;
+  font-size: 0.875rem;
+}
+
+.figureSlot {
+  position: relative;
+  height: 580px;
+  pointer-events: none;
+}
+
+.figure {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.figureImage {
+  object-fit: contain;
+  user-select: none;
+}
+
+.support {
+  position: relative;
+  border-top: 1px solid rgb(255 255 255 / 12%);
+  background: rgb(23 29 40 / 35%);
+}
+
+@media (max-width: 767px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    min-height: 0;
+    padding: 52px 24px 0;
+    text-align: center;
+  }
+
+  .intro {
+    padding-block: 0;
+  }
+
+  .title {
+    font-size: clamp(3rem, 10vw, 4.75rem);
+  }
+
+  .description {
+    margin: 20px auto 0;
+    font-size: 1rem;
+  }
+
+  .actions {
+    margin-inline: auto;
+    gap: 10px;
+  }
+
+  .links {
+    justify-content: center;
+    gap: 12px 20px;
+    margin-top: 24px;
+  }
+
+  .figureSlot {
+    height: clamp(320px, 72vw, 440px);
+    margin-top: 24px;
+  }
+
+  .landscapeImage {
+    object-position: 58% center;
+  }
+
+  .caveLayer {
+    display: none;
+  }
+
+  .veil {
+    background: linear-gradient(180deg, rgb(8 14 24 / 86%) 0%, rgb(8 14 24 / 74%) 25%, rgb(8 14 24 / 22%) 53%, #171d28 88%);
+  }
+
+  .support {
+    background: rgb(23 29 40 / 72%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .layer,
+  .figure {
+    transform: none !important;
+    will-change: auto;
+  }
+}
